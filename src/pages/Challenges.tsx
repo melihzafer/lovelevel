@@ -21,6 +21,8 @@ export default function ChallengesPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [newChallengeTitle, setNewChallengeTitle] = useState('');
   const [newChallengeDescription, setNewChallengeDescription] = useState('');
+  const [newChallengeTags, setNewChallengeTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
   
   // Complete challenge modal
   const [completingChallenge, setCompletingChallenge] = useState<Challenge | null>(null);
@@ -70,7 +72,7 @@ export default function ChallengesPage() {
       title: newChallengeTitle.trim(),
       description: newChallengeDescription.trim() || undefined,
       category: 'custom',
-      tags: ['custom'],
+      tags: newChallengeTags.length > 0 ? newChallengeTags : ['custom'],
       createdAt: new Date().toISOString(),
     };
 
@@ -78,6 +80,27 @@ export default function ChallengesPage() {
     setShowAddModal(false);
     setNewChallengeTitle('');
     setNewChallengeDescription('');
+    setNewChallengeTags([]);
+    setTagInput('');
+  };
+
+  const handleAddTag = () => {
+    const tag = tagInput.trim().toLowerCase();
+    if (tag && !newChallengeTags.includes(tag)) {
+      setNewChallengeTags([...newChallengeTags, tag]);
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setNewChallengeTags(newChallengeTags.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleTagInputKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddTag();
+    }
   };
 
   const categories = ['at-home', 'outdoors', 'creative', 'budget-friendly', 'custom'];
