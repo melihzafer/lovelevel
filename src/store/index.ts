@@ -1,0 +1,234 @@
+import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
+import type { Settings, PetState as PetStateType, Challenge } from '../types/database';
+import { DEFAULT_SETTINGS, DEFAULT_PET_STATE } from '../types/database';
+import * as db from '../lib/db';
+import { getDateStats } from '../lib/dateUtils';
+import { addXP, getLevelInfo } from '../lib/xpSystem';
+
+// Settings Store
+interface SettingsState {
+  settings: Settings;
+  loadSettings: () => Promise<void>;
+  updateSettings: (updates: Partial<Settings>) => Promise<void>;
+  isLoading: boolean;
+}
+
+export const useSettingsStore = create<SettingsState>()(
+  devtools(
+    (set) => ({
+      settings: DEFAULT_SETTINGS,
+      isLoading: true,
+      loadSettings: async () => {
+        set({ isLoading: true });
+        const settings = await db.getSettings();
+        set({ settings, isLoading: false });
+      },
+      updateSettings: async (updates) => {
+        await db.updateSettings(updates);
+        set((state) => ({
+          settings: { ...state.settings, ...updates },
+        }));
+      },
+    }),
+    { name: 'settings-store' }
+  )
+);
+
+// Pet Store
+interface PetState extends PetStateType {
+  loadPet: () => Promise<void>;
+  updatePet: (updates: Partial<PetStateType>) => Promise<void>;
+  gainXP: (amount: number, source: string) => Promise<{
+    didLevelUp: boolean;
+    newLevel: number;
+    levelsGained: number;
+  }>;
+  feedPet: () => Promise<void>;
+  playWithPet: () => Promise<void>;
+  isLoading: boolean;
+}
+
+export const usePetStore = create<PetState>()(
+  devtools(
+    (set, get) => ({
+      ...DEFAULT_PET_STATE,
+      isLoading: true,
+      loadPet: async () => {
+        set({ isLoading: true });
+        const pet = await db.getPet();
+        set({ ...pet, isLoading: false });
+      },
+      updatePet: async (updates) => {
+        await db.updatePet(updates);
+        set(updates);
+      },
+      gainXP: async (amount, source) => {
+        const state = get();
+        const settings = useSettingsStore.getState().settings;
+        const result = addXP(
+          state.level,
+          state.xp,
+          amount,
+          settings.levelCurveMultiplier
+        );
+
+        await db.updatePet({
+          level: result.newLevel,
+          xp: result.remainingXP,
+        });
+
+        set({
+          level: result.newLevel,
+          xp: result.remainingXP,
+        });
+
+        // Log to history
+        if (result.didLevelUp) {
+          await db.addHistoryEntry({
+            id: `level-${Date.now()}`,
+            type: 'level-up',
+            timestamp: new Date().toISOString(),
+            data: {
+              newLevel: result.newLevel,
+              source,
+            },
+          });
+        }
+
+        return result;
+      },
+      feedPet: async () => {
+        const state = get();
+        const newHunger = Math.min(100, state.hunger + 20);
+        await db.updatePet({ hunger: newHunger, mood: 'happy' });
+        set({ hunger: newHunger, mood: 'happy' });
+      },
+      playWithPet: async () => {
+        const state = get();
+        const newEnergy = Math.max(0, state.energy - 10);
+        const newMood = newEnergy > 20 ? 'happy' : 'sleepy';
+        await db.updatePet({
+          energy: newEnergy,
+          mood: newMood,
+          lastInteraction: new Date().toISOString(),
+        });
+        set({
+          energy: newEnergy,
+          mood: newMood,
+          lastInteraction: new Date().toISOString(),
+        });
+      },
+    }),
+    { name: 'pet-store' }
+  )
+);
+
+// Challenges Store
+interface ChallengesState {
+  challenges: Challenge[];
+  loadChallenges: () => Promise<void>;
+  addChallenge: (challenge: Challenge) => Promise<void>;
+  updateChallenge: (id: string, updates: Partial<Challenge>) => Promise<void>;
+  completeChallenge: (id: string, notes?: string) => Promise<void>;
+  deleteChallenge: (id: string) => Promise<void>;
+  getCompletedChallenges: () => Challenge[];
+  getActiveChallenges: () => Challenge[];
+  isLoading: boolean;
+}
+
+export const useChallengesStore = create<ChallengesState>()(
+  devtools(
+    (set, get) => ({
+      challenges: [],
+      isLoading: true,
+      loadChallenges: async () => {
+        set({ isLoading: true });
+        const challenges = await db.getAllChallenges();
+        set({ challenges, isLoading: false });
+      },
+      addChallenge: async (challenge) => {
+        await db.addChallenge(challenge);
+        set((state) => ({
+          challenges: [...state.challenges, challenge],
+        }));
+      },
+      updateChallenge: async (id, updates) => {
+        await db.updateChallenge(id, updates);
+        set((state) => ({
+          challenges: state.challenges.map((c) =>
+            c.id === id ? { ...c, ...updates } : c
+          ),
+        }));
+      },
+      completeChallenge: async (id, notes) => {
+        const completedAt = new Date().toISOString();
+        await db.updateChallenge(id, { completedAt, notes });
+        
+        set((state) => ({
+          challenges: state.challenges.map((c) =>
+            c.id === id ? { ...c, completedAt, notes } : c
+          ),
+        }));
+
+        // Award XP to pet
+        const settings = useSettingsStore.getState().settings;
+        const petStore = usePetStore.getState();
+        await petStore.gainXP(settings.xpPerChallenge, 'challenge-completed');
+
+        // Log to history
+        const challenge = get().challenges.find(c => c.id === id);
+        await db.addHistoryEntry({
+          id: `challenge-${Date.now()}`,
+          type: 'challenge-completed',
+          timestamp: completedAt,
+          data: {
+            challengeId: id,
+            challengeTitle: challenge?.title,
+          },
+        });
+      },
+      deleteChallenge: async (id) => {
+        await db.deleteChallenge(id);
+        set((state) => ({
+          challenges: state.challenges.filter((c) => c.id !== id),
+        }));
+      },
+      getCompletedChallenges: () => {
+        return get().challenges.filter((c) => c.completedAt);
+      },
+      getActiveChallenges: () => {
+        return get().challenges.filter((c) => !c.completedAt);
+      },
+    }),
+    { name: 'challenges-store' }
+  )
+);
+
+// Derived selectors for date stats
+export function useDateStats() {
+  const settings = useSettingsStore((state) => state.settings);
+  
+  if (!settings.relationshipStartDate) {
+    return null;
+  }
+
+  return getDateStats(settings.relationshipStartDate);
+}
+
+// Derived selector for level info
+export function useLevelInfo() {
+  const pet = usePetStore();
+  const settings = useSettingsStore((state) => state.settings);
+  
+  return getLevelInfo(pet.level, pet.xp, settings.levelCurveMultiplier);
+}
+
+// Initialize all stores
+export async function initializeStores() {
+  await Promise.all([
+    useSettingsStore.getState().loadSettings(),
+    usePetStore.getState().loadPet(),
+    useChallengesStore.getState().loadChallenges(),
+  ]);
+}

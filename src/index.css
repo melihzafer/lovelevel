@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light theme colors - romantic pinks and soft purples */
+    --color-primary-50: #fef2f4;
+    --color-primary-100: #fce7eb;
+    --color-primary-200: #f9cfd9;
+    --color-primary-300: #f5a7bc;
+    --color-primary-400: #f0769a;
+    --color-primary-500: #e7507a;
+    --color-primary-600: #d43063;
+    --color-primary-700: #b22251;
+    --color-primary-800: #941f49;
+    --color-primary-900: #7e1d42;
+
+    --color-accent-50: #faf5ff;
+    --color-accent-100: #f3e8ff;
+    --color-accent-200: #e9d5ff;
+    --color-accent-300: #d8b4fe;
+    --color-accent-400: #c084fc;
+    --color-accent-500: #a855f7;
+    --color-accent-600: #9333ea;
+    --color-accent-700: #7e22ce;
+    --color-accent-800: #6b21a8;
+    --color-accent-900: #581c87;
+
+    --bg-primary: #ffffff;
+    --bg-secondary: #fef2f4;
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --border-color: #f3e8ff;
+  }
+
+  .dark {
+    /* Dark theme colors - deeper tones */
+    --color-primary-50: #4c1d30;
+    --color-primary-100: #6b2344;
+    --color-primary-200: #8b2a5a;
+    --color-primary-300: #b23870;
+    --color-primary-400: #d84786;
+    --color-primary-500: #e7507a;
+    --color-primary-600: #f0769a;
+    --color-primary-700: #f5a7bc;
+    --color-primary-800: #f9cfd9;
+    --color-primary-900: #fce7eb;
+
+    --color-accent-50: #2e1065;
+    --color-accent-100: #4c1d95;
+    --color-accent-200: #5b21b6;
+    --color-accent-300: #6d28d9;
+    --color-accent-400: #7c3aed;
+    --color-accent-500: #a855f7;
+    --color-accent-600: #c084fc;
+    --color-accent-700: #d8b4fe;
+    --color-accent-800: #e9d5ff;
+    --color-accent-900: #f3e8ff;
+
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --border-color: #334155;
+  }
+
+  body {
+    @apply bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-200;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  * {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-primary)];
+  }
+
+  /* Ensure touch targets are at least 44x44px */
+  button,
+  a,
+  input[type="checkbox"],
+  input[type="radio"] {
+    @apply min-h-[44px] min-w-[44px];
+  }
+}
+
+@layer utilities {
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
+
+  .glass-effect {
+    @apply bg-white/10 backdrop-blur-md border border-white/20;
+  }
+
+  .dark .glass-effect {
+    @apply bg-black/20 backdrop-blur-md border border-white/10;
+  }
+}
