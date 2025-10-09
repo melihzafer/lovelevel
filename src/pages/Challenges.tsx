@@ -302,6 +302,47 @@ export default function ChallengesPage() {
               className="w-full px-4 py-2 border border-border-color rounded-lg bg-bg-primary text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none text-base"
             />
           </div>
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-text-primary">
+              {t.tagsOptional}
+            </label>
+            <div className="flex gap-2">
+              <Input
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyPress={handleTagInputKeyPress}
+                placeholder={t.tagsPlaceholder}
+                className="flex-1 min-h-[44px]"
+              />
+              <Button
+                onClick={handleAddTag}
+                variant="outline"
+                disabled={!tagInput.trim()}
+                className="min-h-[44px] px-4"
+              >
+                {t.add}
+              </Button>
+            </div>
+            {newChallengeTags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {newChallengeTags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full text-sm"
+                  >
+                    {tag}
+                    <button
+                      onClick={() => handleRemoveTag(tag)}
+                      className="hover:text-primary-900 dark:hover:text-primary-100 transition-colors"
+                      aria-label={`Remove ${tag}`}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
           <div className="flex flex-col sm:flex-row gap-3">
             <Button onClick={() => setShowAddModal(false)} variant="outline" className="flex-1 min-h-[44px]">
               {t.cancel}
