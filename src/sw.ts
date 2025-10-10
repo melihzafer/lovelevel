@@ -72,12 +72,27 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// Notification scheduling (check for monthiversaries)
+// Notification click handler
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  
+  const notificationData = event.notification.data || {};
+  const urlToOpen = notificationData.url || '/lovelevel/';
+  
   event.waitUntil(
-    // @ts-ignore
-    clients.openWindow('/')
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clientList: readonly WindowClient[]) => {
+        // If a window is already open, focus it
+        for (const client of clientList) {
+          if (client.url === new URL(urlToOpen, self.location.origin).href && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        // Otherwise open a new window
+        if (self.clients.openWindow) {
+          return self.clients.openWindow(urlToOpen);
+        }
+      })
   );
 });
 
