@@ -84,7 +84,7 @@ export default function OnboardingPage() {
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value as Language)}
-              className="w-full px-4 py-2 border border-border-color rounded-lg bg-bg-primary text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-2 border border-primary-600 rounded-lg bg-white text-primary-300 placeholder:text-primary-300 dark:placeholder:text-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
             >
               <option value="en">🇬🇧 English</option>
               <option value="tr">🇹🇷 Türkçe</option>

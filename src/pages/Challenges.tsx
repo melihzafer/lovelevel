@@ -137,7 +137,7 @@ export default function ChallengesPage() {
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-4 py-2 border border-border-color rounded-lg bg-primary-50 text-primary-white min-h-[44px] w-full sm:w-auto"
+              className="w-full px-4 py-2 border border-primary-600 rounded-lg bg-white text-primary-300 placeholder:text-primary-300 dark:placeholder:text-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all sm:w-auto"
             >
               <option value="all">{t.allChallenges}</option>
               {categories.map((cat) => (
@@ -256,7 +256,7 @@ export default function ChallengesPage() {
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder={t.notesPlaceholder}
                 rows={4}
-                className="w-full px-4 py-2 border border-border-color rounded-lg bg-bg-primary text-text-primary placeholder:text-primary-400 dark:placeholder:text-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none text-base"
+                className="w-full px-4 py-2 border border-primary-600 rounded-lg bg-white text-primary-300 placeholder:text-primary-300 dark:placeholder:text-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all resize-none"
               />
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
@@ -299,7 +299,7 @@ export default function ChallengesPage() {
               onChange={(e) => setNewChallengeDescription(e.target.value)}
               placeholder={t.challengeDescription}
               rows={3}
-              className="w-full px-4 py-2 border border-border-color rounded-lg bg-bg-primary text-text-primary placeholder:text-primary-400 dark:placeholder:text-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none text-base"
+              className="w-full px-4 py-2 border border-primary-600 rounded-lg bg-white text-primary-300 placeholder:text-primary-300 dark:placeholder:text-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all resize-none"
             />
           </div>
           <div className="space-y-2">
