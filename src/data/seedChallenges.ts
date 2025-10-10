@@ -2,17 +2,17 @@ import type { Challenge } from '../types/database';
 import { nanoid } from 'nanoid';
 
 /**
- * Seed data: 20 challenges across 4 categories
- * - At Home (5 challenges)
- * - Outdoors (5 challenges)
- * - Creative (5 challenges)
- * - Budget-Friendly (5 challenges)
+ * Tohum verisi: 4 kategoride 20 zorluk
+ * - Evde (5 zorluk)
+ * - Açık Havada (5 zorluk)
+ * - Yaratıcı (5 zorluk)
+ * - Bütçe Dostu (5 zorluk)
  * 
- * Challenge IDs are used to look up translations in i18n.ts
+ * Zorluk ID'leri i18n.ts'de çevirileri aramak için kullanılır
  */
 
 export const SEED_CHALLENGES: (Omit<Challenge, 'id' | 'createdAt'> & { challengeId: string })[] = [
-  // AT HOME
+  // EVDE
   {
     challengeId: 'cook-recipe',
     title: 'Cook a New Recipe Together',
@@ -54,7 +54,7 @@ export const SEED_CHALLENGES: (Omit<Challenge, 'id' | 'createdAt'> & { challenge
     estimate: { minutes: 90, costUSD: 0 },
   },
 
-  // OUTDOORS
+  // AÇIK HAVADA
   {
     challengeId: 'sunrise-hike',
     title: 'Sunrise or Sunset Hike',
@@ -96,7 +96,7 @@ export const SEED_CHALLENGES: (Omit<Challenge, 'id' | 'createdAt'> & { challenge
     estimate: { minutes: 120, costUSD: 30 },
   },
 
-  // CREATIVE
+  // YARATICI
   {
     challengeId: 'paint-together',
     title: 'Paint Together',
@@ -138,7 +138,7 @@ export const SEED_CHALLENGES: (Omit<Challenge, 'id' | 'createdAt'> & { challenge
     estimate: { minutes: 90, costUSD: 0 },
   },
 
-  // BUDGET-FRIENDLY
+  // BÜTÇE DOSTU
   {
     challengeId: 'museum-day',
     title: 'Free Museum or Gallery Day',
@@ -182,7 +182,7 @@ export const SEED_CHALLENGES: (Omit<Challenge, 'id' | 'createdAt'> & { challenge
 ];
 
 /**
- * Generate Challenge objects with IDs and timestamps
+ * ID'ler ve zaman damgalarıyla Challenge nesneleri oluştur
  */
 export function generateSeedChallenges(): Challenge[] {
   return SEED_CHALLENGES.map((challenge) => ({
@@ -193,7 +193,7 @@ export function generateSeedChallenges(): Challenge[] {
 }
 
 /**
- * Insert seed challenges into the database
+ * Tohum zorluklarını veritabanına ekle
  */
 export async function seedChallenges(db: { addChallenge: (challenge: Challenge) => Promise<void> }) {
   const challenges = generateSeedChallenges();

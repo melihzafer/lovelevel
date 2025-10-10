@@ -112,6 +112,9 @@ export const translations = {
     delete: 'Delete',
     edit: 'Edit',
     confirm: 'Confirm',
+    add: 'Add',
+    tagsOptional: 'Tags (optional)',
+    tagsPlaceholder: 'Enter a tag (e.g., romantic, cooking)',
     
     // Pet interactions
     feed: 'Feed',
@@ -344,6 +347,9 @@ export const translations = {
     delete: 'Sil',
     edit: 'Düzenle',
     confirm: 'Onayla',
+    add: 'Ekle',
+    tagsOptional: 'Etiketler (isteğe bağlı)',
+    tagsPlaceholder: 'Etiket girin (örn., romantik, yemek)',
     
     // Pet interactions
     feed: 'Besle',
@@ -576,6 +582,9 @@ export const translations = {
     delete: 'Изтрий',
     edit: 'Редактирай',
     confirm: 'Потвърди',
+    add: 'Добави',
+    tagsOptional: 'Тагове (по избор)',
+    tagsPlaceholder: 'Въведете таг (напр., романтичен, готвене)',
     
     // Pet interactions
     feed: 'Нахрани',
