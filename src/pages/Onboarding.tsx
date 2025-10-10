@@ -81,7 +81,7 @@ export default function OnboardingPage() {
             <label className="block text-sm font-medium text-text-primary mb-2">
               Language / Dil / Език
             </label>
-            <select style={{ color: 'black'}}
+            <select
               value={language}
               onChange={(e) => setLanguage(e.target.value as Language)}
               className="w-full px-4 py-2 border border-border-color rounded-lg bg-bg-primary text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
