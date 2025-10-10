@@ -5,6 +5,7 @@ import path from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/lovelevel/', // GitHub Pages subpath
   plugins: [
     react(),
     VitePWA({
@@ -20,30 +21,30 @@ export default defineConfig({
         theme_color: '#e7507a',
         background_color: '#ffffff',
         display: 'standalone',
-        start_url: '/',
-        scope: '/',
+        start_url: '/lovelevel/',
+        scope: '/lovelevel/',
         orientation: 'portrait',
         icons: [
           {
-            src: '/icons/icon-192.png',
+            src: '/lovelevel/icons/icon-192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any',
           },
           {
-            src: '/icons/icon-512.png',
+            src: '/lovelevel/icons/icon-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any',
           },
           {
-            src: '/icons/icon-192-maskable.png',
+            src: '/lovelevel/icons/icon-192-maskable.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'maskable',
           },
           {
-            src: '/icons/icon-512-maskable.png',
+            src: '/lovelevel/icons/icon-512-maskable.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',
@@ -75,6 +76,17 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+        },
+      },
+    },
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
