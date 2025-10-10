@@ -82,7 +82,7 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 // Background sync for offline actions (future enhancement)
-self.addEventListener('sync', (event) => {
+self.addEventListener('sync', (event: any) => {
   if (event.tag === 'sync-data') {
     event.waitUntil(
       // Implement data sync logic here
@@ -92,8 +92,7 @@ self.addEventListener('sync', (event) => {
 });
 
 // Periodic background sync for monthiversary checks
-// @ts-ignore
-self.addEventListener('periodicsync', (event) => {
+self.addEventListener('periodicsync', (event: any) => {
   if (event.tag === 'check-monthiversary') {
     event.waitUntil(
       // Check if today is a monthiversary and show notification
