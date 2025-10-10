@@ -16,6 +16,7 @@ export default function SettingsPage() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [importData, setImportData] = useState('');
   const [exportedData, setExportedData] = useState('');
+  const [isMigrating, setIsMigrating] = useState(false);
 
   const handleExport = async () => {
     const data = await db.exportData();
@@ -69,6 +70,20 @@ export default function SettingsPage() {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
+    }
+  };
+
+  const handleMigrateChallenges = async () => {
+    setIsMigrating(true);
+    try {
+      const updatedCount = await db.migrateChallengeTranslations();
+      alert(`✅ ${updatedCount} challenge güncellendi! Sayfayı yeniliyorum...`);
+      window.location.reload();
+    } catch (error) {
+      console.error('Migration error:', error);
+      alert('❌ Bir hata oluştu. Konsolu kontrol edin.');
+    } finally {
+      setIsMigrating(false);
     }
   };
 
@@ -140,7 +155,7 @@ export default function SettingsPage() {
               }}
             />
           </div>
-
+{/* w-full px-4 py-2 border border-border-color rounded-lg bg-white text-white placeholder:text-primary-300 dark:placeholder:text-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all */}
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-2">
               {t.messageTemplate}
@@ -148,7 +163,7 @@ export default function SettingsPage() {
             <textarea
               value={settings.messageTemplate}
               onChange={(e) => updateSettings({ messageTemplate: e.target.value })}
-              className="w-full px-4 py-2 bg-bg-secondary border border-border-color rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-border-color rounded-lg bg-white text-primary-300 placeholder:text-primary-300 dark:placeholder:text-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
               rows={3}
               placeholder="Use {partner_name_1}, {partner_name_2}, {months_together}, {days_together}"
             />
@@ -224,6 +239,17 @@ export default function SettingsPage() {
               <option value="tr">🇹🇷 Türkçe</option>
               <option value="bg">🇧🇬 Български</option>
             </select>
+            <Button
+              onClick={handleMigrateChallenges}
+              disabled={isMigrating}
+              variant="outline"
+              className="w-full mt-3 min-h-[44px]"
+            >
+              {isMigrating ? '⏳ Güncelleniyor...' : '🔄 Challengeleri Bu Dile Çevir'}
+            </Button>
+            <p className="text-xs text-text-secondary mt-2">
+              💡 Dili değiştirdikten sonra bu butona basarak mevcut challengeleri yeni dile çevirin
+            </p>
           </div>
         </div>
 
@@ -326,7 +352,7 @@ export default function SettingsPage() {
             value={importData}
             onChange={(e) => setImportData(e.target.value)}
             placeholder={t.pasteJsonPlaceholder}
-            className="w-full px-4 py-2 bg-bg-secondary border border-border-color rounded-lg text-text-primary font-mono text-xs"
+            className="w-full px-4 py-2 bg-bg-secondary border border-border-color rounded-lg text-text-primary placeholder:text-primary-400 dark:placeholder:text-primary-300 font-mono text-xs"
             rows={10}
           />
 

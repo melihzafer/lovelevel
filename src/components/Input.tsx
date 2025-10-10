@@ -15,9 +15,9 @@ export function Input({ label, className = '', id, ...props }: InputProps) {
           {props.required && <span className="text-primary-500 ml-1">*</span>}
         </label>
       )}
-      <input style={{ color: 'black'}}
+      <input
         id={inputId}
-        className={`w-full px-4 py-2 border border-border-color rounded-lg bg-bg-primary text-primary placeholder:text-black dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all ${className}`}
+        className={`w-full px-4 py-2 border border-border-color rounded-lg bg-white text-primary-300 placeholder:text-primary-300 dark:placeholder:text-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all ${className}`}
         {...props}
       />
     </div>

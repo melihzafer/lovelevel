@@ -130,6 +130,46 @@ async function initializeDefaultData(db: IDBPDatabase<LoveLevelDB>) {
   await tx.done;
 }
 
+// Migrate existing challenges to current language
+export async function migrateChallengeTranslations(): Promise<number> {
+  const db = await initDB();
+  const settings = await db.get('settings', 'main');
+  const language = settings?.language || 'en';
+  const translations = getTranslation(language);
+  
+  const tx = db.transaction('challenges', 'readwrite');
+  const store = tx.objectStore('challenges');
+  const challenges = await store.getAll();
+  
+  let updatedCount = 0;
+  
+  for (const challenge of challenges) {
+    // Check if this is a seed challenge (has a challengeId in SEED_CHALLENGES)
+    const seedChallenge = SEED_CHALLENGES.find(sc => 
+      sc.challengeId && challenge.title === sc.title
+    );
+    
+    if (seedChallenge) {
+      const translatedContent = translations.challengeContent[seedChallenge.challengeId as keyof typeof translations.challengeContent];
+      
+      if (translatedContent) {
+        // Update with translated content
+        const updatedChallenge: Challenge = {
+          ...challenge,
+          title: translatedContent.title,
+          description: translatedContent.description,
+        };
+        
+        await store.put(updatedChallenge);
+        updatedCount++;
+      }
+    }
+  }
+  
+  await tx.done;
+  return updatedCount;
+}
+
 // Settings operations
 export async function getSettings(): Promise<Settings> {
   const db = await initDB();
@@ -178,7 +218,7 @@ export async function getChallengesByCategory(category: string): Promise<Challen
 }
 
 export async function getCompletedChallenges(): Promise<Challenge[]> {
-  const db = await initDB();
+  await initDB();
   const all = await getAllChallenges();
   return all.filter(c => c.completedAt);
 }
