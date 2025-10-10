@@ -35,12 +35,12 @@ Successfully resolved Node.js compatibility and Tailwind CSS v4 breaking changes
 **Fix**:
 ```typescript
 // Before:
-animate={{ width: `${levelInfo.progressPercentage}%` }}
-{levelInfo.xpToNextLevel} XP until level {pet.level + 1}
+animate={ { width: `${levelInfo.progressPercentage}%` } }
+{ levelInfo.xpToNextLevel } XP until level { pet.level + 1 }
 
 // After:
-animate={{ width: `${levelInfo.xpProgressPercent}%` }}
-{levelInfo.xpForNextLevel - levelInfo.currentXP} XP until level {pet.level + 1}
+animate={ { width: `${levelInfo.xpProgressPercent}%` } }
+{ levelInfo.xpForNextLevel - levelInfo.currentXP } XP until level { pet.level + 1 }
 ```
 
 #### Button.tsx - Missing 'secondary' Variant
