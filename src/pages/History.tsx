@@ -5,7 +5,7 @@ import { useTranslation } from '../lib/i18n';
 import type { HistoryEntry } from '../types/database';
 
 export default function HistoryPage() {
-  const t = useTranslation();
+  const { t } = useTranslation();
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
 

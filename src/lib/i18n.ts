@@ -156,6 +156,76 @@ export const translations = {
     navHistory: 'History',
     navSettings: 'Settings',
     
+    // Profile & Settings
+    profile: 'Profile',
+    editProfile: 'Edit Profile',
+    displayName: 'Display Name',
+    enterDisplayName: 'Enter your name',
+    photoURL: 'Profile Photo',
+    clickToUpload: 'Click on avatar to upload photo',
+    invalidFileType: 'Please upload an image file',
+    fileTooLarge: 'Image must be smaller than 5MB',
+    photoUpdated: 'Profile photo updated successfully!',
+    photoUploadError: 'Failed to upload photo. Please try again.',
+    profileUpdated: 'Profile updated successfully!',
+    profileUpdateError: 'Failed to update profile. Please try again.',
+    notSet: 'Not set',
+    accountCreated: 'Account Created',
+    unknown: 'Unknown',
+    saving: 'Saving...',
+    
+    // Settings tabs
+    accountSecurity: 'Account Security',
+    privacy: 'Privacy',
+    connectedAccounts: 'Connected Accounts',
+    
+    // Account Security
+    changePassword: 'Change Password',
+    currentPassword: 'Current Password',
+    newPassword: 'New Password',
+    confirmNewPassword: 'Confirm New Password',
+    enterCurrentPassword: 'Enter current password',
+    enterNewPassword: 'Enter new password',
+    confirmNewPasswordPlaceholder: 'Confirm new password',
+    passwordChanged: 'Password changed successfully!',
+    passwordChangeError: 'Failed to change password. Please try again.',
+    reauthRequired: 'Please enter your current password to continue',
+    reauthFailed: 'Current password is incorrect',
+    enable2FA: 'Enable Two-Factor Authentication',
+    twoFactorAuth: 'Two-Factor Authentication',
+    twoFactorDesc: 'Add an extra layer of security to your account',
+    comingSoon: 'Coming Soon',
+    
+    // Logout
+    logoutConfirm: 'Confirm Logout',
+    logoutMessage: 'Are you sure you want to log out?',
+    
+    // Authentication
+    auth: {
+      login: 'Sign In',
+      signIn: 'Sign In',
+      signUp: 'Sign Up',
+      logout: 'Logout',
+      email: 'Email',
+      password: 'Password',
+      confirmPassword: 'Confirm Password',
+      loginSubtitle: 'Welcome back!',
+      signupSubtitle: 'Start your love journey together',
+      createAccount: 'Create Account',
+      emailRequired: 'Email is required',
+      emailInvalid: 'Invalid email format',
+      passwordRequired: 'Password is required',
+      passwordTooShort: 'Password must be at least 6 characters',
+      passwordMismatch: 'Passwords do not match',
+      passwordHint: 'Minimum 6 characters',
+      signingIn: 'Signing in...',
+      creatingAccount: 'Creating account...',
+      orContinueWith: 'Or continue with',
+      continueWithGoogle: 'Continue with Google',
+      noAccount: "Don't have an account?",
+      haveAccount: 'Already have an account?',
+    },
+    
     // Miscellaneous
     shareJourney: 'Share Your Journey 💫',
     levelUpTips: '💡 Level Up Tips:',
@@ -410,6 +480,76 @@ export const translations = {
     navPet: 'Evcil Hayvan',
     navHistory: 'Geçmiş',
     navSettings: 'Ayarlar',
+    
+    // Profile & Settings
+    profile: 'Profil',
+    editProfile: 'Profili Düzenle',
+    displayName: 'Görünen Ad',
+    enterDisplayName: 'Adınızı girin',
+    photoURL: 'Profil Fotoğrafı',
+    clickToUpload: 'Fotoğraf yüklemek için avatara tıklayın',
+    invalidFileType: 'Lütfen bir resim dosyası yükleyin',
+    fileTooLarge: 'Resim 5MB\'dan küçük olmalıdır',
+    photoUpdated: 'Profil fotoğrafı başarıyla güncellendi!',
+    photoUploadError: 'Fotoğraf yüklenemedi. Lütfen tekrar deneyin.',
+    profileUpdated: 'Profil başarıyla güncellendi!',
+    profileUpdateError: 'Profil güncellenemedi. Lütfen tekrar deneyin.',
+    notSet: 'Ayarlanmadı',
+    accountCreated: 'Hesap Oluşturuldu',
+    unknown: 'Bilinmiyor',
+    saving: 'Kaydediliyor...',
+    
+    // Settings tabs
+    accountSecurity: 'Hesap Güvenliği',
+    privacy: 'Gizlilik',
+    connectedAccounts: 'Bağlı Hesaplar',
+    
+    // Account Security
+    changePassword: 'Şifre Değiştir',
+    currentPassword: 'Mevcut Şifre',
+    newPassword: 'Yeni Şifre',
+    confirmNewPassword: 'Yeni Şifreyi Onayla',
+    enterCurrentPassword: 'Mevcut şifrenizi girin',
+    enterNewPassword: 'Yeni şifre girin',
+    confirmNewPasswordPlaceholder: 'Yeni şifreyi onaylayın',
+    passwordChanged: 'Şifre başarıyla değiştirildi!',
+    passwordChangeError: 'Şifre değiştirilemedi. Lütfen tekrar deneyin.',
+    reauthRequired: 'Devam etmek için lütfen mevcut şifrenizi girin',
+    reauthFailed: 'Mevcut şifre yanlış',
+    enable2FA: 'İki Faktörlü Doğrulamayı Etkinleştir',
+    twoFactorAuth: 'İki Faktörlü Doğrulama',
+    twoFactorDesc: 'Hesabınıza ekstra bir güvenlik katmanı ekleyin',
+    comingSoon: 'Yakında',
+    
+    // Logout
+    logoutConfirm: 'Çıkışı Onayla',
+    logoutMessage: 'Çıkış yapmak istediğinizden emin misiniz?',
+    
+    // Authentication
+    auth: {
+      login: 'Giriş Yap',
+      signIn: 'Giriş Yap',
+      signUp: 'Kayıt Ol',
+      logout: 'Çıkış Yap',
+      email: 'E-posta',
+      password: 'Şifre',
+      confirmPassword: 'Şifreyi Onayla',
+      loginSubtitle: 'Tekrar hoş geldiniz!',
+      signupSubtitle: 'Aşk yolculuğunuza birlikte başlayın',
+      createAccount: 'Hesap Oluştur',
+      emailRequired: 'E-posta gerekli',
+      emailInvalid: 'Geçersiz e-posta formatı',
+      passwordRequired: 'Şifre gerekli',
+      passwordTooShort: 'Şifre en az 6 karakter olmalıdır',
+      passwordMismatch: 'Şifreler eşleşmiyor',
+      passwordHint: 'En az 6 karakter',
+      signingIn: 'Giriş yapılıyor...',
+      creatingAccount: 'Hesap oluşturuluyor...',
+      orContinueWith: 'Veya şununla devam et',
+      continueWithGoogle: 'Google ile devam et',
+      noAccount: 'Hesabınız yok mu?',
+      haveAccount: 'Zaten hesabınız var mı?',
+    },
     
     // Miscellaneous
     shareJourney: 'Yolculuğunuzu Paylaşın 💫',
@@ -666,6 +806,76 @@ export const translations = {
     navHistory: 'История',
     navSettings: 'Настройки',
     
+    // Profile & Settings
+    profile: 'Профил',
+    editProfile: 'Редактиране на профила',
+    displayName: 'Показвано име',
+    enterDisplayName: 'Въведете вашето име',
+    photoURL: 'Профилна снимка',
+    clickToUpload: 'Кликнете на аватара за да качите снимка',
+    invalidFileType: 'Моля, качете изображение',
+    fileTooLarge: 'Изображението трябва да е по-малко от 5MB',
+    photoUpdated: 'Профилната снимка е актуализирана успешно!',
+    photoUploadError: 'Неуспешно качване на снимката. Моля, опитайте отново.',
+    profileUpdated: 'Профилът е актуализиран успешно!',
+    profileUpdateError: 'Неуспешна актуализация на профила. Моля, опитайте отново.',
+    notSet: 'Не е зададено',
+    accountCreated: 'Акаунт създаден',
+    unknown: 'Неизвестно',
+    saving: 'Записване...',
+    
+    // Settings tabs
+    accountSecurity: 'Сигурност на акаунта',
+    privacy: 'Поверителност',
+    connectedAccounts: 'Свързани акаунти',
+    
+    // Account Security
+    changePassword: 'Промяна на паролата',
+    currentPassword: 'Текуща парола',
+    newPassword: 'Нова парола',
+    confirmNewPassword: 'Потвърдете новата парола',
+    enterCurrentPassword: 'Въведете текущата си парола',
+    enterNewPassword: 'Въведете нова парола',
+    confirmNewPasswordPlaceholder: 'Потвърдете новата парола',
+    passwordChanged: 'Паролата е променена успешно!',
+    passwordChangeError: 'Неуспешна промяна на паролата. Моля, опитайте отново.',
+    reauthRequired: 'Моля, въведете текущата си парола за да продължите',
+    reauthFailed: 'Текущата парола е неправилна',
+    enable2FA: 'Активиране на двуфакторна автентикация',
+    twoFactorAuth: 'Двуфакторна автентикация',
+    twoFactorDesc: 'Добавете допълнителен слой сигурност към вашия акаунт',
+    comingSoon: 'Очаквайте скоро',
+    
+    // Logout
+    logoutConfirm: 'Потвърждение за излизане',
+    logoutMessage: 'Сигурни ли сте, че искате да излезете?',
+    
+    // Authentication
+    auth: {
+      login: 'Вход',
+      signIn: 'Вход',
+      signUp: 'Регистрация',
+      logout: 'Изход',
+      email: 'Имейл',
+      password: 'Парола',
+      confirmPassword: 'Потвърди паролата',
+      loginSubtitle: 'Добре дошли отново!',
+      signupSubtitle: 'Започнете вашето любовно пътуване заедно',
+      createAccount: 'Създай акаунт',
+      emailRequired: 'Имейлът е задължителен',
+      emailInvalid: 'Невалиден формат на имейл',
+      passwordRequired: 'Паролата е задължителна',
+      passwordTooShort: 'Паролата трябва да е поне 6 символа',
+      passwordMismatch: 'Паролите не съвпадат',
+      passwordHint: 'Минимум 6 символа',
+      signingIn: 'Влизане...',
+      creatingAccount: 'Създаване на акаунт...',
+      orContinueWith: 'Или продължете с',
+      continueWithGoogle: 'Продължи с Google',
+      noAccount: 'Нямате акаунт?',
+      haveAccount: 'Вече имате акаунт?',
+    },
+    
     // Miscellaneous
     shareJourney: 'Споделете пътуването си 💫',
     levelUpTips: '💡 Съвети за повишаване на ниво:',
@@ -783,5 +993,6 @@ import { useSettingsStore } from '../store';
 
 export function useTranslation() {
   const language = useSettingsStore((state) => state.settings.language);
-  return getTranslation(language);
+  const t = getTranslation(language);
+  return { t };
 }

@@ -9,7 +9,7 @@ import { Button } from '../components/Button';
 import type { PetItem } from '../types/database';
 
 export default function PetPage() {
-  const t = useTranslation();
+  const { t } = useTranslation();
   const pet = usePetStore();
   const levelInfo = useLevelInfo();
   const petName = pet.name || 'Your Pet';

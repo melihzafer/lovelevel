@@ -9,7 +9,7 @@ import { useTranslation } from '../lib/i18n';
 import type { Challenge } from '../types/database';
 
 export default function ChallengesPage() {
-  const t = useTranslation();
+  const { t } = useTranslation();
   const challenges = useChallengesStore((state) => state.challenges);
   const addChallenge = useChallengesStore((state) => state.addChallenge);
   const completeChallenge = useChallengesStore((state) => state.completeChallenge);

@@ -12,7 +12,7 @@ import {
   getUpcomingNotifications 
 } from '../lib/notifications';
 import type { NotificationSchedule } from '../lib/notifications';export default function SettingsPage() {
-  const t = useTranslation();
+  const { t } = useTranslation();
   const { settings, updateSettings } = useSettingsStore();
   const pet = usePetStore();
   const { challenges } = useChallengesStore();

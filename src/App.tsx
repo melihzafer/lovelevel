@@ -4,6 +4,8 @@ import { initializeStores, useSettingsStore } from './store';
 import { Loader } from './components/Loader';
 import { BottomNav } from './components/BottomNav';
 import { ThemeProvider } from './components/ThemeProvider';
+import { AuthProvider } from './contexts/FirebaseAuthContext';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 // Lazy-loaded pages
 const OnboardingPage = lazy(() => import('./pages/Onboarding'));
@@ -12,6 +14,9 @@ const ChallengesPage = lazy(() => import('./pages/Challenges'));
 const PetPage = lazy(() => import('./pages/Pet'));
 const HistoryPage = lazy(() => import('./pages/History'));
 const SettingsPage = lazy(() => import('./pages/Settings'));
+const ProfilePage = lazy(() => import('./pages/Profile'));
+const LoginPage = lazy(() => import('./pages/Login'));
+const SignupPage = lazy(() => import('./pages/Signup'));
 
 function AppContent() {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -42,19 +47,73 @@ function AppContent() {
         }
       >
         <Routes>
-          {/* Onboarding gate */}
+          {/* Public routes */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+
+          {/* Protected routes */}
           {!onboardingCompleted ? (
             <>
-              <Route path="/onboarding" element={<OnboardingPage />} />
+              <Route
+                path="/onboarding"
+                element={
+                  <ProtectedRoute>
+                    <OnboardingPage />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="*" element={<Navigate to="/onboarding" replace />} />
             </>
           ) : (
             <>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/challenges" element={<ChallengesPage />} />
-              <Route path="/pet" element={<PetPage />} />
-              <Route path="/history" element={<HistoryPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <HomePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/challenges"
+                element={
+                  <ProtectedRoute>
+                    <ChallengesPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/pet"
+                element={
+                  <ProtectedRoute>
+                    <PetPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/history"
+                element={
+                  <ProtectedRoute>
+                    <HistoryPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <SettingsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <ProfilePage />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/onboarding" element={<Navigate to="/" replace />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </>
@@ -71,7 +130,9 @@ export function App() {
   return (
     <BrowserRouter>
       <ThemeProvider>
-        <AppContent />
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>
   );
