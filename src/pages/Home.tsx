@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useDateStats } from '../store';
+import { useDateStats, useSettingsStore } from '../store';
 import { Confetti } from '../components/Confetti';
 import { Modal } from '../components/Modal';
 import { Button } from '../components/Button';
@@ -9,8 +9,21 @@ import { useTranslation } from '../lib/i18n';
 export default function HomePage() {
   const t = useTranslation();
   const dateStats = useDateStats();
+  const { settings } = useSettingsStore();
   const [showCelebration, setShowCelebration] = useState(false);
   const [hasShownTodayCelebration, setHasShownTodayCelebration] = useState(false);
+
+  // Get partner names from settings
+  const partner1Name = settings.partners[0]?.name || t.partner1 || 'Partner 1';
+  const partner2Name = settings.partners[1]?.name || t.partner2 || 'Partner 2';
+  
+  // Show greeting based on time of day
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return t.goodMorning || 'Good Morning';
+    if (hour < 18) return t.goodAfternoon || 'Good Afternoon';
+    return t.goodEvening || 'Good Evening';
+  };
 
   useEffect(() => {
     // Check if we should show celebration on load
@@ -62,11 +75,25 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50 dark:from-primary-950 dark:via-gray-900 dark:to-accent-950 p-4 sm:p-6">
       <div className="max-w-2xl mx-auto space-y-6 sm:space-y-8">
+        {/* Greeting Section */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center pt-4"
+        >
+          <h1 className="text-2xl sm:text-3xl font-semibold text-text-primary mb-2">
+            {getGreeting()}! 👋
+          </h1>
+          <p className="text-base sm:text-lg text-text-secondary">
+            {partner1Name} & {partner2Name}
+          </p>
+        </motion.div>
+
         {/* Hero Counter */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center space-y-3 sm:space-y-4 pt-4 sm:pt-8"
+          className="text-center space-y-3 sm:space-y-4"
         >
           <motion.div
             initial={{ scale: 0.9 }}
