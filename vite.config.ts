@@ -5,7 +5,7 @@ import path from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/', // GitHub Pages subpath
+  base: '/lovelevel', // GitHub Pages subpath
   plugins: [
     react(),
     VitePWA({
