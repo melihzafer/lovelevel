@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePetStore, useLevelInfo } from '../store';
 import { useTranslation } from '../lib/i18n';
 import { SEED_PET_ITEMS, getUnlockedItems } from '../data/seedPetItems';
@@ -99,38 +99,61 @@ export default function PetPage() {
 
   const filteredItems = SEED_PET_ITEMS.filter(item => item.type === selectedTab);
 
-  // Get equipped items for visual rendering
-  const equippedAccessory = SEED_PET_ITEMS.find(item => item.id === pet.equipped?.accessoryId);
-  const equippedBackground = SEED_PET_ITEMS.find(item => item.id === pet.equipped?.backgroundId);
-  
-  // Determine pet emoji based on equipped accessory
-  const getPetEmoji = () => {
-    if (equippedAccessory?.id === 'acc-sunglasses') return '😎';
-    if (equippedAccessory?.id === 'acc-party-hat') return '🥳';
-    if (equippedAccessory?.id === 'acc-flower-crown') return '🌸';
-    if (equippedAccessory?.id === 'acc-chef-hat') return '👨‍🍳';
-    if (equippedAccessory?.id === 'acc-wizard-hat') return '🧙';
-    if (equippedAccessory?.id === 'acc-crown') return '👑';
-    if (equippedAccessory?.id === 'acc-headphones') return '🎧';
-    if (equippedAccessory?.id === 'acc-pirate-hat') return '🏴‍☠️';
-    return '🐾'; // Default
-  };
+  // State for pet emoji and background class
+  const [petEmoji, setPetEmoji] = useState('🐾');
+  const [backgroundClass, setBackgroundClass] = useState('bg-gradient-to-br from-accent-50 via-white to-primary-50 dark:from-accent-950 dark:via-gray-900 dark:to-primary-950');
 
-  // Determine background gradient based on equipped background
-  const getBackgroundClass = () => {
-    if (equippedBackground?.id === 'bg-sunset') return 'bg-gradient-to-br from-orange-200 via-pink-200 to-purple-300 dark:from-orange-900 dark:via-pink-900 dark:to-purple-900';
-    if (equippedBackground?.id === 'bg-ocean') return 'bg-gradient-to-br from-blue-200 via-cyan-200 to-teal-300 dark:from-blue-900 dark:via-cyan-900 dark:to-teal-900';
-    if (equippedBackground?.id === 'bg-forest') return 'bg-gradient-to-br from-green-200 via-emerald-200 to-lime-300 dark:from-green-900 dark:via-emerald-900 dark:to-lime-900';
-    if (equippedBackground?.id === 'bg-galaxy') return 'bg-gradient-to-br from-purple-300 via-indigo-300 to-blue-400 dark:from-purple-950 dark:via-indigo-950 dark:to-blue-950';
-    if (equippedBackground?.id === 'bg-candy') return 'bg-gradient-to-br from-pink-200 via-rose-200 to-fuchsia-300 dark:from-pink-900 dark:via-rose-900 dark:to-fuchsia-900';
-    if (equippedBackground?.id === 'bg-desert') return 'bg-gradient-to-br from-yellow-200 via-amber-200 to-orange-300 dark:from-yellow-900 dark:via-amber-900 dark:to-orange-900';
-    if (equippedBackground?.id === 'bg-snow') return 'bg-gradient-to-br from-blue-50 via-cyan-50 to-white dark:from-blue-950 dark:via-cyan-950 dark:to-gray-900';
-    if (equippedBackground?.id === 'bg-cherry') return 'bg-gradient-to-br from-pink-300 via-rose-300 to-red-300 dark:from-pink-900 dark:via-rose-900 dark:to-red-900';
-    if (equippedBackground?.id === 'bg-lavender') return 'bg-gradient-to-br from-purple-200 via-violet-200 to-fuchsia-200 dark:from-purple-900 dark:via-violet-900 dark:to-fuchsia-900';
-    if (equippedBackground?.id === 'bg-mint') return 'bg-gradient-to-br from-green-100 via-teal-100 to-cyan-100 dark:from-green-900 dark:via-teal-900 dark:to-cyan-900';
-    if (equippedBackground?.id === 'bg-rainbow') return 'bg-gradient-to-br from-red-200 via-yellow-200 via-green-200 via-blue-200 to-purple-200 dark:from-red-900 dark:via-yellow-900 dark:via-green-900 dark:via-blue-900 dark:to-purple-900';
-    return 'bg-gradient-to-br from-accent-50 via-white to-primary-50 dark:from-accent-950 dark:via-gray-900 dark:to-primary-950'; // Default
-  };
+  // Update pet emoji when accessory changes
+  useEffect(() => {
+    const equippedAccessory = SEED_PET_ITEMS.find(item => item.id === pet.equipped?.accessoryId);
+    
+    if (!equippedAccessory) {
+      setPetEmoji('🐾');
+      return;
+    }
+
+    const emojiMap: Record<string, string> = {
+      'acc-sunglasses': '😎',
+      'acc-party-hat': '🥳',
+      'acc-flower-crown': '🌸',
+      'acc-chef-hat': '👨‍🍳',
+      'acc-wizard-hat': '🧙',
+      'acc-crown': '👑',
+      'acc-headphones': '🎧',
+      'acc-pirate-hat': '�‍☠️',
+    };
+
+    setPetEmoji(emojiMap[equippedAccessory.id] || '🐾');
+  }, [pet.equipped?.accessoryId]);
+
+  // Update background class when background changes
+  useEffect(() => {
+    const equippedBackground = SEED_PET_ITEMS.find(item => item.id === pet.equipped?.backgroundId);
+    
+    if (!equippedBackground) {
+      setBackgroundClass('bg-gradient-to-br from-accent-50 via-white to-primary-50 dark:from-accent-950 dark:via-gray-900 dark:to-primary-950');
+      return;
+    }
+
+    const backgroundMap: Record<string, string> = {
+      'bg-sunset': 'bg-gradient-to-br from-orange-200 via-pink-200 to-purple-300 dark:from-orange-900 dark:via-pink-900 dark:to-purple-900',
+      'bg-ocean': 'bg-gradient-to-br from-blue-200 via-cyan-200 to-teal-300 dark:from-blue-900 dark:via-cyan-900 dark:to-teal-900',
+      'bg-forest': 'bg-gradient-to-br from-green-200 via-emerald-200 to-lime-300 dark:from-green-900 dark:via-emerald-900 dark:to-lime-900',
+      'bg-galaxy': 'bg-gradient-to-br from-purple-300 via-indigo-300 to-blue-400 dark:from-purple-950 dark:via-indigo-950 dark:to-blue-950',
+      'bg-candy': 'bg-gradient-to-br from-pink-200 via-rose-200 to-fuchsia-300 dark:from-pink-900 dark:via-rose-900 dark:to-fuchsia-900',
+      'bg-desert': 'bg-gradient-to-br from-yellow-200 via-amber-200 to-orange-300 dark:from-yellow-900 dark:via-amber-900 dark:to-orange-900',
+      'bg-snow': 'bg-gradient-to-br from-blue-50 via-cyan-50 to-white dark:from-blue-950 dark:via-cyan-950 dark:to-gray-900',
+      'bg-cherry': 'bg-gradient-to-br from-pink-300 via-rose-300 to-red-300 dark:from-pink-900 dark:via-rose-900 dark:to-red-900',
+      'bg-lavender': 'bg-gradient-to-br from-purple-200 via-violet-200 to-fuchsia-200 dark:from-purple-900 dark:via-violet-900 dark:to-fuchsia-900',
+      'bg-mint': 'bg-gradient-to-br from-green-100 via-teal-100 to-cyan-100 dark:from-green-900 dark:via-teal-900 dark:to-cyan-900',
+      'bg-rainbow': 'bg-gradient-to-br from-red-200 via-yellow-200 via-green-200 via-blue-200 to-purple-200 dark:from-red-900 dark:via-yellow-900 dark:via-green-900 dark:via-blue-900 dark:to-purple-900',
+    };
+
+    setBackgroundClass(backgroundMap[equippedBackground.id] || 'bg-gradient-to-br from-accent-50 via-white to-primary-50 dark:from-accent-950 dark:via-gray-900 dark:to-primary-950');
+  }, [pet.equipped?.backgroundId]);
+
+  // Get equipped accessory for badge display
+  const equippedAccessory = SEED_PET_ITEMS.find(item => item.id === pet.equipped?.accessoryId);
 
   if (!levelInfo) {
     return (
@@ -141,7 +164,7 @@ export default function PetPage() {
   }
 
   return (
-    <div className={`min-h-screen ${getBackgroundClass()} p-6 pb-24 transition-colors duration-700`}>
+    <div className={`min-h-screen ${backgroundClass} p-6 pb-24 transition-colors duration-700`}>
       <div className="max-w-2xl mx-auto space-y-8">
         {/* Pet Name & Level */}
         <div className="text-center space-y-2">
@@ -178,7 +201,7 @@ export default function PetPage() {
             }}
             className="text-9xl select-none"
           >
-            {getPetEmoji()}
+            {petEmoji}
           </motion.div>
 
           {/* Accessory Badge (show equipped item name) */}
