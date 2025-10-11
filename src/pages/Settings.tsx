@@ -5,8 +5,13 @@ import { Input } from '../components/Input';
 import { Modal } from '../components/Modal';
 import { useTranslation, type Language } from '../lib/i18n';
 import * as db from '../lib/db';
-
-export default function SettingsPage() {
+import { 
+  requestNotificationPermission, 
+  showTestNotification, 
+  isNotificationSupported,
+  getUpcomingNotifications 
+} from '../lib/notifications';
+import type { NotificationSchedule } from '../lib/notifications';export default function SettingsPage() {
   const t = useTranslation();
   const { settings, updateSettings } = useSettingsStore();
   const pet = usePetStore();
@@ -15,6 +20,7 @@ export default function SettingsPage() {
   const [showExportModal, setShowExportModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [importData, setImportData] = useState('');
+  const [upcomingNotifications, setUpcomingNotifications] = useState<NotificationSchedule[]>([]);
   const [exportedData, setExportedData] = useState('');
   const [isMigrating, setIsMigrating] = useState(false);
 
@@ -43,24 +49,43 @@ export default function SettingsPage() {
   };
 
   const handleRequestNotifications = async () => {
-    if (!('Notification' in window)) {
-      alert('Notifications are not supported in this browser.');
+    if (!isNotificationSupported()) {
+      alert(t.notificationsNotSupported || 'Notifications are not supported in this browser.');
       return;
     }
 
-    const permission = await Notification.requestPermission();
-    await updateSettings({
-      notificationsEnabled: permission === 'granted',
-      notificationPermission: permission,
-    });
-
-    if (permission === 'granted') {
-      new Notification('coupLOVE', {
-        body: "You'll now receive anniversary reminders! 💕",
-        icon: '/icons/icon-192.png',
-      });
+    try {
+      const permission = await requestNotificationPermission();
+      
+      if (permission === 'granted') {
+        // Show test notification
+        await showTestNotification();
+        
+        // Load upcoming notifications
+        const upcoming = await getUpcomingNotifications();
+        setUpcomingNotifications(upcoming);
+      }
+    } catch (error) {
+      console.error('Error requesting notifications:', error);
+      alert(t.notificationError || 'Failed to enable notifications');
     }
   };
+
+  const handleTestNotification = async () => {
+    try {
+      await showTestNotification();
+    } catch (error) {
+      console.error('Error showing test notification:', error);
+      alert(t.notificationError || 'Failed to show notification');
+    }
+  };
+
+  // Load upcoming notifications on mount
+  useState(() => {
+    if (settings.notificationsEnabled) {
+      getUpcomingNotifications().then(setUpcomingNotifications).catch(console.error);
+    }
+  });
 
   const handleThemeChange = (theme: 'system' | 'light' | 'dark') => {
     updateSettings({ theme });
@@ -182,10 +207,10 @@ export default function SettingsPage() {
               <div className="font-medium text-text-primary">{t.anniversaryReminders}</div>
               <div className="text-sm text-text-secondary">
                 {settings.notificationPermission === 'granted'
-                  ? t.enabled
+                  ? '✅ ' + t.enabled
                   : settings.notificationPermission === 'denied'
-                  ? t.denied
-                  : 'Not set'}
+                  ? '❌ ' + t.denied
+                  : '⚠️ Not set'}
               </div>
             </div>
             <Button
@@ -193,9 +218,67 @@ export default function SettingsPage() {
               variant="secondary"
               disabled={settings.notificationPermission === 'denied'}
             >
-              {settings.notificationPermission === 'granted' ? t.enabled : 'Enable'}
+              {settings.notificationPermission === 'granted' ? '✓ Enabled' : 'Enable'}
             </Button>
           </div>
+
+          {settings.notificationPermission === 'granted' && (
+            <>
+              {/* Test Notification Button */}
+              <Button
+                onClick={handleTestNotification}
+                variant="outline"
+                className="w-full"
+              >
+                🔔 {t.testNotification || 'Send Test Notification'}
+              </Button>
+
+              {/* Upcoming Notifications */}
+              {upcomingNotifications.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  <h3 className="text-sm font-medium text-text-secondary">
+                    {t.upcomingNotifications || 'Upcoming Reminders'}
+                  </h3>
+                  {upcomingNotifications.map((notification, index) => (
+                    <div 
+                      key={index}
+                      className="bg-accent-50 dark:bg-accent-900/30 rounded-lg p-3 text-sm"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium text-text-primary">
+                            {notification.title}
+                          </div>
+                          <div className="text-xs text-text-secondary mt-1">
+                            {notification.body}
+                          </div>
+                        </div>
+                        <div className="text-xs text-accent-600 dark:text-accent-400">
+                          {new Date(notification.scheduledFor).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {settings.notificationPermission === 'denied' && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-sm">
+              <p className="text-red-800 dark:text-red-300">
+                {t.notificationsDenied || 'Notifications are blocked. Please enable them in your browser settings.'}
+              </p>
+            </div>
+          )}
+
+          {!isNotificationSupported() && (
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 text-sm">
+              <p className="text-yellow-800 dark:text-yellow-300">
+                {t.notificationsNotSupported || 'Notifications are not supported in this browser.'}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Appearance */}

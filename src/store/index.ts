@@ -46,6 +46,11 @@ interface PetState extends PetStateType {
   }>;
   feedPet: () => Promise<void>;
   playWithPet: () => Promise<void>;
+  setName: (name: string) => Promise<void>;
+  setHunger: (hunger: number) => Promise<void>;
+  setEnergy: (energy: number) => Promise<void>;
+  equipAccessory: (accessoryId: string | undefined) => Promise<void>;
+  equipBackground: (backgroundId: string | undefined) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -118,6 +123,30 @@ export const usePetStore = create<PetState>()(
           mood: newMood,
           lastInteraction: new Date().toISOString(),
         });
+      },
+      setName: async (name: string) => {
+        await db.updatePet({ name });
+        set({ name });
+      },
+      setHunger: async (hunger: number) => {
+        await db.updatePet({ hunger });
+        set({ hunger });
+      },
+      setEnergy: async (energy: number) => {
+        await db.updatePet({ energy });
+        set({ energy });
+      },
+      equipAccessory: async (accessoryId: string | undefined) => {
+        const state = get();
+        const newEquipped = { ...state.equipped, accessoryId };
+        await db.updatePet({ equipped: newEquipped });
+        set({ equipped: newEquipped });
+      },
+      equipBackground: async (backgroundId: string | undefined) => {
+        const state = get();
+        const newEquipped = { ...state.equipped, backgroundId };
+        await db.updatePet({ equipped: newEquipped });
+        set({ equipped: newEquipped });
       },
     }),
     { name: 'pet-store' }

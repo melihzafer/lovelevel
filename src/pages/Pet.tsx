@@ -1,6 +1,12 @@
 import { motion } from 'framer-motion';
+import { useState } from 'react';
 import { usePetStore, useLevelInfo } from '../store';
 import { useTranslation } from '../lib/i18n';
+import { SEED_PET_ITEMS, getUnlockedItems } from '../data/seedPetItems';
+import { Modal } from '../components/Modal';
+import { Input } from '../components/Input';
+import { Button } from '../components/Button';
+import type { PetItem } from '../types/database';
 
 export default function PetPage() {
   const t = useTranslation();
@@ -8,12 +14,90 @@ export default function PetPage() {
   const levelInfo = useLevelInfo();
   const petName = pet.name || 'Your Pet';
 
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [newName, setNewName] = useState(petName);
+  const [nameError, setNameError] = useState('');
+  const [showInventory, setShowInventory] = useState(false);
+  const [selectedTab, setSelectedTab] = useState<'accessory' | 'background' | 'emote'>('accessory');
+
+  // Get unlocked items based on level and monthiversaries
+  const unlockedItems = getUnlockedItems(pet.level, 0, 0); // TODO: get actual monthiversaries and challenge count
+
   const handleTap = () => {
     // Haptic feedback if available
     if ('vibrate' in navigator) {
       navigator.vibrate(50);
     }
   };
+
+  const handleFeed = () => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate([50, 100, 50]);
+    }
+    pet.setHunger(Math.min(100, pet.hunger + 10));
+    // TODO: Add XP reward
+  };
+
+  const handlePlay = () => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate([50, 100, 50]);
+    }
+    pet.setEnergy(Math.min(100, pet.energy + 10));
+    // TODO: Add XP reward
+  };
+
+  const handleRename = () => {
+    const trimmed = newName.trim();
+    
+    if (trimmed.length < 2) {
+      setNameError(t.petNameTooShort || 'Name must be at least 2 characters');
+      return;
+    }
+    
+    if (trimmed.length > 20) {
+      setNameError(t.petNameTooLong || 'Name must be 20 characters or less');
+      return;
+    }
+    
+    if (!/^[a-zA-Z0-9\s]+$/.test(trimmed)) {
+      setNameError(t.petNameInvalidChars || 'Only letters, numbers, and spaces allowed');
+      return;
+    }
+    
+    pet.setName(trimmed);
+    setShowRenameModal(false);
+    setNameError('');
+  };
+
+  const handleEquip = (item: PetItem) => {
+    if (item.type === 'accessory') {
+      const currentlyEquipped = pet.equipped?.accessoryId === item.id;
+      pet.equipAccessory(currentlyEquipped ? undefined : item.id);
+    } else if (item.type === 'background') {
+      const currentlyEquipped = pet.equipped?.backgroundId === item.id;
+      pet.equipBackground(currentlyEquipped ? undefined : item.id);
+    }
+    // TODO: Add emote support when PetState interface includes it
+    
+    if ('vibrate' in navigator) {
+      navigator.vibrate(30);
+    }
+  };
+
+  const isItemUnlocked = (item: PetItem) => {
+    return unlockedItems.some(unlocked => unlocked.id === item.id);
+  };
+
+  const isItemEquipped = (item: PetItem) => {
+    if (item.type === 'accessory') {
+      return pet.equipped?.accessoryId === item.id;
+    } else if (item.type === 'background') {
+      return pet.equipped?.backgroundId === item.id;
+    }
+    return false; // emotes not supported yet
+  };
+
+  const filteredItems = SEED_PET_ITEMS.filter(item => item.type === selectedTab);
 
   if (!levelInfo) {
     return (
@@ -24,11 +108,20 @@ export default function PetPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-accent-50 via-white to-primary-50 dark:from-accent-950 dark:via-gray-900 dark:to-primary-950 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-accent-50 via-white to-primary-50 dark:from-accent-950 dark:via-gray-900 dark:to-primary-950 p-6 pb-24">
       <div className="max-w-2xl mx-auto space-y-8">
         {/* Pet Name & Level */}
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-text-primary">{petName}</h1>
+          <div className="flex items-center justify-center gap-2">
+            <h1 className="text-3xl font-bold text-text-primary">{petName}</h1>
+            <button
+              onClick={() => setShowRenameModal(true)}
+              className="text-xl p-1 hover:bg-primary-100 dark:hover:bg-primary-900 rounded transition-colors"
+              aria-label="Rename pet"
+            >
+              ✏️
+            </button>
+          </div>
           <div className="inline-block px-4 py-1 rounded-full bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300 font-medium">
             {t.petLevel} {pet.level}
           </div>
@@ -86,20 +179,34 @@ export default function PetPage() {
           </p>
         </div>
 
-        {/* Stats */}
+        {/* Stats & Actions */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-bg-primary rounded-xl p-4 text-center">
+          <div className="bg-bg-primary rounded-xl p-4 text-center space-y-2">
             <div className="text-3xl mb-2">❤️</div>
             <div className="text-2xl font-bold text-text-primary">{pet.hunger}</div>
-            <div className="text-xs text-text-secondary">{t.happiness}</div>
+            <div className="text-xs text-text-secondary mb-2">{t.happiness}</div>
+            <Button onClick={handleFeed} variant="outline" className="w-full text-sm py-2">
+              {t.feed || 'Feed'}
+            </Button>
           </div>
 
-          <div className="bg-bg-primary rounded-xl p-4 text-center">
+          <div className="bg-bg-primary rounded-xl p-4 text-center space-y-2">
             <div className="text-3xl mb-2">⚡</div>
             <div className="text-2xl font-bold text-text-primary">{pet.energy}</div>
-            <div className="text-xs text-text-secondary">{t.energy}</div>
+            <div className="text-xs text-text-secondary mb-2">{t.energy}</div>
+            <Button onClick={handlePlay} variant="outline" className="w-full text-sm py-2">
+              {t.play || 'Play'}
+            </Button>
           </div>
         </div>
+
+        {/* Inventory Button */}
+        <Button 
+          onClick={() => setShowInventory(true)} 
+          className="w-full"
+        >
+          🎒 {t.inventory || 'Inventory'} ({unlockedItems.length} {t.items || 'items'})
+        </Button>
 
         {/* Tips */}
         <div className="bg-accent-50 dark:bg-accent-900/30 rounded-xl p-4 text-sm text-text-secondary">
@@ -111,6 +218,124 @@ export default function PetPage() {
           </ul>
         </div>
       </div>
+
+      {/* Rename Modal */}
+      <Modal
+        isOpen={showRenameModal}
+        onClose={() => {
+          setShowRenameModal(false);
+          setNameError('');
+          setNewName(petName);
+        }}
+        title={t.renamePet || 'Rename Pet'}
+      >
+        <div className="space-y-4">
+          <Input
+            value={newName}
+            onChange={(e) => {
+              setNewName(e.target.value);
+              setNameError('');
+            }}
+            placeholder={t.enterPetName || 'Enter pet name'}
+            maxLength={20}
+            autoFocus
+          />
+          {nameError && (
+            <p className="text-sm text-red-500">{nameError}</p>
+          )}
+          <div className="flex gap-3">
+            <Button 
+              onClick={() => {
+                setShowRenameModal(false);
+                setNameError('');
+                setNewName(petName);
+              }} 
+              variant="outline" 
+              className="flex-1"
+            >
+              {t.cancel}
+            </Button>
+            <Button onClick={handleRename} className="flex-1">
+              {t.save || 'Save'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Inventory Modal */}
+      <Modal
+        isOpen={showInventory}
+        onClose={() => setShowInventory(false)}
+        title={t.petInventory || 'Pet Inventory'}
+      >
+        <div className="space-y-4">
+          {/* Tabs */}
+          <div className="flex gap-2 border-b border-border-color">
+            {(['accessory', 'background', 'emote'] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setSelectedTab(tab)}
+                className={`px-4 py-2 font-medium transition-colors ${
+                  selectedTab === tab
+                    ? 'text-primary-600 border-b-2 border-primary-600'
+                    : 'text-text-secondary hover:text-text-primary'
+                }`}
+              >
+                {tab === 'accessory' && '👔 '}
+                {tab === 'background' && '🎨 '}
+                {tab === 'emote' && '😄 '}
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          {/* Items Grid */}
+          <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto">
+            {filteredItems.map((item) => {
+              const unlocked = isItemUnlocked(item);
+              const equipped = isItemEquipped(item);
+
+              return (
+                <motion.button
+                  key={item.id}
+                  onClick={() => unlocked && handleEquip(item)}
+                  disabled={!unlocked}
+                  whileHover={unlocked ? { scale: 1.02 } : {}}
+                  whileTap={unlocked ? { scale: 0.98 } : {}}
+                  className={`p-4 rounded-xl border-2 text-left transition-all ${
+                    equipped
+                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
+                      : unlocked
+                      ? 'border-border-color hover:border-primary-300 bg-bg-primary'
+                      : 'border-border-color bg-gray-100 dark:bg-gray-800 opacity-50 cursor-not-allowed'
+                  }`}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <span className="text-xl">
+                      {item.type === 'accessory' && '👔'}
+                      {item.type === 'background' && '🎨'}
+                      {item.type === 'emote' && '😄'}
+                    </span>
+                    {equipped && <span className="text-xs bg-primary-500 text-white px-2 py-1 rounded">✓</span>}
+                    {!unlocked && <span className="text-xl">🔒</span>}
+                  </div>
+                  <h4 className={`font-medium text-sm mb-1 ${unlocked ? 'text-text-primary' : 'text-text-secondary'}`}>
+                    {item.name}
+                  </h4>
+                  <p className="text-xs text-text-secondary line-clamp-2">{item.description}</p>
+                  {!unlocked && item.unlockCondition && (
+                    <p className="text-xs text-accent-600 dark:text-accent-400 mt-2">
+                      {item.unlockCondition.type === 'level' && `Level ${item.unlockCondition.value}`}
+                      {item.unlockCondition.type === 'monthiversary' && `${item.unlockCondition.value} month${item.unlockCondition.value > 1 ? 's' : ''}`}
+                      {item.unlockCondition.type === 'challenge-count' && `${item.unlockCondition.value} challenges`}
+                    </p>
+                  )}
+                </motion.button>
+              );
+            })}
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
