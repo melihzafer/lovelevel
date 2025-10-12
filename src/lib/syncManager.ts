@@ -193,7 +193,7 @@ class SyncManager {
 
       for (const challenge of challenges) {
         // Map local Challenge to Supabase schema
-        await supabase.from('shared_challenges').upsert({
+        const { error } = await supabase.from('shared_challenges').upsert({
           id: challenge.id,
           partnership_id: partnershipId,
           title: challenge.title,
@@ -204,7 +204,13 @@ class SyncManager {
           tags: challenge.tags,
           xp_reward: 20, // Default XP reward
           created_by: userId,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         });
+
+        if (error) {
+          console.error('❌ Error syncing challenge:', challenge.title, error);
+        }
       }
 
       console.log(`✅ Synced ${challenges.length} local challenges to Supabase`);

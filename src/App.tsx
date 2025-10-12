@@ -12,6 +12,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 const OnboardingPage = lazy(() => import('./pages/Onboarding'));
 const HomePage = lazy(() => import('./pages/Home'));
 const ChallengesPage = lazy(() => import('./pages/Challenges'));
+const PartnerPage = lazy(() => import('./pages/Partner'));
 const PetPage = lazy(() => import('./pages/Pet'));
 const HistoryPage = lazy(() => import('./pages/History'));
 const SettingsPage = lazy(() => import('./pages/Settings'));
@@ -80,6 +81,14 @@ function AppContent() {
                 element={
                   <ProtectedRoute>
                     <ChallengesPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/partner"
+                element={
+                  <ProtectedRoute>
+                    <PartnerPage />
                   </ProtectedRoute>
                 }
               />

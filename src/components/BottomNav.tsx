@@ -7,8 +7,8 @@ export function BottomNav() {
   const navItems = [
     { path: '/', label: t.navHome, icon: '🏠' },
     { path: '/challenges', label: t.navChallenges, icon: '✨' },
-    { path: '/pet', label: t.navPet, icon: '🐾' },
-    { path: '/history', label: t.navHistory, icon: '📖' },
+    { path: '/partner', label: t.navPartner, icon: '�' },
+    { path: '/pet', label: t.navPet, icon: '�' },
     { path: '/settings', label: t.navSettings, icon: '⚙️' },
   ];
 
