@@ -5,7 +5,7 @@ import path from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/', // GitHub Pages subpath
+  base: '/', // Change to '/lovelevel/' for GitHub Pages deployment
   plugins: [
     react(),
     VitePWA({
@@ -21,30 +21,30 @@ export default defineConfig({
         theme_color: '#e7507a',
         background_color: '#ffffff',
         display: 'standalone',
-        start_url: '/lovelevel/',
-        scope: '/lovelevel/',
+        start_url: '/',
+        scope: '/',
         orientation: 'portrait',
         icons: [
           {
-            src: '/lovelevel/icons/icon-192.png',
+            src: '/icons/icon-192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any',
           },
           {
-            src: '/lovelevel/icons/icon-512.png',
+            src: '/icons/icon-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any',
           },
           {
-            src: '/lovelevel/icons/icon-192-maskable.png',
+            src: '/icons/icon-192-maskable.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'maskable',
           },
           {
-            src: '/lovelevel/icons/icon-512-maskable.png',
+            src: '/icons/icon-512-maskable.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',

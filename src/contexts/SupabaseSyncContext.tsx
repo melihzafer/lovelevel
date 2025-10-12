@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { useAuth } from './AuthContext';
+import { useAuth } from './FirebaseAuthContext';
 import { syncManager } from '../lib/syncManager';
 
 interface Partnership {
