@@ -26,7 +26,7 @@ class SyncManager {
       // Fetch user's active partnership
       const { data: partnership, error } = await supabase
         .from('partnerships')
-        .select('id, status, anniversary_date')
+        .select('id, user1_id, user2_id, status, anniversary_date')
         .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
         .eq('status', 'active')
         .single();

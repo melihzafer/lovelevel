@@ -2,18 +2,18 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Users, Calendar, UserMinus, Sparkles } from 'lucide-react';
 import { useAuth } from '../contexts/FirebaseAuthContext';
-import { useSupabaseSync } from '../contexts/SupabaseSyncContext';
-import { useTranslation } from 'react-i18next';
+import { useSync } from '../contexts/SupabaseSyncContext';
+import { useTranslation } from '../lib/i18n';
 import { supabase } from '../lib/supabase';
 import InvitePartner from '../components/InvitePartner';
 import JoinPartner from '../components/JoinPartner';
-import Button from '../components/Button';
-import Loader from '../components/Loader';
+import { Button } from '../components/Button';
+import { Loader } from '../components/Loader';
 
 export default function Partner() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { partnership } = useSupabaseSync();
+  const { partnership } = useSync();
   const [activeTab, setActiveTab] = useState<'invite' | 'join'>('invite');
   const [partner, setPartner] = useState<{
     id: string;
@@ -26,42 +26,41 @@ export default function Partner() {
 
   // Load partner info when partnership exists
   useEffect(() => {
-    if (partnership && user) {
-      loadPartnerInfo();
-    } else {
+    async function fetchPartnerInfo() {
+      if (!partnership || !user) {
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+
+      // Determine which user is the partner (not current user)
+      const partnerId = partnership.user1_id === user.uid ? partnership.user2_id : partnership.user1_id;
+
+      // Fetch partner profile
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, display_name, email, photo_url')
+        .eq('id', partnerId)
+        .single();
+
+      if (!error && data) {
+        setPartner({
+          id: data.id,
+          displayName: data.display_name || 'Unknown User',
+          email: data.email || undefined,
+          photoUrl: data.photo_url || undefined,
+        });
+      }
+
       setLoading(false);
     }
+
+    fetchPartnerInfo();
   }, [partnership, user]);
 
-  async function loadPartnerInfo() {
-    if (!partnership || !user) return;
-
-    setLoading(true);
-
-    // Determine which user is the partner (not current user)
-    const partnerId = partnership.user1_id === user.uid ? partnership.user2_id : partnership.user1_id;
-
-    // Fetch partner profile
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, display_name, email, photo_url')
-      .eq('id', partnerId)
-      .single();
-
-    if (!error && data) {
-      setPartner({
-        id: data.id,
-        displayName: data.display_name || 'Unknown User',
-        email: data.email || undefined,
-        photoUrl: data.photo_url || undefined,
-      });
-    }
-
-    setLoading(false);
-  }
-
   async function handleDisconnect() {
-    if (!partnership || !window.confirm(t('confirmDisconnectPartner'))) return;
+    if (!partnership || !window.confirm(t.confirmDisconnectPartner || 'Are you sure you want to disconnect from your partner?')) return;
 
     setDisconnecting(true);
 
@@ -76,7 +75,7 @@ export default function Partner() {
       window.location.reload();
     } else {
       console.error('Error disconnecting partner:', error);
-      alert(t('errorDisconnectingPartner'));
+      alert(t.errorDisconnectingPartner || 'Error disconnecting from partner');
     }
 
     setDisconnecting(false);
@@ -123,7 +122,7 @@ export default function Partner() {
             </motion.div>
 
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              {t('yourPartnership')}
+              {t.yourPartnership}
             </h1>
           </div>
 
@@ -168,7 +167,7 @@ export default function Partner() {
                   {calculateDaysTogether()}
                 </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
-                  {t('daysTogether')}
+                  {t.daysTogether}
                 </div>
               </div>
 
@@ -178,10 +177,10 @@ export default function Partner() {
                 <div className="text-lg font-bold text-gray-900 dark:text-white">
                   {partnership.anniversary_date
                     ? new Date(partnership.anniversary_date).toLocaleDateString()
-                    : t('notSet')}
+                    : t.notSet}
                 </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
-                  {t('anniversaryDate')}
+                  {t.anniversaryDate}
                 </div>
               </div>
             </div>
@@ -192,10 +191,10 @@ export default function Partner() {
                 <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
                 <div>
                   <div className="font-semibold text-green-900 dark:text-green-300">
-                    {t('realTimeSyncActive')}
+                    {t.realTimeSyncActive}
                   </div>
                   <div className="text-sm text-green-700 dark:text-green-400">
-                    {t('challengesAndPetSynced')}
+                    {t.challengesAndPetSynced}
                   </div>
                 </div>
               </div>
@@ -211,12 +210,12 @@ export default function Partner() {
               {disconnecting ? (
                 <>
                   <Loader />
-                  {t('disconnecting')}...
+                  {t.disconnecting}...
                 </>
               ) : (
                 <>
                   <UserMinus className="w-4 h-4" />
-                  {t('disconnectPartner')}
+                  {t.disconnectPartner}
                 </>
               )}
             </Button>
@@ -225,13 +224,13 @@ export default function Partner() {
           {/* Info Card */}
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
             <h4 className="font-semibold text-blue-900 dark:text-blue-300 mb-2">
-              {t('partnershipFeatures')}
+              {t.partnershipFeatures}
             </h4>
             <ul className="text-sm text-blue-800 dark:text-blue-400 space-y-1">
-              <li>✨ {t('featureSharedChallenges')}</li>
-              <li>💗 {t('featurePetSync')}</li>
-              <li>📊 {t('featureCombinedStats')}</li>
-              <li>🔔 {t('featureRealTimeUpdates')}</li>
+              <li>✨ {t.featureSharedChallenges}</li>
+              <li>💗 {t.featurePetSync}</li>
+              <li>📊 {t.featureCombinedStats}</li>
+              <li>🔔 {t.featureRealTimeUpdates}</li>
             </ul>
           </div>
         </motion.div>
@@ -259,10 +258,10 @@ export default function Partner() {
           </motion.div>
 
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            {t('connectWithPartner')}
+            {t.connectWithPartner}
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            {t('connectDescription')}
+            {t.connectDescription}
           </p>
         </div>
 
@@ -277,7 +276,7 @@ export default function Partner() {
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
               }`}
             >
-              {t('invitePartner')}
+              {t.invitePartner}
             </button>
 
             <button
@@ -288,7 +287,7 @@ export default function Partner() {
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
               }`}
             >
-              {t('joinPartner')}
+              {t.joinPartner}
             </button>
           </div>
 
@@ -321,3 +320,4 @@ export default function Partner() {
     </div>
   );
 }
+

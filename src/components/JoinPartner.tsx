@@ -3,10 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { UserPlus, AlertCircle, Check, Heart } from 'lucide-react';
 import { useAuth } from '../contexts/FirebaseAuthContext';
 import { getInviteCodeDetails, acceptInviteCode } from '../services/inviteService';
-import { useTranslation } from 'react-i18next';
-import Button from './Button';
-import Input from './Input';
-import Loader from './Loader';
+import { useTranslation } from '../lib/i18n';
+import { Button } from './Button';
+import { Input } from './Input';
+import { Loader } from './Loader';
 
 export default function JoinPartner() {
   const { t } = useTranslation();
@@ -44,7 +44,7 @@ export default function JoinPartner() {
     if (result.valid && result.creator) {
       // Check if trying to use own code
       if (result.creator.id === user.uid) {
-        setError(t('cannotUseOwnCode'));
+        setError(t.cannotUseOwnCode);
         setPartnerInfo(null);
       } else {
         setPartnerInfo({
@@ -53,7 +53,7 @@ export default function JoinPartner() {
         });
       }
     } else {
-      setError(result.error || t('invalidInviteCode'));
+      setError(result.error || t.invalidInviteCode);
       setPartnerInfo(null);
     }
 
@@ -75,7 +75,7 @@ export default function JoinPartner() {
         window.location.reload();
       }, 2000);
     } else {
-      setError(result.error || t('failedToAcceptInvite'));
+      setError(result.error || t.failedToAcceptInvite);
     }
 
     setAccepting(false);
@@ -100,15 +100,15 @@ export default function JoinPartner() {
 
         <div>
           <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            {t('partnershipCreated')}
+            {t.partnershipCreated}
           </h3>
           <p className="text-gray-600 dark:text-gray-400">
-            {t('nowConnectedWith')} {partnerInfo?.displayName}!
+            {t.nowConnectedWith} {partnerInfo?.displayName}!
           </p>
         </div>
 
         <div className="text-sm text-gray-500 dark:text-gray-400">
-          {t('refreshingPage')}...
+          {t.refreshingPage}...
         </div>
       </motion.div>
     );
@@ -123,10 +123,10 @@ export default function JoinPartner() {
       {/* Instructions */}
       <div className="text-center space-y-2">
         <h3 className="text-xl font-semibold text-gray-800 dark:text-white">
-          {t('joinYourPartner')}
+          {t.joinYourPartner}
         </h3>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          {t('enterInviteCodeFromPartner')}
+          {t.enterInviteCodeFromPartner}
         </p>
       </div>
 
@@ -134,9 +134,9 @@ export default function JoinPartner() {
       <div className="space-y-4">
         <div className="relative">
           <Input
-            label={t('inviteCode')}
+            label={t.inviteCode}
             value={code}
-            onChange={(e) => handleCodeChange(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCodeChange(e.target.value)}
             placeholder="ABC123"
             className="text-center text-2xl font-mono tracking-wider uppercase"
             maxLength={6}
@@ -215,7 +215,7 @@ export default function JoinPartner() {
                     {partnerInfo.displayName}
                   </h4>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {t('wantsToConnectWithYou')}
+                    {t.wantsToConnectWithYou}
                   </p>
                 </div>
 
@@ -242,12 +242,12 @@ export default function JoinPartner() {
               {accepting ? (
                 <>
                   <Loader />
-                  {t('connecting')}...
+                  {t.connecting}...
                 </>
               ) : (
                 <>
                   <Heart className="w-4 h-4" />
-                  {t('acceptAndConnect')}
+                  {t.acceptAndConnect}
                 </>
               )}
             </Button>
@@ -257,8 +257,9 @@ export default function JoinPartner() {
 
       {/* Help Text */}
       <div className="text-center text-sm text-gray-500 dark:text-gray-400">
-        {t('inviteCodeHelp')}
+        {t.inviteCodeHelp}
       </div>
     </motion.div>
   );
 }
+

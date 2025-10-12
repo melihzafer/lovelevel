@@ -5,6 +5,8 @@ import { syncManager } from '../lib/syncManager';
 
 interface Partnership {
   id: string;
+  user1_id: string;
+  user2_id: string;
   status: 'pending' | 'active' | 'declined';
   anniversary_date: string | null;
 }

@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Copy, Share2, RefreshCw, Clock } from 'lucide-react';
 import { useAuth } from '../contexts/FirebaseAuthContext';
-import { generateInviteCode, getActiveInviteCode, InviteCode } from '../services/inviteService';
-import { useTranslation } from 'react-i18next';
-import Button from './Button';
-import Loader from './Loader';
+import { generateInviteCode, getActiveInviteCode, type InviteCode } from '../services/inviteService';
+import { useTranslation } from '../lib/i18n';
+import { Button } from './Button';
+import { Loader } from './Loader';
 
 export default function InvitePartner() {
   const { t } = useTranslation();
@@ -17,19 +17,17 @@ export default function InvitePartner() {
 
   // Load existing invite code on mount
   useEffect(() => {
-    if (user) {
-      loadInviteCode();
+    async function fetchInviteCode() {
+      if (!user) return;
+
+      setLoading(true);
+      const code = await getActiveInviteCode(user.uid);
+      setInviteCode(code);
+      setLoading(false);
     }
+
+    fetchInviteCode();
   }, [user]);
-
-  async function loadInviteCode() {
-    if (!user) return;
-
-    setLoading(true);
-    const code = await getActiveInviteCode(user.uid);
-    setInviteCode(code);
-    setLoading(false);
-  }
 
   async function handleGenerateCode() {
     if (!user) return;
@@ -88,11 +86,11 @@ export default function InvitePartner() {
     const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
 
     if (diffDays > 0) {
-      return `${diffDays} ${t('days')} ${diffHours} ${t('hours')}`;
+      return `${diffDays} ${t.days} ${diffHours} ${t.hours}`;
     } else if (diffHours > 0) {
-      return `${diffHours} ${t('hours')}`;
+      return `${diffHours} ${t.hours}`;
     } else {
-      return t('expiringSoon');
+      return t.expiringSoon;
     }
   }
 
@@ -113,10 +111,10 @@ export default function InvitePartner() {
       {/* Instructions */}
       <div className="text-center space-y-2">
         <h3 className="text-xl font-semibold text-gray-800 dark:text-white">
-          {t('inviteYourPartner')}
+          {t.inviteYourPartner}
         </h3>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          {t('shareCodeWithPartner')}
+          {t.shareCodeWithPartner}
         </p>
       </div>
 
@@ -134,7 +132,7 @@ export default function InvitePartner() {
               <div className="flex items-center justify-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <Clock className="w-4 h-4" />
                 <span>
-                  {t('expiresIn')}: {getTimeRemaining()}
+                  {t.expiresIn}: {getTimeRemaining()}
                 </span>
               </div>
             </div>
@@ -148,7 +146,7 @@ export default function InvitePartner() {
               className="flex items-center justify-center gap-2"
             >
               <Copy className="w-4 h-4" />
-              {copied ? t('copied') : t('copyCode')}
+              {copied ? t.copied : t.copyCode}
             </Button>
 
             <Button
@@ -157,7 +155,7 @@ export default function InvitePartner() {
               className="flex items-center justify-center gap-2"
             >
               <Share2 className="w-4 h-4" />
-              {t('shareCode')}
+              {t.shareCode}
             </Button>
           </div>
 
@@ -169,14 +167,14 @@ export default function InvitePartner() {
             className="w-full flex items-center justify-center gap-2 text-sm"
           >
             <RefreshCw className={`w-4 h-4 ${generating ? 'animate-spin' : ''}`} />
-            {t('generateNewCode')}
+            {t.generateNewCode}
           </Button>
         </div>
       ) : (
         /* Generate First Code */
         <div className="text-center space-y-4">
           <p className="text-gray-600 dark:text-gray-400">
-            {t('noActiveInviteCode')}
+            {t.noActiveInviteCode}
           </p>
 
           <Button
@@ -187,10 +185,10 @@ export default function InvitePartner() {
             {generating ? (
               <>
                 <RefreshCw className="w-4 h-4 animate-spin" />
-                {t('generating')}
+                {t.generating}
               </>
             ) : (
-              t('generateInviteCode')
+              t.generateInviteCode
             )}
           </Button>
         </div>
@@ -199,14 +197,15 @@ export default function InvitePartner() {
       {/* Tips */}
       <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
         <h4 className="font-semibold text-blue-900 dark:text-blue-300 mb-2">
-          {t('tips')}
+          {t.tips}
         </h4>
         <ul className="text-sm text-blue-800 dark:text-blue-400 space-y-1">
-          <li>• {t('inviteTip1')}</li>
-          <li>• {t('inviteTip2')}</li>
-          <li>• {t('inviteTip3')}</li>
+          <li>• {t.inviteTip1}</li>
+          <li>• {t.inviteTip2}</li>
+          <li>• {t.inviteTip3}</li>
         </ul>
       </div>
     </motion.div>
   );
 }
+
