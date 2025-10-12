@@ -110,6 +110,28 @@ export const DEFAULT_PET_STATE: PetState = {
   equipped: {},
 };
 
+// Supabase-specific types (synced data)
+export interface Partnership {
+  id: string;
+  user1_id: string;
+  user2_id: string;
+  status: 'pending' | 'active' | 'declined';
+  anniversary_date: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface InviteCode {
+  id?: string;
+  code: string;
+  created_by: string;
+  created_at: string;
+  expires_at: string;
+  used: boolean;
+  used_by?: string;
+  used_at?: string;
+}
+
 // Utility types
 export type DeepPartial<T> = {
   [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];

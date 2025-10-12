@@ -2,14 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useAuth } from './FirebaseAuthContext';
 import { syncManager } from '../lib/syncManager';
-
-interface Partnership {
-  id: string;
-  user1_id: string;
-  user2_id: string;
-  status: 'pending' | 'active' | 'declined';
-  anniversary_date: string | null;
-}
+import type { Partnership } from '../types/database';
 
 interface SupabaseSyncContextType {
   partnership: Partnership | null;

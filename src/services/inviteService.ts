@@ -1,19 +1,11 @@
 import { supabase } from '../lib/supabase';
 import { nanoid } from 'nanoid';
+import type { InviteCode } from '../types/database';
 
 /**
  * Invite Code Service
  * Handles partner invitation codes stored in Supabase
  */
-
-export interface InviteCode {
-  code: string;
-  created_by: string;
-  created_at: string;
-  expires_at: string;
-  used: boolean;
-  used_by?: string;
-}
 
 /**
  * Generate a new 6-character invite code

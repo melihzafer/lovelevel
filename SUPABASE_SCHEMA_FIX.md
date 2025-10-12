@@ -1,0 +1,293 @@
+# Supabase Schema Fix - invite_codes Table
+
+## 🔴 Issue Detected
+
+**Error**: `column invite_codes.used does not exist` (PostgreSQL error code 42703)
+
+**Root Cause**: The `invite_codes` table in Supabase is missing the `used` column that the code expects.
+
+**Impact**: Partner invite system completely broken - cannot generate or validate invite codes.
+
+---
+
+## ✅ Quick Fix (Recommended)
+
+### Step 1: Add Missing Column
+
+1. Go to Supabase Dashboard: https://supabase.com/dashboard
+2. Select your project: **lovelevel-7dadc**
+3. Click **SQL Editor** (left sidebar)
+4. Paste this SQL and click **Run**:
+
+```sql
+-- Add missing 'used' column to invite_codes table
+ALTER TABLE invite_codes 
+ADD COLUMN IF NOT EXISTS used BOOLEAN DEFAULT false NOT NULL;
+
+-- Create index for faster queries
+CREATE INDEX IF NOT EXISTS idx_invite_codes_used 
+ON invite_codes(used);
+
+-- Create composite index for common query pattern
+CREATE INDEX IF NOT EXISTS idx_invite_codes_creator_used 
+ON invite_codes(created_by, used) WHERE used = false;
+```
+
+### Step 2: Verify Fix
+
+Run this query to check the table structure:
+
+```sql
+-- Check table columns
+SELECT column_name, data_type, is_nullable, column_default
+FROM information_schema.columns
+WHERE table_name = 'invite_codes'
+ORDER BY ordinal_position;
+```
+
+**Expected Output** (should include):
+- `code` (text)
+- `created_by` (text or uuid)
+- `created_at` (timestamp)
+- `expires_at` (timestamp)
+- `used` (boolean) ← **THIS ONE IS CRITICAL**
+- `used_by` (text or uuid, nullable)
+
+### Step 3: Test in Browser
+
+1. Refresh browser (Ctrl+R or Cmd+R)
+2. Navigate to Partner page: http://localhost:5174/partner
+3. Open DevTools Console (F12)
+4. Check for errors - should see:
+   - ✅ "No active partnership found" (expected, not an error)
+   - ✅ NO "column invite_codes.used does not exist" error
+
+---
+
+## 📋 Full Table Schema (Reference)
+
+If the above doesn't work, or if the table doesn't exist at all, run this to create it from scratch:
+
+```sql
+-- Drop existing table (CAUTION: This deletes all data!)
+DROP TABLE IF EXISTS invite_codes CASCADE;
+
+-- Create invite_codes table with complete schema
+CREATE TABLE invite_codes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  code TEXT UNIQUE NOT NULL,
+  created_by TEXT NOT NULL, -- Firebase UID (not FK, Firebase Auth is external)
+  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  used BOOLEAN DEFAULT false NOT NULL,
+  used_by TEXT, -- Firebase UID of user who accepted invite
+  used_at TIMESTAMPTZ,
+  
+  -- Constraints
+  CONSTRAINT code_length_check CHECK (length(code) = 6),
+  CONSTRAINT expires_after_creation CHECK (expires_at > created_at),
+  CONSTRAINT used_consistency CHECK (
+    (used = false AND used_by IS NULL AND used_at IS NULL) OR
+    (used = true AND used_by IS NOT NULL AND used_at IS NOT NULL)
+  )
+);
+
+-- Indexes for performance
+CREATE INDEX idx_invite_codes_code ON invite_codes(code);
+CREATE INDEX idx_invite_codes_created_by ON invite_codes(created_by);
+CREATE INDEX idx_invite_codes_used ON invite_codes(used);
+CREATE INDEX idx_invite_codes_creator_used ON invite_codes(created_by, used) WHERE used = false;
+CREATE INDEX idx_invite_codes_expires ON invite_codes(expires_at) WHERE used = false;
+
+-- RLS Policies (if RLS is enabled)
+-- Note: Currently RLS is DISABLED per project requirements
+-- If you enable RLS later, add these policies:
+
+-- ALTER TABLE invite_codes ENABLE ROW LEVEL SECURITY;
+
+-- CREATE POLICY "Users can create their own invite codes"
+-- ON invite_codes FOR INSERT
+-- WITH CHECK (created_by = current_setting('request.jwt.claims', true)::json->>'sub');
+
+-- CREATE POLICY "Users can read all active invite codes"
+-- ON invite_codes FOR SELECT
+-- USING (used = false AND expires_at > NOW());
+
+-- CREATE POLICY "Users can update codes they created"
+-- ON invite_codes FOR UPDATE
+-- USING (created_by = current_setting('request.jwt.claims', true)::json->>'sub');
+
+-- Comments for documentation
+COMMENT ON TABLE invite_codes IS 'Partner invitation codes for connecting couples';
+COMMENT ON COLUMN invite_codes.code IS '6-character alphanumeric code (uppercase, no ambiguous chars)';
+COMMENT ON COLUMN invite_codes.created_by IS 'Firebase UID of code creator';
+COMMENT ON COLUMN invite_codes.used IS 'Boolean flag for quick filtering of available codes';
+COMMENT ON COLUMN invite_codes.used_by IS 'Firebase UID of partner who accepted invite';
+COMMENT ON COLUMN invite_codes.expires_at IS 'Code expires 7 days after creation';
+```
+
+---
+
+## 🧪 Test Queries
+
+### Check Active Codes
+```sql
+-- View all active (unused, not expired) invite codes
+SELECT 
+  code,
+  created_by,
+  created_at,
+  expires_at,
+  (expires_at > NOW()) AS is_valid,
+  EXTRACT(EPOCH FROM (expires_at - NOW())) / 3600 AS hours_until_expiry
+FROM invite_codes
+WHERE used = false
+  AND expires_at > NOW()
+ORDER BY created_at DESC;
+```
+
+### Check Used Codes
+```sql
+-- View all used invite codes with partnership info
+SELECT 
+  ic.code,
+  ic.created_by,
+  ic.used_by,
+  ic.created_at,
+  ic.used_at,
+  EXTRACT(EPOCH FROM (ic.used_at - ic.created_at)) / 3600 AS hours_to_accept,
+  p.id AS partnership_id,
+  p.status AS partnership_status
+FROM invite_codes ic
+LEFT JOIN partnerships p ON (
+  (p.user1_id = ic.created_by AND p.user2_id = ic.used_by) OR
+  (p.user2_id = ic.created_by AND p.user1_id = ic.used_by)
+)
+WHERE ic.used = true
+ORDER BY ic.used_at DESC;
+```
+
+### Cleanup Expired Codes
+```sql
+-- Delete expired unused codes (optional housekeeping)
+DELETE FROM invite_codes
+WHERE used = false
+  AND expires_at < NOW();
+```
+
+---
+
+## 🔄 Alternative Fix (If Column Exists as Different Name)
+
+If the table already has a `used_by` column and you want to derive `used` status from it:
+
+**Option 1: Use Generated Column** (PostgreSQL 12+)
+```sql
+-- Add computed column based on used_by
+ALTER TABLE invite_codes 
+ADD COLUMN used BOOLEAN GENERATED ALWAYS AS (used_by IS NOT NULL) STORED;
+```
+
+**Option 2: Update Code Instead** (if you prefer not to alter DB)
+Change inviteService.ts queries from:
+```typescript
+.eq('used', false)  // Current code
+```
+To:
+```typescript
+.is('used_by', null)  // Alternative query
+```
+
+---
+
+## 📊 Verification Checklist
+
+After running the fix:
+
+- [ ] SQL command executed without errors
+- [ ] `SELECT * FROM invite_codes LIMIT 1;` returns columns including `used`
+- [ ] Browser console shows NO "column ... does not exist" errors
+- [ ] Partner page loads without errors
+- [ ] Can click "Generate Invite Code" button (check for new errors)
+
+---
+
+## 🚨 Troubleshooting
+
+### Error: "relation invite_codes does not exist"
+**Cause**: Table not created yet.  
+**Fix**: Run the full "CREATE TABLE" script above.
+
+### Error: "column used_by does not exist"
+**Cause**: Table created without used_by column.  
+**Fix**: Add it:
+```sql
+ALTER TABLE invite_codes ADD COLUMN used_by TEXT;
+ALTER TABLE invite_codes ADD COLUMN used_at TIMESTAMPTZ;
+```
+
+### Error: "permission denied for table invite_codes"
+**Cause**: Your Supabase user lacks permissions.  
+**Fix**: Make sure you're logged in as the project owner. Check Supabase dashboard → Settings → Database → Connection string.
+
+### Partnership Query 406 Error
+**Status**: This is expected, NOT an error.  
+**Reason**: User has no active partnership yet. Once invite code is accepted, this will resolve.
+
+---
+
+## 📌 Related Files
+
+- `src/services/inviteService.ts` - Invite code logic (uses `used` column)
+- `src/types/database.ts` - TypeScript types (InviteCode interface missing - see below)
+- `TESTING_PARTNER_INVITE.md` - Comprehensive test cases for invite system
+
+---
+
+## 🔧 Next Steps
+
+1. **IMMEDIATE**: Run the ALTER TABLE command above
+2. **VERIFY**: Check browser console for errors
+3. **TEST**: Generate invite code, verify no errors
+4. **OPTIONAL**: Add InviteCode type to database.ts (see below)
+
+---
+
+## 💡 Bonus: Add InviteCode Type to database.ts
+
+For type safety, add this to `src/types/database.ts`:
+
+```typescript
+// Add after Partnership interface
+export interface InviteCode {
+  id?: string;
+  code: string;
+  created_by: string;
+  created_at: string;
+  expires_at: string;
+  used: boolean;
+  used_by?: string;
+  used_at?: string;
+}
+```
+
+This centralizes types and prevents drift between inviteService.ts interface and database schema.
+
+---
+
+## ✅ Success Criteria
+
+You'll know the fix worked when:
+
+1. ✅ Browser console shows NO "column invite_codes.used does not exist" errors
+2. ✅ Partner page loads without errors (only "No active partnership found" log, which is expected)
+3. ✅ Clicking "Generate Invite Code" creates a 6-character code without errors
+4. ✅ Code displays with expiry countdown (e.g., "7 days 2 hours")
+5. ✅ Supabase SQL Editor query `SELECT * FROM invite_codes;` returns rows with `used` column
+
+---
+
+**Created**: October 12, 2025  
+**Status**: Ready for user execution  
+**Priority**: 🔴 CRITICAL - Blocks Partner Invite System  
+**Estimated Time**: 2-5 minutes
