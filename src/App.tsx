@@ -5,6 +5,7 @@ import { Loader } from './components/Loader';
 import { BottomNav } from './components/BottomNav';
 import { ThemeProvider } from './components/ThemeProvider';
 import { AuthProvider } from './contexts/FirebaseAuthContext';
+import { SupabaseSyncProvider } from './contexts/SupabaseSyncContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 // Lazy-loaded pages
@@ -131,7 +132,9 @@ export function App() {
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          <AppContent />
+          <SupabaseSyncProvider>
+            <AppContent />
+          </SupabaseSyncProvider>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

@@ -6,11 +6,12 @@ A complete, production-ready **offline-first PWA for couples** featuring:
 
 - 📅 **Relationship day counter** with live updates and milestone tracking
 - 🎊 **Monthly anniversary celebrations** with confetti, custom messages, and notifications
-- ✅ **Challenge system** with 20+ seeded activities, notes, filters, and XP rewards
+- ✅ **Challenge system** with 20+ seeded activities, notes, filters, XP rewards, **and partner sync**
 - 🐾 **Virtual pet companion** that grows with your relationship (levels, items, interactions)
 - 💾 **Complete data management** (IndexedDB storage, JSON export/import)
 - 🎨 **Beautiful theming** (light/dark modes with smooth transitions)
 - ⚡ **Offline-first architecture** (Service Worker, full PWA compliance)
+- ☁️ **Partner sync** (Supabase real-time sync, profile photos, shared challenges)
 
 ---
 
@@ -22,6 +23,12 @@ A complete, production-ready **offline-first PWA for couples** featuring:
 - ✅ **db.ts** - IndexedDB wrapper using `idb`, handles all data persistence
 - ✅ **dateUtils.ts** - Date/anniversary calculations with EOM logic, leap year handling
 - ✅ **xpSystem.ts** - Level progression with configurable curve formula
+- ✅ **supabase.ts** - Supabase client initialization with TypeScript types
+- ✅ **syncManager.ts** - Bidirectional sync between IndexedDB and Supabase
+- ✅ **imageUtils.ts** - Image compression utility for profile photos (max 1MB)
+
+#### Contexts (`src/contexts/`)
+- ✅ **SupabaseSyncContext.tsx** - React context for real-time sync state management
 
 #### State Management (`src/store/`)
 - ✅ **index.ts** - Zustand stores for settings, pet, challenges with IndexedDB persistence
@@ -82,9 +89,36 @@ A complete, production-ready **offline-first PWA for couples** featuring:
 | State | Zustand | 5.0 |
 | Styling | Tailwind CSS | 3.4 |
 | Animations | Framer Motion | 11.16 |
-| Database | IndexedDB (idb) | 8.0 |
+| Local DB | IndexedDB (idb) | 8.0 |
+| Cloud DB | Supabase PostgreSQL | Latest |
+| Storage | Supabase Storage | Latest |
+| Sync | Supabase Realtime | Latest |
 | PWA | Workbox + vite-plugin-pwa | Latest |
 | Testing | Vitest + Testing Library | Latest |
+
+### Architecture: Hybrid Offline-First + Cloud Sync
+
+**Primary Data Layer**: IndexedDB (instant, offline-first)  
+**Secondary Data Layer**: Supabase (sync, partner collaboration, cloud backup)
+
+**Data Flow:**
+```
+User Action → IndexedDB (instant) → Sync Queue → Supabase (background) → Partner's Device (real-time)
+```
+
+**Key Benefits:**
+- ✅ **Instant UI updates** (IndexedDB, no network latency)
+- ✅ **Offline-first** (8,000+ lines of code preserved, fully functional without internet)
+- ✅ **Partner sync** (Supabase Realtime subscriptions, challenges/pet synced automatically)
+- ✅ **Full-quality photos** (Supabase Storage, no CORS issues)
+- ✅ **Rollback-friendly** (remove Supabase layer, IndexedDB continues working)
+
+**Supabase Schema:**
+- **profiles**: User display name, email, photo URL
+- **partnerships**: Couples relationship data (user1_id, user2_id, status, anniversary)
+- **invite_codes**: Partner invitation system (8-char alphanumeric codes)
+- **shared_challenges**: Synced challenge data (title, category, status, notes, XP)
+- **shared_pet**: Shared virtual pet state (name, level, XP, mood, hunger, energy, equipped items)
 
 ### Key Features Implemented
 

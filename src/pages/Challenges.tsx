@@ -6,6 +6,7 @@ import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { Input } from '../components/Input';
 import { useTranslation } from '../lib/i18n';
+import { syncManager } from '../lib/syncManager';
 import type { Challenge } from '../types/database';
 
 export default function ChallengesPage() {
@@ -59,6 +60,13 @@ export default function ChallengesPage() {
   const handleCompleteSubmit = async () => {
     if (completingChallenge) {
       await completeChallenge(completingChallenge.id, notes.trim() || undefined);
+      
+      // Queue for Supabase sync (when partnership exists)
+      const challenge = challenges.find(c => c.id === completingChallenge.id);
+      if (challenge) {
+        await syncManager.queueSync('challenge', 'update', challenge);
+      }
+      
       setCompletingChallenge(null);
       setNotes('');
     }
@@ -77,6 +85,10 @@ export default function ChallengesPage() {
     };
 
     await addChallenge(newChallenge);
+    
+    // Queue for Supabase sync (when partnership exists)
+    await syncManager.queueSync('challenge', 'add', newChallenge);
+    
     setShowAddModal(false);
     setNewChallengeTitle('');
     setNewChallengeDescription('');

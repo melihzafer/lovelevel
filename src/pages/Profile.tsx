@@ -3,8 +3,8 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/FirebaseAuthContext';
 import { updateProfile } from 'firebase/auth';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
+import { compressImage } from '../lib/imageUtils';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { useTranslation } from '../lib/i18n';
@@ -29,7 +29,7 @@ export default function ProfilePage() {
       return;
     }
 
-    // Validate file size (max 5MB)
+    // Validate file size (max 5MB before compression)
     if (file.size > 5 * 1024 * 1024) {
       alert(t.fileTooLarge || 'Image must be smaller than 5MB');
       return;
@@ -37,16 +37,42 @@ export default function ProfilePage() {
 
     setIsUploading(true);
     try {
-      // Create storage reference
-      const storageRef = ref(storage, `profile-photos/${user.uid}/${Date.now()}_${file.name}`);
+      // 1. Compress image (target: max 1MB)
+      const compressedFile = await compressImage(file, 1024);
       
-      // Upload file
-      await uploadBytes(storageRef, file);
+      // 2. Create file path: profile-photos/{userId}/{timestamp}_{filename}
+      const fileName = `${user.uid}/${Date.now()}_${file.name}`;
       
-      // Get download URL
-      const photoURL = await getDownloadURL(storageRef);
+      // 3. Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('profile-photos')
+        .upload(fileName, compressedFile, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (uploadError) throw uploadError;
       
-      // Update user profile
+      // 4. Get public URL
+      const { data: urlData } = supabase.storage
+        .from('profile-photos')
+        .getPublicUrl(fileName);
+      
+      const photoURL = urlData.publicUrl;
+      
+      // 5. Update Supabase profiles table
+      const { error: dbError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.uid,
+          display_name: user.displayName || null,
+          email: user.email || null,
+          photo_url: photoURL,
+        });
+
+      if (dbError) console.error('Profile DB update error:', dbError);
+      
+      // 6. Update Firebase Auth profile (for consistency)
       await updateProfile(user, { photoURL });
       
       alert(t.photoUpdated || 'Profile photo updated successfully!');
