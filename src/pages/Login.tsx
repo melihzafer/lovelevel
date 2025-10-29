@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/FirebaseAuthContext';
+import { useSettingsStore } from '../store';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { useTranslation } from '../lib/i18n';
@@ -9,6 +10,7 @@ export default function Login() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { login, loginWithGoogle, error, clearError } = useAuth();
+  const settings = useSettingsStore((state) => state.settings);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -58,10 +60,27 @@ export default function Login() {
     setLocalError(null);
     setIsLoading(true);
     try {
+      console.log('🔵 Starting Google OAuth login...');
       await loginWithGoogle();
-      navigate('/');
-    } catch {
-      // Error handled by AuthContext
+      console.log('✅ Google OAuth login successful');
+      
+      // Check if user has completed onboarding
+      const hasCompletedOnboarding = settings.onboardingCompleted;
+      console.log('📋 Onboarding status:', hasCompletedOnboarding);
+      
+      if (hasCompletedOnboarding) {
+        console.log('➡️ Navigating to home');
+        navigate('/');
+      } else {
+        console.log('➡️ Navigating to onboarding (first time user)');
+        navigate('/onboarding');
+      }
+    } catch (err) {
+      console.error('❌ Google OAuth login failed:', err);
+      // Error already handled and displayed by AuthContext
+      if (err instanceof Error) {
+        setLocalError(err.message);
+      }
     } finally {
       setIsLoading(false);
     }

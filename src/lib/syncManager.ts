@@ -23,6 +23,8 @@ class SyncManager {
    */
   async initialize(userId: string) {
     try {
+      console.log('🔍 Looking for active partnership for user:', userId);
+      
       // Fetch user's active partnership
       const { data: partnership, error } = await supabase
         .from('partnerships')
@@ -32,10 +34,21 @@ class SyncManager {
         .single();
 
       if (error) {
-        console.log('No active partnership found:', error.message);
+        // 🔧 FIX: No partnership is not an error - it's expected for new users
+        if (error.code === 'PGRST116') {
+          console.log('ℹ️ No active partnership found (this is normal for new users)');
+        } else {
+          console.warn('⚠️ Partnership query error:', error.message);
+        }
         return null;
       }
 
+      if (!partnership) {
+        console.log('ℹ️ No partnership data returned');
+        return null;
+      }
+
+      console.log('✅ Found partnership:', partnership.id);
       this.partnershipId = partnership.id;
 
       // Start real-time sync
@@ -49,7 +62,8 @@ class SyncManager {
 
       return partnership;
     } catch (error) {
-      console.error('Sync initialization error:', error);
+      // 🔧 FIX: Catch all errors and log, but don't throw - let app continue
+      console.error('⚠️ Sync initialization failed (app will work in solo mode):', error);
       return null;
     }
   }

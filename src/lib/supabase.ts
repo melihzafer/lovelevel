@@ -196,3 +196,96 @@ export type Database = {
     };
   };
 };
+
+/**
+ * 🔧 CRITICAL FIX: Ensure user profile exists in Supabase
+ * This MUST be called before any Supabase operations that reference profiles table
+ * (e.g., invite codes with foreign key constraints)
+ * 
+ * @param userId - Firebase Auth UID
+ * @param email - User's email
+ * @param displayName - User's display name (optional)
+ * @param photoUrl - User's photo URL (optional)
+ * @param retryCount - Internal retry counter (default: 0)
+ */
+export async function ensureProfile(
+  userId: string,
+  email: string | null,
+  displayName: string | null = null,
+  photoUrl: string | null = null,
+  retryCount: number = 0
+): Promise<void> {
+  const MAX_RETRIES = 2;
+  const RETRY_DELAY = 500; // ms
+
+  try {
+    console.log('🔍 Checking if profile exists for user:', userId);
+    
+    // Check if profile already exists
+    const { data: existingProfile, error: fetchError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', userId)
+      .maybeSingle();
+    
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      console.error('❌ Error checking profile:', fetchError);
+      
+      // Retry on network/connection errors
+      if (retryCount < MAX_RETRIES && (
+        fetchError.message.includes('fetch') || 
+        fetchError.message.includes('network') ||
+        fetchError.message.includes('timeout')
+      )) {
+        console.log(`🔄 Retrying profile check (${retryCount + 1}/${MAX_RETRIES})...`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+        return ensureProfile(userId, email, displayName, photoUrl, retryCount + 1);
+      }
+      
+      throw fetchError;
+    }
+    
+    if (existingProfile) {
+      console.log('✅ Profile already exists:', userId);
+      return;
+    }
+    
+    // Create new profile
+    console.log('➕ Creating new profile for user:', userId);
+    const { error: insertError } = await supabase
+      .from('profiles')
+      .insert({
+        id: userId,
+        email: email,
+        display_name: displayName,
+        photo_url: photoUrl,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+    
+    if (insertError) {
+      console.error('❌ Error creating profile:', insertError);
+      
+      // If profile was created by another concurrent request, that's OK
+      if (insertError.code === '23505') { // Duplicate key
+        console.log('✅ Profile already created by concurrent request');
+        return;
+      }
+      
+      // Retry on transient errors
+      if (retryCount < MAX_RETRIES) {
+        console.log(`🔄 Retrying profile creation (${retryCount + 1}/${MAX_RETRIES})...`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+        return ensureProfile(userId, email, displayName, photoUrl, retryCount + 1);
+      }
+      
+      throw insertError;
+    }
+    
+    console.log('✅ Profile created successfully:', userId);
+  } catch (error) {
+    console.error('❌ Failed to ensure profile exists:', error);
+    // Re-throw to prevent operations that depend on profile
+    throw error;
+  }
+}

@@ -113,25 +113,37 @@ export const handleFirebaseError = (error: unknown): string => {
   if (typeof error === 'object' && error !== null && 'code' in error) {
     const firebaseError = error as { code: string; message: string };
     
-    // User-friendly error messages
+    // User-friendly error messages (English/Turkish)
     const errorMessages: Record<string, string> = {
-      'auth/email-already-in-use': 'This email is already registered',
-      'auth/invalid-email': 'Invalid email address',
-      'auth/operation-not-allowed': 'Operation not allowed',
-      'auth/weak-password': 'Password is too weak',
-      'auth/user-disabled': 'This account has been disabled',
-      'auth/user-not-found': 'No account found with this email',
-      'auth/wrong-password': 'Incorrect password',
-      'auth/network-request-failed': 'Network error. Please check your connection',
-      'permission-denied': 'Permission denied. Please check your account',
-      'unavailable': 'Service temporarily unavailable',
-      'unauthenticated': 'Please sign in to continue',
+      'auth/email-already-in-use': 'This email is already registered / Bu e-posta zaten kayıtlı',
+      'auth/invalid-email': 'Invalid email address / Geçersiz e-posta adresi',
+      'auth/operation-not-allowed': 'Operation not allowed / İşlem yapılmasına izin verilmiyor',
+      'auth/weak-password': 'Password is too weak / Şifre çok zayıf',
+      'auth/user-disabled': 'This account has been disabled / Bu hesap devre dışı bırakıldı',
+      'auth/user-not-found': 'No account found with this email / Bu e-posta ile kayıtlı hesap bulunamadı',
+      'auth/wrong-password': 'Incorrect password / Yanlış şifre',
+      'auth/network-request-failed': 'Network error. Please check your connection / Ağ hatası. Bağlantınızı kontrol edin',
+      'auth/popup-closed-by-user': 'Sign-in popup was closed / Giriş penceresi kapatıldı',
+      'auth/popup-blocked': 'Popup blocked by browser. Please allow popups / Popup tarayıcı tarafından engellendi',
+      'auth/cancelled-popup-request': 'Sign-in was cancelled / Giriş iptal edildi',
+      'auth/account-exists-with-different-credential': 'An account already exists with the same email but different sign-in method / Aynı e-posta ile farklı giriş yöntemi kullanılarak kayıtlı bir hesap var',
+      'permission-denied': 'Permission denied. Please check your account / İzin reddedildi',
+      'unavailable': 'Service temporarily unavailable / Servis geçici olarak kullanılamıyor',
+      'unauthenticated': 'Please sign in to continue / Devam etmek için giriş yapın',
     };
 
-    return errorMessages[firebaseError.code] || firebaseError.message;
+    const errorMessage = errorMessages[firebaseError.code];
+    if (errorMessage) {
+      console.error(`🔴 Firebase Error [${firebaseError.code}]:`, errorMessage);
+      return errorMessage;
+    }
+    
+    console.error('🔴 Firebase Error:', firebaseError.code, firebaseError.message);
+    return firebaseError.message;
   }
 
-  return 'An unexpected error occurred';
+  console.error('🔴 Unknown Error:', error);
+  return 'An unexpected error occurred / Beklenmeyen bir hata oluştu';
 };
 
 // Development mode helpers

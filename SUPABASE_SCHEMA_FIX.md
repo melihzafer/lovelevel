@@ -1,12 +1,18 @@
-# Supabase Schema Fix - invite_codes Table
+# Supabase Schema Fixes - Partner Invite System
 
-## 🔴 Issue Detected
+> **Quick Links**: [Issue #1](#issue-1-invite_codesused-column-missing) | [Issue #2](#issue-2-partnerships-foreign-key-constraints) | [Issue #3](#issue-3-shared_challenges-foreign-key-constraint) ✅
+
+---
+
+## 🔴 Issue #1: invite_codes.used Column Missing
 
 **Error**: `column invite_codes.used does not exist` (PostgreSQL error code 42703)
 
 **Root Cause**: The `invite_codes` table in Supabase is missing the `used` column that the code expects.
 
 **Impact**: Partner invite system completely broken - cannot generate or validate invite codes.
+
+**Status**: ✅ FIXED
 
 ---
 
@@ -284,6 +290,148 @@ You'll know the fix worked when:
 3. ✅ Clicking "Generate Invite Code" creates a 6-character code without errors
 4. ✅ Code displays with expiry countdown (e.g., "7 days 2 hours")
 5. ✅ Supabase SQL Editor query `SELECT * FROM invite_codes;` returns rows with `used` column
+
+---
+
+## 🔴 Issue #3: shared_challenges Foreign Key Constraint
+
+**Error**: `insert or update on table "shared_challenges" violates foreign key constraint "shared_challenges_created_by_fkey"` (PostgreSQL error code 23503)
+
+**Root Cause**: The `shared_challenges` table has a foreign key constraint on `created_by` column referencing the `profiles` table. When users authenticate via Firebase, they're NOT automatically added to the `profiles` table, causing all challenge syncs to fail.
+
+**Impact**: 
+- ✅ Partnership creation works
+- ✅ Real-time sync initializes
+- ❌ All 20 seed challenges fail to sync (409 Conflict)
+- ❌ No challenges appear in Supabase
+- ❌ Challenge completion sync broken
+
+**Console Pattern**:
+```
+syncManager.ts:99 ✅ Real-time sync started for partnership: [ID]
+@supabase POST .../shared_challenges 409 (Conflict) [× 20]
+syncManager.ts:212 ❌ Error syncing challenge: [name] {code: '23503', details: 'Key (created_by)=(...)  is not present in table "profiles".'}
+syncManager.ts:216 ✅ Synced 20 local challenges to Supabase [MISLEADING - all failed!]
+```
+
+**Status**: 🔴 **URGENT FIX REQUIRED**
+
+---
+
+### ✅ Quick Fix (Issue #3)
+
+**Step 1: Remove Foreign Key Constraint**
+
+1. Go to Supabase Dashboard: https://supabase.com/dashboard
+2. Select your project: **lovelevel-7dadc**
+3. Click **SQL Editor** (left sidebar)
+4. Paste this SQL and click **Run**:
+
+```sql
+-- Remove foreign key constraint on shared_challenges.created_by
+ALTER TABLE shared_challenges 
+DROP CONSTRAINT IF EXISTS shared_challenges_created_by_fkey;
+
+-- Optional: Add index for performance (no constraint)
+CREATE INDEX IF NOT EXISTS idx_shared_challenges_created_by 
+ON shared_challenges(created_by);
+
+-- Verify constraint removed
+SELECT conname, contype 
+FROM pg_constraint 
+WHERE conrelid = 'shared_challenges'::regclass;
+```
+
+**Expected Result**:
+- Constraint `shared_challenges_created_by_fkey` should NOT appear in results
+- Only `shared_challenges_partnership_id_fkey` should remain (this one is valid)
+
+**Step 2: Verify Fix**
+
+1. Refresh browser (Ctrl+R)
+2. Open DevTools Console (F12)
+3. Check for sync messages:
+   ```
+   ✅ Real-time sync started for partnership: [ID]
+   ✅ Synced 20 local challenges to Supabase [should be green, no errors]
+   ✅ Synced 0 remote challenges to IndexedDB [expected - none from partner yet]
+   ```
+
+**Step 3: Verify in Supabase Dashboard**
+
+Run this query:
+```sql
+SELECT COUNT(*) as total_challenges FROM shared_challenges;
+```
+
+**Expected**: Should show 20 rows (or however many challenges were synced)
+
+**Step 4: Test Challenge Completion**
+
+1. In the app, complete a challenge
+2. Check console for sync confirmation
+3. Verify in Supabase that challenge row updated
+
+---
+
+### 🔍 Why This Happens
+
+**Architecture Issue**:
+- Firebase Auth (external identity provider) creates users with UIDs
+- Supabase `profiles` table is optional/supplementary (display_name, photo, etc.)
+- Foreign keys assume `profiles` table is populated BEFORE challenges are created
+- Reality: Users can create challenges immediately after login, before profile sync
+
+**Solution**: Remove foreign key constraints on all sync tables. User IDs are managed by Firebase Auth, not Supabase.
+
+---
+
+### 📋 Additional Tables to Check
+
+Run this query to find other tables with similar foreign key issues:
+
+```sql
+-- Find all foreign keys pointing to profiles table
+SELECT 
+  tc.table_name, 
+  tc.constraint_name,
+  kcu.column_name
+FROM information_schema.table_constraints AS tc 
+JOIN information_schema.key_column_usage AS kcu
+  ON tc.constraint_name = kcu.constraint_name
+JOIN information_schema.constraint_column_usage AS ccu
+  ON ccu.constraint_name = tc.constraint_name
+WHERE tc.constraint_type = 'FOREIGN KEY' 
+  AND ccu.table_name = 'profiles';
+```
+
+**Likely Candidates**:
+- `shared_pet` table (if it has `created_by` or `last_updated_by` columns)
+- Any other sync tables with user references
+
+**Fix Them All**:
+```sql
+-- Remove foreign keys from shared_pet (if applicable)
+ALTER TABLE shared_pet 
+DROP CONSTRAINT IF EXISTS shared_pet_created_by_fkey;
+
+ALTER TABLE shared_pet 
+DROP CONSTRAINT IF EXISTS shared_pet_last_updated_by_fkey;
+```
+
+---
+
+## 📊 Verification Checklist
+
+After running ALL fixes:
+
+- [x] Issue #1: invite_codes.used column added ✅
+- [x] Issue #2: partnerships foreign keys removed ✅
+- [ ] Issue #3: shared_challenges foreign key removed 🔄
+- [ ] Additional: shared_pet foreign keys removed (if applicable) ⏳
+- [ ] Browser console shows successful challenge sync ⏳
+- [ ] Supabase shared_challenges table populated ⏳
+- [ ] Real-time updates working between partners ⏳
 
 ---
 

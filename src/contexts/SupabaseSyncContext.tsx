@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useAuth } from './FirebaseAuthContext';
 import { syncManager } from '../lib/syncManager';
+import { ensureProfile } from '../lib/supabase';
 import type { Partnership } from '../types/database';
 
 interface SupabaseSyncContextType {
@@ -29,20 +30,40 @@ export function SupabaseSyncProvider({ children }: { children: ReactNode }) {
     const initSync = async () => {
       setIsSyncing(true);
       try {
+        console.log('🔄 Initializing Supabase sync for user:', user.uid);
+        
+        // 🔧 CRITICAL FIX: Ensure profile exists BEFORE any Supabase operations
+        // This prevents foreign key constraint errors (23503)
+        console.log('👤 Ensuring profile exists in Supabase...');
+        await ensureProfile(
+          user.uid,
+          user.email,
+          user.displayName,
+          user.photoURL
+        );
+        console.log('✅ Profile ensured');
+        
+        // Now safe to initialize sync (which queries partnerships, etc.)
         const partnershipData = await syncManager.initialize(user.uid);
         if (partnershipData) {
           setPartnership(partnershipData);
           console.log('✅ Sync initialized for partnership:', partnershipData.id);
         } else {
           console.log('ℹ️ No active partnership - operating in solo mode');
+          // 🔧 FIX: Solo mode is OK, not an error - user can still use app
+          setPartnership(null);
         }
       } catch (error) {
-        console.error('Sync initialization error:', error);
+        console.error('⚠️ Sync initialization error (continuing in solo mode):', error);
+        // 🔧 FIX: Don't block login - let user continue without sync
+        setPartnership(null);
       } finally {
         setIsSyncing(false);
       }
     };
 
+    // 🔧 FIX: Immediate sync initialization (removed delay)
+    // The sync is now non-blocking and won't interfere with navigation
     initSync();
 
     // Cleanup on unmount or user logout

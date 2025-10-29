@@ -6,7 +6,8 @@ import {
   signOut,
   onAuthStateChanged,
   GoogleAuthProvider,
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   setPersistence,
   browserLocalPersistence,
 } from 'firebase/auth';
@@ -48,8 +49,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.error('Failed to set persistence:', err);
     });
 
+    // Handle redirect result from Google OAuth
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          console.log('✅ Google OAuth redirect successful:', result.user.email);
+        }
+      })
+      .catch((err) => {
+        console.error('❌ Google OAuth redirect error:', err);
+        const errorMessage = handleFirebaseError(err);
+        setError(errorMessage);
+      });
+
     // Listen to auth state changes
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      // 🔧 SIMPLIFIED: No Firestore - only Firebase Auth + Supabase
+      // User profiles are stored in Supabase (handled by ensureProfile())
       setUser(user);
       setLoading(false);
     });
@@ -61,7 +77,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       setError(null);
       setLoading(true);
-      await signInWithEmailAndPassword(auth, email, password);
+      
+      // 🔧 FIX: Sign in and immediately set user from credential
+      // Don't wait for onAuthStateChanged - it's too slow for navigation
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const firebaseUser = userCredential.user;
+      
+      // Set user immediately (before onAuthStateChanged fires)
+      setUser(firebaseUser);
+      console.log('✅ Login successful, user set immediately:', firebaseUser.email);
+      
+      // 🔧 NOTE: User profile will be created in Supabase by ensureProfile()
+      // called from SupabaseSyncContext - no Firestore needed!
+      
     } catch (err) {
       const errorMessage = handleFirebaseError(err);
       setError(errorMessage);
@@ -75,7 +103,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       setError(null);
       setLoading(true);
-      await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Create Firebase Auth user
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      // Set user immediately
+      setUser(user);
+      console.log('✅ Signup successful:', user.email);
+      
+      // 🔧 NOTE: User profile will be created in Supabase by ensureProfile()
+      // called from SupabaseSyncContext when user logs in - no Firestore needed!
+      
     } catch (err) {
       const errorMessage = handleFirebaseError(err);
       setError(errorMessage);
@@ -90,13 +129,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setError(null);
       setLoading(true);
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      // Force account selection to avoid cached credentials
+      provider.setCustomParameters({
+        prompt: 'select_account'
+      });
+      
+      // Use redirect instead of popup to avoid CORS issues
+      console.log('🔵 Redirecting to Google OAuth...');
+      console.log('🔧 Auth domain:', auth.config.authDomain);
+      console.log('🔧 API key present:', !!auth.config.apiKey);
+      
+      await signInWithRedirect(auth, provider);
+      // After redirect, the page will reload and getRedirectResult will handle the result
     } catch (err) {
+      console.error('❌ Google OAuth error:', err);
+      
+      // 🔧 Enhanced error logging for diagnosis
+      if (err && typeof err === 'object') {
+        const firebaseErr = err as { code?: string; message?: string; customData?: unknown };
+        console.error('Error code:', firebaseErr.code);
+        console.error('Error message:', firebaseErr.message);
+        console.error('Error details:', firebaseErr.customData);
+      }
+      
       const errorMessage = handleFirebaseError(err);
       setError(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
       setLoading(false);
+      throw new Error(errorMessage);
     }
   };
 
