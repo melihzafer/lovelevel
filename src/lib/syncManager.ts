@@ -60,6 +60,9 @@ class SyncManager {
       // Initial sync: Supabase → IndexedDB
       await this.syncRemoteToLocal(partnership.id);
 
+      // Initial sync: Supabase Pet → IndexedDB
+      await this.syncPetRemoteToLocal(partnership.id);
+
       return partnership;
     } catch (error) {
       // 🔧 FIX: Catch all errors and log, but don't throw - let app continue
@@ -266,6 +269,49 @@ class SyncManager {
       console.log(`✅ Synced ${challenges?.length || 0} remote challenges to IndexedDB`);
     } catch (error) {
       console.error('Error syncing remote to local:', error);
+    }
+  }
+
+  /**
+   * Sync remote pet state from Supabase to IndexedDB (initial load)
+   */
+  async syncPetRemoteToLocal(partnershipId: string) {
+    try {
+      // Fetch shared pet state
+      const { data: petData, error } = await supabase
+        .from('shared_pet')
+        .select('*')
+        .eq('partnership_id', partnershipId)
+        .single();
+
+      if (error) {
+        // If no pet record exists yet, that's OK - it will be created on first update
+        if (error.code === 'PGRST116') {
+          console.log('ℹ️ No shared pet record found (will be created on first update)');
+          return;
+        }
+        throw error;
+      }
+
+      if (petData) {
+        // Update local pet state in IndexedDB
+        await db.updatePet({
+          name: petData.name,
+          xp: petData.xp,
+          level: petData.level,
+          mood: petData.mood as 'happy' | 'chill' | 'sleepy',
+          hunger: petData.hunger,
+          energy: petData.energy,
+          equipped: {
+            accessoryId: petData.equipped_accessory_id || undefined,
+            backgroundId: petData.equipped_background_id || undefined,
+          },
+        });
+
+        console.log('✅ Synced remote pet state to IndexedDB');
+      }
+    } catch (error) {
+      console.error('Error syncing remote pet to local:', error);
     }
   }
 

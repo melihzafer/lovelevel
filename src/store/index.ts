@@ -5,6 +5,7 @@ import { DEFAULT_SETTINGS, DEFAULT_PET_STATE } from '../types/database';
 import * as db from '../lib/db';
 import { getDateStats } from '../lib/dateUtils';
 import { addXP, getLevelInfo } from '../lib/xpSystem';
+import { syncManager } from '../lib/syncManager';
 
 // Settings Store
 interface SettingsState {
@@ -88,6 +89,18 @@ export const usePetStore = create<PetState>()(
           xp: result.remainingXP,
         });
 
+        // Sync XP/level to partner
+        syncManager.queueSync('pet', 'update', {
+          name: state.name,
+          xp: result.remainingXP,
+          level: result.newLevel,
+          mood: state.mood,
+          hunger: state.hunger,
+          energy: state.energy,
+          equippedAccessoryId: state.equipped?.accessoryId,
+          equippedBackgroundId: state.equipped?.backgroundId,
+        });
+
         // Log to history
         if (result.didLevelUp) {
           await db.addHistoryEntry({
@@ -108,6 +121,18 @@ export const usePetStore = create<PetState>()(
         const newHunger = Math.min(100, state.hunger + 20);
         await db.updatePet({ hunger: newHunger, mood: 'happy' });
         set({ hunger: newHunger, mood: 'happy' });
+        
+        // Sync pet state to partner
+        syncManager.queueSync('pet', 'update', {
+          name: state.name,
+          xp: state.xp,
+          level: state.level,
+          mood: 'happy',
+          hunger: newHunger,
+          energy: state.energy,
+          equippedAccessoryId: state.equipped?.accessoryId,
+          equippedBackgroundId: state.equipped?.backgroundId,
+        });
       },
       playWithPet: async () => {
         const state = get();
@@ -123,30 +148,105 @@ export const usePetStore = create<PetState>()(
           mood: newMood,
           lastInteraction: new Date().toISOString(),
         });
+        
+        // Sync pet state to partner
+        syncManager.queueSync('pet', 'update', {
+          name: state.name,
+          xp: state.xp,
+          level: state.level,
+          mood: newMood,
+          hunger: state.hunger,
+          energy: newEnergy,
+          equippedAccessoryId: state.equipped?.accessoryId,
+          equippedBackgroundId: state.equipped?.backgroundId,
+        });
       },
       setName: async (name: string) => {
+        const state = get();
         await db.updatePet({ name });
         set({ name });
+        
+        // Sync pet name to partner
+        syncManager.queueSync('pet', 'update', {
+          name,
+          xp: state.xp,
+          level: state.level,
+          mood: state.mood,
+          hunger: state.hunger,
+          energy: state.energy,
+          equippedAccessoryId: state.equipped?.accessoryId,
+          equippedBackgroundId: state.equipped?.backgroundId,
+        });
       },
       setHunger: async (hunger: number) => {
+        const state = get();
         await db.updatePet({ hunger });
         set({ hunger });
+        
+        // Sync hunger to partner
+        syncManager.queueSync('pet', 'update', {
+          name: state.name,
+          xp: state.xp,
+          level: state.level,
+          mood: state.mood,
+          hunger,
+          energy: state.energy,
+          equippedAccessoryId: state.equipped?.accessoryId,
+          equippedBackgroundId: state.equipped?.backgroundId,
+        });
       },
       setEnergy: async (energy: number) => {
+        const state = get();
         await db.updatePet({ energy });
         set({ energy });
+        
+        // Sync energy to partner
+        syncManager.queueSync('pet', 'update', {
+          name: state.name,
+          xp: state.xp,
+          level: state.level,
+          mood: state.mood,
+          hunger: state.hunger,
+          energy,
+          equippedAccessoryId: state.equipped?.accessoryId,
+          equippedBackgroundId: state.equipped?.backgroundId,
+        });
       },
       equipAccessory: async (accessoryId: string | undefined) => {
         const state = get();
         const newEquipped = { ...state.equipped, accessoryId };
         await db.updatePet({ equipped: newEquipped });
         set({ equipped: newEquipped });
+        
+        // Sync equipped accessory to partner
+        syncManager.queueSync('pet', 'update', {
+          name: state.name,
+          xp: state.xp,
+          level: state.level,
+          mood: state.mood,
+          hunger: state.hunger,
+          energy: state.energy,
+          equippedAccessoryId: accessoryId,
+          equippedBackgroundId: state.equipped?.backgroundId,
+        });
       },
       equipBackground: async (backgroundId: string | undefined) => {
         const state = get();
         const newEquipped = { ...state.equipped, backgroundId };
         await db.updatePet({ equipped: newEquipped });
         set({ equipped: newEquipped });
+        
+        // Sync equipped background to partner
+        syncManager.queueSync('pet', 'update', {
+          name: state.name,
+          xp: state.xp,
+          level: state.level,
+          mood: state.mood,
+          hunger: state.hunger,
+          energy: state.energy,
+          equippedAccessoryId: state.equipped?.accessoryId,
+          equippedBackgroundId: backgroundId,
+        });
       },
     }),
     { name: 'pet-store' }

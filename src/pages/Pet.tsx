@@ -7,6 +7,7 @@ import { Modal } from '../components/Modal';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import type { PetItem } from '../types/database';
+import { syncManager } from '../lib/syncManager';
 
 export default function PetPage() {
   const { t } = useTranslation();
@@ -35,6 +36,18 @@ export default function PetPage() {
       navigator.vibrate([50, 100, 50]);
     }
     pet.setHunger(Math.min(100, pet.hunger + 10));
+    
+    // Sync pet state to partner
+    syncManager.queueSync('pet', 'update', {
+      name: pet.name,
+      xp: pet.xp,
+      level: pet.level,
+      mood: pet.mood,
+      hunger: Math.min(100, pet.hunger + 10),
+      energy: pet.energy,
+      equippedAccessoryId: pet.equipped?.accessoryId,
+      equippedBackgroundId: pet.equipped?.backgroundId,
+    });
     // TODO: Add XP reward
   };
 
@@ -43,6 +56,18 @@ export default function PetPage() {
       navigator.vibrate([50, 100, 50]);
     }
     pet.setEnergy(Math.min(100, pet.energy + 10));
+    
+    // Sync pet state to partner
+    syncManager.queueSync('pet', 'update', {
+      name: pet.name,
+      xp: pet.xp,
+      level: pet.level,
+      mood: pet.mood,
+      hunger: pet.hunger,
+      energy: Math.min(100, pet.energy + 10),
+      equippedAccessoryId: pet.equipped?.accessoryId,
+      equippedBackgroundId: pet.equipped?.backgroundId,
+    });
     // TODO: Add XP reward
   };
 
@@ -67,15 +92,53 @@ export default function PetPage() {
     pet.setName(trimmed);
     setShowRenameModal(false);
     setNameError('');
+    
+    // Sync pet name to partner
+    syncManager.queueSync('pet', 'update', {
+      name: trimmed,
+      xp: pet.xp,
+      level: pet.level,
+      mood: pet.mood,
+      hunger: pet.hunger,
+      energy: pet.energy,
+      equippedAccessoryId: pet.equipped?.accessoryId,
+      equippedBackgroundId: pet.equipped?.backgroundId,
+    });
   };
 
   const handleEquip = (item: PetItem) => {
     if (item.type === 'accessory') {
       const currentlyEquipped = pet.equipped?.accessoryId === item.id;
-      pet.equipAccessory(currentlyEquipped ? undefined : item.id);
+      const newAccessoryId = currentlyEquipped ? undefined : item.id;
+      pet.equipAccessory(newAccessoryId);
+      
+      // Sync equipped items to partner
+      syncManager.queueSync('pet', 'update', {
+        name: pet.name,
+        xp: pet.xp,
+        level: pet.level,
+        mood: pet.mood,
+        hunger: pet.hunger,
+        energy: pet.energy,
+        equippedAccessoryId: newAccessoryId,
+        equippedBackgroundId: pet.equipped?.backgroundId,
+      });
     } else if (item.type === 'background') {
       const currentlyEquipped = pet.equipped?.backgroundId === item.id;
-      pet.equipBackground(currentlyEquipped ? undefined : item.id);
+      const newBackgroundId = currentlyEquipped ? undefined : item.id;
+      pet.equipBackground(newBackgroundId);
+      
+      // Sync equipped items to partner
+      syncManager.queueSync('pet', 'update', {
+        name: pet.name,
+        xp: pet.xp,
+        level: pet.level,
+        mood: pet.mood,
+        hunger: pet.hunger,
+        energy: pet.energy,
+        equippedAccessoryId: pet.equipped?.accessoryId,
+        equippedBackgroundId: newBackgroundId,
+      });
     }
     // TODO: Add emote support when PetState interface includes it
     
@@ -98,6 +161,36 @@ export default function PetPage() {
   };
 
   const filteredItems = SEED_PET_ITEMS.filter(item => item.type === selectedTab);
+
+  // Listen for remote pet updates from partner
+  useEffect(() => {
+    const handleRemotePetUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const remotePetState = customEvent.detail;
+      
+      console.log('🔄 Partner updated pet:', remotePetState);
+      
+      // Update local pet state (triggers re-render)
+      pet.updatePet({
+        name: remotePetState.name,
+        xp: remotePetState.xp,
+        level: remotePetState.level,
+        mood: remotePetState.mood,
+        hunger: remotePetState.hunger,
+        energy: remotePetState.energy,
+        equipped: {
+          accessoryId: remotePetState.equippedAccessoryId,
+          backgroundId: remotePetState.equippedBackgroundId,
+        },
+      });
+    };
+
+    window.addEventListener('sync:pet', handleRemotePetUpdate);
+    
+    return () => {
+      window.removeEventListener('sync:pet', handleRemotePetUpdate);
+    };
+  }, [pet]);
 
   // State for pet emoji and background class
   const [petEmoji, setPetEmoji] = useState('🐾');
