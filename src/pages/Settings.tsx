@@ -11,9 +11,13 @@ import {
   isNotificationSupported,
   getUpcomingNotifications 
 } from '../lib/notifications';
-import type { NotificationSchedule } from '../lib/notifications';export default function SettingsPage() {
+import { useAuth } from '../contexts/FirebaseAuthContext';
+import type { NotificationSchedule } from '../lib/notifications';
+
+export default function SettingsPage() {
   const { t } = useTranslation();
   const { settings, updateSettings } = useSettingsStore();
+  const { deleteAccount } = useAuth();
   const pet = usePetStore();
   const { challenges } = useChallengesStore();
   
@@ -386,6 +390,31 @@ import type { NotificationSchedule } from '../lib/notifications';export default 
           <p className="text-xs text-text-secondary">
             {t.dataManagementDesc}
           </p>
+        </div>
+
+        {/* Danger Zone */}
+        <div className="bg-red-50 dark:bg-red-900/10 rounded-xl p-6 shadow space-y-4 border border-red-100 dark:border-red-900/30">
+          <h2 className="font-semibold text-red-600 dark:text-red-400">Danger Zone</h2>
+          
+          <p className="text-sm text-red-800 dark:text-red-300">
+            Once you delete your account, there is no going back. Please be certain.
+          </p>
+          
+          <Button 
+            onClick={async () => {
+              if (window.confirm('Are you absolutely sure you want to delete your account? This action cannot be undone.')) {
+                try {
+                  await deleteAccount();
+                } catch (error) {
+                  alert('Failed to delete account. Please try again.');
+                }
+              }
+            }} 
+            variant="outline" 
+            className="w-full border-red-200 text-red-600 hover:bg-red-100 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+          >
+            Delete Account
+          </Button>
         </div>
 
         {/* About */}

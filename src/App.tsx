@@ -4,8 +4,8 @@ import { initializeStores, useSettingsStore } from './store';
 import { Loader } from './components/Loader';
 import { BottomNav } from './components/BottomNav';
 import { ThemeProvider } from './components/ThemeProvider';
-import { AuthProvider } from './contexts/FirebaseAuthContext';
-import { SupabaseSyncProvider } from './contexts/SupabaseSyncContext';
+import { AuthProvider, useAuth } from './contexts/FirebaseAuthContext';
+import { SupabaseSyncProvider, useSync } from './contexts/SupabaseSyncContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 // Lazy-loaded pages
@@ -24,6 +24,8 @@ function AppContent() {
   const [isInitialized, setIsInitialized] = useState(false);
   const settings = useSettingsStore((state) => state.settings);
   const onboardingCompleted = settings.onboardingCompleted;
+  const { user, loading: authLoading } = useAuth();
+  const { isProfileSynced } = useSync();
 
   useEffect(() => {
     initializeStores().then(() => {
@@ -31,7 +33,11 @@ function AppContent() {
     });
   }, []);
 
-  if (!isInitialized) {
+  // Show loader while:
+  // 1. App is initializing (stores loading)
+  // 2. Auth is loading
+  // 3. User is logged in but profile hasn't synced from Supabase yet
+  if (!isInitialized || authLoading || (user && !isProfileSynced)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader />

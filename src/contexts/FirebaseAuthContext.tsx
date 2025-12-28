@@ -6,12 +6,14 @@ import {
   signOut,
   onAuthStateChanged,
   GoogleAuthProvider,
-  signInWithRedirect,
+  signInWithPopup,
   getRedirectResult,
   setPersistence,
   browserLocalPersistence,
 } from 'firebase/auth';
 import { auth, handleFirebaseError } from '../lib/firebase';
+import { supabase } from '../lib/supabase';
+import { clearAllData } from '../lib/db';
 
 interface AuthContextType {
   user: User | null;
@@ -21,6 +23,7 @@ interface AuthContextType {
   signup: (email: string, password: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   clearError: () => void;
 }
 
@@ -49,11 +52,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.error('Failed to set persistence:', err);
     });
 
-    // Handle redirect result from Google OAuth
+    // Handle redirect result from Google OAuth (legacy support or if redirect was used)
     getRedirectResult(auth)
       .then((result) => {
         if (result) {
           console.log('✅ Google OAuth redirect successful:', result.user.email);
+          setUser(result.user);
         }
       })
       .catch((err) => {
@@ -64,8 +68,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Listen to auth state changes
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      // 🔧 SIMPLIFIED: No Firestore - only Firebase Auth + Supabase
-      // User profiles are stored in Supabase (handled by ensureProfile())
       setUser(user);
       setLoading(false);
     });
@@ -78,17 +80,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setError(null);
       setLoading(true);
       
-      // 🔧 FIX: Sign in and immediately set user from credential
-      // Don't wait for onAuthStateChanged - it's too slow for navigation
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const firebaseUser = userCredential.user;
-      
-      // Set user immediately (before onAuthStateChanged fires)
-      setUser(firebaseUser);
-      console.log('✅ Login successful, user set immediately:', firebaseUser.email);
-      
-      // 🔧 NOTE: User profile will be created in Supabase by ensureProfile()
-      // called from SupabaseSyncContext - no Firestore needed!
+      setUser(userCredential.user);
+      console.log('✅ Login successful:', userCredential.user.email);
       
     } catch (err) {
       const errorMessage = handleFirebaseError(err);
@@ -104,16 +98,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setError(null);
       setLoading(true);
       
-      // Create Firebase Auth user
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      
-      // Set user immediately
-      setUser(user);
-      console.log('✅ Signup successful:', user.email);
-      
-      // 🔧 NOTE: User profile will be created in Supabase by ensureProfile()
-      // called from SupabaseSyncContext when user logs in - no Firestore needed!
+      setUser(userCredential.user);
+      console.log('✅ Signup successful:', userCredential.user.email);
       
     } catch (err) {
       const errorMessage = handleFirebaseError(err);
@@ -129,27 +116,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setError(null);
       setLoading(true);
       const provider = new GoogleAuthProvider();
-      // Force account selection to avoid cached credentials
       provider.setCustomParameters({
         prompt: 'select_account'
       });
       
-      // Use redirect instead of popup to avoid CORS issues
-      console.log('🔵 Redirecting to Google OAuth...');
-      console.log('🔧 Auth domain:', auth.config.authDomain);
-      console.log('🔧 API key present:', !!auth.config.apiKey);
+      console.log('🔵 Starting Google OAuth popup...');
+      const result = await signInWithPopup(auth, provider);
+      console.log('✅ Google OAuth popup successful:', result.user.email);
+      setUser(result.user);
       
-      await signInWithRedirect(auth, provider);
-      // After redirect, the page will reload and getRedirectResult will handle the result
     } catch (err) {
       console.error('❌ Google OAuth error:', err);
       
-      // 🔧 Enhanced error logging for diagnosis
       if (err && typeof err === 'object') {
         const firebaseErr = err as { code?: string; message?: string; customData?: unknown };
         console.error('Error code:', firebaseErr.code);
         console.error('Error message:', firebaseErr.message);
-        console.error('Error details:', firebaseErr.customData);
       }
       
       const errorMessage = handleFirebaseError(err);
@@ -163,10 +145,53 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       setError(null);
       await signOut(auth);
+      
+      // Clear local database to prevent data leaking between accounts
+      await clearAllData();
+      
+      // Reload page to reset all memory stores (Zustand, etc)
+      window.location.href = '/login';
     } catch (err) {
       const errorMessage = handleFirebaseError(err);
       setError(errorMessage);
       throw new Error(errorMessage);
+    }
+  };
+
+  const deleteAccount = async () => {
+    try {
+      setError(null);
+      setLoading(true);
+
+      if (!user) throw new Error('No user logged in');
+
+      // 1. Delete Supabase Profile (cascading SHOULD handle other data, but let's be safe)
+      // Note: We need to use the authenticated client
+      const { error: sbError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', user.uid);
+
+      if (sbError) {
+        console.error('Error deleting supabase profile:', sbError);
+        // Continue anyway to delete auth
+      }
+
+      // 2. Delete Firebase Auth User
+      await user.delete();
+
+      // 3. Clear local data
+      await clearAllData();
+
+      // 4. Redirect
+      window.location.href = '/login';
+    } catch (err) {
+      console.error('Error deleting account:', err);
+      const errorMessage = handleFirebaseError(err);
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -182,6 +207,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     signup,
     loginWithGoogle,
     logout,
+    deleteAccount,
     clearError,
   };
 

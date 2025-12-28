@@ -1,7 +1,6 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/FirebaseAuthContext';
-import { useSettingsStore } from '../store';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { useTranslation } from '../lib/i18n';
@@ -9,14 +8,20 @@ import { useTranslation } from '../lib/i18n';
 export default function Signup() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { signup, loginWithGoogle, error, clearError } = useAuth();
-  const settings = useSettingsStore((state) => state.settings);
+  const { signup, loginWithGoogle, error, clearError, user, loading } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/onboarding');
+    }
+  }, [user, loading, navigate]);
 
   const validateForm = (): boolean => {
     if (!email.trim()) {
@@ -52,7 +57,7 @@ export default function Signup() {
     setIsLoading(true);
     try {
       await signup(email, password);
-      navigate('/onboarding'); // Redirect to onboarding for new users
+      // Navigation handled by useEffect
     } catch {
       // Error handled by AuthContext
     } finally {
@@ -67,19 +72,7 @@ export default function Signup() {
     try {
       console.log('🔵 Starting Google OAuth...');
       await loginWithGoogle();
-      console.log('✅ Google OAuth successful');
-      
-      // Check if user has completed onboarding
-      const hasCompletedOnboarding = settings.onboardingCompleted;
-      console.log('📋 Onboarding status:', hasCompletedOnboarding);
-      
-      if (hasCompletedOnboarding) {
-        console.log('➡️ Navigating to home (onboarding already completed)');
-        navigate('/');
-      } else {
-        console.log('➡️ Navigating to onboarding (first time user)');
-        navigate('/onboarding');
-      }
+      // Navigation handled by useEffect
     } catch (err) {
       console.error('❌ Google OAuth failed in Signup component:', err);
       // Error already handled and displayed by AuthContext

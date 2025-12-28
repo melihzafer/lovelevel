@@ -7,6 +7,10 @@ import { initializeNotifications } from './lib/notifications'
 // Initialize notification system
 initializeNotifications().catch(console.error);
 
+// Initialize stores and sync listeners
+import { initializeStores } from './store';
+initializeStores().catch(console.error);
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />

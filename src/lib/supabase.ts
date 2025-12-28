@@ -30,6 +30,8 @@ export type Database = {
           display_name: string | null;
           email: string | null;
           photo_url: string | null;
+          onboarding_completed: boolean;
+          settings: Record<string, any> | null;
           created_at: string;
           updated_at: string;
         };
@@ -38,6 +40,8 @@ export type Database = {
           display_name?: string | null;
           email?: string | null;
           photo_url?: string | null;
+          onboarding_completed?: boolean;
+          settings?: Record<string, any> | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -46,6 +50,8 @@ export type Database = {
           display_name?: string | null;
           email?: string | null;
           photo_url?: string | null;
+          onboarding_completed?: boolean;
+          settings?: Record<string, any> | null;
           created_at?: string;
           updated_at?: string;
         };

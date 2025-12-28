@@ -1,18 +1,17 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { usePetStore, useLevelInfo } from '../store';
+import { usePetStore } from '../store';
 import { useTranslation } from '../lib/i18n';
 import { SEED_PET_ITEMS, getUnlockedItems } from '../data/seedPetItems';
 import { Modal } from '../components/Modal';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import type { PetItem } from '../types/database';
-import { syncManager } from '../lib/syncManager';
+import { PetGame } from '../components/pet/PetGame';
 
 export default function PetPage() {
   const { t } = useTranslation();
   const pet = usePetStore();
-  const levelInfo = useLevelInfo();
   const petName = pet.name || 'Your Pet';
 
   const [showRenameModal, setShowRenameModal] = useState(false);
@@ -23,53 +22,6 @@ export default function PetPage() {
 
   // Get unlocked items based on level and monthiversaries
   const unlockedItems = getUnlockedItems(pet.level, 0, 0); // TODO: get actual monthiversaries and challenge count
-
-  const handleTap = () => {
-    // Haptic feedback if available
-    if ('vibrate' in navigator) {
-      navigator.vibrate(50);
-    }
-  };
-
-  const handleFeed = () => {
-    if ('vibrate' in navigator) {
-      navigator.vibrate([50, 100, 50]);
-    }
-    pet.setHunger(Math.min(100, pet.hunger + 10));
-    
-    // Sync pet state to partner
-    syncManager.queueSync('pet', 'update', {
-      name: pet.name,
-      xp: pet.xp,
-      level: pet.level,
-      mood: pet.mood,
-      hunger: Math.min(100, pet.hunger + 10),
-      energy: pet.energy,
-      equippedAccessoryId: pet.equipped?.accessoryId,
-      equippedBackgroundId: pet.equipped?.backgroundId,
-    });
-    // TODO: Add XP reward
-  };
-
-  const handlePlay = () => {
-    if ('vibrate' in navigator) {
-      navigator.vibrate([50, 100, 50]);
-    }
-    pet.setEnergy(Math.min(100, pet.energy + 10));
-    
-    // Sync pet state to partner
-    syncManager.queueSync('pet', 'update', {
-      name: pet.name,
-      xp: pet.xp,
-      level: pet.level,
-      mood: pet.mood,
-      hunger: pet.hunger,
-      energy: Math.min(100, pet.energy + 10),
-      equippedAccessoryId: pet.equipped?.accessoryId,
-      equippedBackgroundId: pet.equipped?.backgroundId,
-    });
-    // TODO: Add XP reward
-  };
 
   const handleRename = () => {
     const trimmed = newName.trim();
@@ -92,18 +44,6 @@ export default function PetPage() {
     pet.setName(trimmed);
     setShowRenameModal(false);
     setNameError('');
-    
-    // Sync pet name to partner
-    syncManager.queueSync('pet', 'update', {
-      name: trimmed,
-      xp: pet.xp,
-      level: pet.level,
-      mood: pet.mood,
-      hunger: pet.hunger,
-      energy: pet.energy,
-      equippedAccessoryId: pet.equipped?.accessoryId,
-      equippedBackgroundId: pet.equipped?.backgroundId,
-    });
   };
 
   const handleEquip = (item: PetItem) => {
@@ -111,36 +51,11 @@ export default function PetPage() {
       const currentlyEquipped = pet.equipped?.accessoryId === item.id;
       const newAccessoryId = currentlyEquipped ? undefined : item.id;
       pet.equipAccessory(newAccessoryId);
-      
-      // Sync equipped items to partner
-      syncManager.queueSync('pet', 'update', {
-        name: pet.name,
-        xp: pet.xp,
-        level: pet.level,
-        mood: pet.mood,
-        hunger: pet.hunger,
-        energy: pet.energy,
-        equippedAccessoryId: newAccessoryId,
-        equippedBackgroundId: pet.equipped?.backgroundId,
-      });
     } else if (item.type === 'background') {
       const currentlyEquipped = pet.equipped?.backgroundId === item.id;
       const newBackgroundId = currentlyEquipped ? undefined : item.id;
       pet.equipBackground(newBackgroundId);
-      
-      // Sync equipped items to partner
-      syncManager.queueSync('pet', 'update', {
-        name: pet.name,
-        xp: pet.xp,
-        level: pet.level,
-        mood: pet.mood,
-        hunger: pet.hunger,
-        energy: pet.energy,
-        equippedAccessoryId: pet.equipped?.accessoryId,
-        equippedBackgroundId: newBackgroundId,
-      });
     }
-    // TODO: Add emote support when PetState interface includes it
     
     if ('vibrate' in navigator) {
       navigator.vibrate(30);
@@ -192,34 +107,9 @@ export default function PetPage() {
     };
   }, [pet]);
 
-  // State for pet emoji and background class
-  const [petEmoji, setPetEmoji] = useState('🐾');
+  // Background class logic (preserved from original)
   const [backgroundClass, setBackgroundClass] = useState('bg-gradient-to-br from-accent-50 via-white to-primary-50 dark:from-accent-950 dark:via-gray-900 dark:to-primary-950');
 
-  // Update pet emoji when accessory changes
-  useEffect(() => {
-    const equippedAccessory = SEED_PET_ITEMS.find(item => item.id === pet.equipped?.accessoryId);
-    
-    if (!equippedAccessory) {
-      setPetEmoji('🐾');
-      return;
-    }
-
-    const emojiMap: Record<string, string> = {
-      'acc-sunglasses': '😎',
-      'acc-party-hat': '🥳',
-      'acc-flower-crown': '🌸',
-      'acc-chef-hat': '👨‍🍳',
-      'acc-wizard-hat': '🧙',
-      'acc-crown': '👑',
-      'acc-headphones': '🎧',
-      'acc-pirate-hat': '�‍☠️',
-    };
-
-    setPetEmoji(emojiMap[equippedAccessory.id] || '🐾');
-  }, [pet.equipped?.accessoryId]);
-
-  // Update background class when background changes
   useEffect(() => {
     const equippedBackground = SEED_PET_ITEMS.find(item => item.id === pet.equipped?.backgroundId);
     
@@ -236,7 +126,7 @@ export default function PetPage() {
       'bg-candy': 'bg-gradient-to-br from-pink-200 via-rose-200 to-fuchsia-300 dark:from-pink-900 dark:via-rose-900 dark:to-fuchsia-900',
       'bg-desert': 'bg-gradient-to-br from-yellow-200 via-amber-200 to-orange-300 dark:from-yellow-900 dark:via-amber-900 dark:to-orange-900',
       'bg-snow': 'bg-gradient-to-br from-blue-50 via-cyan-50 to-white dark:from-blue-950 dark:via-cyan-950 dark:to-gray-900',
-      'bg-cherry': 'bg-gradient-to-br from-pink-300 via-rose-300 to-red-300 dark:from-pink-900 dark:via-rose-900 dark:to-red-900',
+      'bg-cherry': 'bg-gradient-to-br from-pink-300 via-rose-300 to-red-300 dark:from-pink-900 dark:via-rose-300 dark:to-red-900',
       'bg-lavender': 'bg-gradient-to-br from-purple-200 via-violet-200 to-fuchsia-200 dark:from-purple-900 dark:via-violet-900 dark:to-fuchsia-900',
       'bg-mint': 'bg-gradient-to-br from-green-100 via-teal-100 to-cyan-100 dark:from-green-900 dark:via-teal-900 dark:to-cyan-900',
       'bg-park': 'bg-gradient-to-br from-green-200 via-yellow-200 to-green-300 dark:from-green-900 dark:via-yellow-900 dark:to-green-950',
@@ -246,20 +136,9 @@ export default function PetPage() {
     setBackgroundClass(backgroundMap[equippedBackground.id] || 'bg-gradient-to-br from-accent-50 via-white to-primary-50 dark:from-accent-950 dark:via-gray-900 dark:to-primary-950');
   }, [pet.equipped?.backgroundId]);
 
-  // Get equipped accessory for badge display
-  const equippedAccessory = SEED_PET_ITEMS.find(item => item.id === pet.equipped?.accessoryId);
-
-  if (!levelInfo) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-12 h-12 border-4 border-primary-200 border-t-primary-600 rounded-full" />
-      </div>
-    );
-  }
-
   return (
     <div className={`min-h-screen ${backgroundClass} p-6 pb-24 transition-colors duration-700`}>
-      <div className="max-w-2xl mx-auto space-y-8">
+      <div className="max-w-md mx-auto space-y-8">
         {/* Pet Name & Level */}
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-2">
@@ -272,94 +151,10 @@ export default function PetPage() {
               ✏️
             </button>
           </div>
-          <div className="inline-block px-4 py-1 rounded-full bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300 font-medium">
-            {t.petLevel} {pet.level}
-          </div>
         </div>
 
-        {/* Pet Visual */}
-        <motion.div
-          onClick={handleTap}
-          whileTap={{ scale: 0.95 }}
-          className="relative mx-auto w-64 h-64 flex items-center justify-center cursor-pointer"
-        >
-          <motion.div
-            animate={{
-              y: [0, -10, 0],
-              rotate: [-2, 2, -2],
-            }}
-            transition={{
-              duration: 4,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
-            className="text-9xl select-none"
-          >
-            {petEmoji}
-          </motion.div>
-
-          {/* Accessory Badge (show equipped item name) */}
-          {equippedAccessory && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="absolute top-0 left-1/2 -translate-x-1/2 bg-primary-500 text-white text-xs px-3 py-1 rounded-full shadow-lg"
-            >
-              {equippedAccessory.name}
-            </motion.div>
-          )}
-
-          {/* Mood indicator */}
-          <div className="absolute bottom-0 right-0 text-4xl">
-            {pet.mood === 'happy' && '😊'}
-            {pet.mood === 'chill' && '😎'}
-            {pet.mood === 'sleepy' && '😴'}
-          </div>
-        </motion.div>
-
-        {/* XP Progress */}
-        <div className="bg-bg-primary rounded-xl p-6 space-y-4">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-text-secondary">{t.xpProgress}</span>
-            <span className="font-medium text-text-primary">
-              {levelInfo.currentXP} / {levelInfo.xpForNextLevel}
-            </span>
-          </div>
-
-          <div className="relative h-4 bg-primary-100 dark:bg-primary-900 rounded-full overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${levelInfo.xpProgressPercent}%` }}
-              transition={{ duration: 1, ease: 'easeOut' }}
-              className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary-500 to-accent-500 rounded-full"
-            />
-          </div>
-
-          <p className="text-xs text-text-secondary text-center">
-            {levelInfo.xpForNextLevel - levelInfo.currentXP} {t.xpUntilLevel} {pet.level + 1}
-          </p>
-        </div>
-
-        {/* Stats & Actions */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-bg-primary rounded-xl p-4 text-center space-y-2">
-            <div className="text-3xl mb-2">❤️</div>
-            <div className="text-2xl font-bold text-text-primary">{pet.hunger}</div>
-            <div className="text-xs text-text-secondary mb-2">{t.happiness}</div>
-            <Button onClick={handleFeed} variant="outline" className="w-full text-sm py-2">
-              {t.feed || 'Feed'}
-            </Button>
-          </div>
-
-          <div className="bg-bg-primary rounded-xl p-4 text-center space-y-2">
-            <div className="text-3xl mb-2">⚡</div>
-            <div className="text-2xl font-bold text-text-primary">{pet.energy}</div>
-            <div className="text-xs text-text-secondary mb-2">{t.energy}</div>
-            <Button onClick={handlePlay} variant="outline" className="w-full text-sm py-2">
-              {t.play || 'Play'}
-            </Button>
-          </div>
-        </div>
+        {/* Pet Game Component */}
+        <PetGame />
 
         {/* Inventory Button */}
         <Button 

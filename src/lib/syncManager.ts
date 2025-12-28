@@ -5,7 +5,7 @@ import type { Challenge } from '../types/database';
 
 interface SyncQueueItem {
   id: string;
-  type: 'challenge' | 'pet';
+  type: 'challenge' | 'pet' | 'settings';
   action: 'add' | 'update' | 'delete';
   data: Challenge | Record<string, unknown>;
   timestamp: string;
@@ -17,12 +17,46 @@ class SyncManager {
   private syncQueue: SyncQueueItem[] = [];
   private isSyncing = false;
   private partnershipId: string | null = null;
-
+  private currentUserId: string | null = null;
+  private partnerId: string | null = null;
+  
   /**
    * Initialize sync for a partnership
    */
   async initialize(userId: string) {
     try {
+      console.log('🔍 Initializing sync for user:', userId);
+      this.currentUserId = userId;
+
+      // 1. Fetch user profile to sync settings/onboarding status
+      // Use maybeSingle to avoid 406 errors if not found (though ensureProfile should have created it)
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('onboarding_completed, settings')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error('❌ Error fetching profile for sync:', profileError);
+      } else if (profile) {
+        console.log('✅ Found user profile settings, syncing to local DB...', { 
+          onboardingCompleted: profile.onboarding_completed 
+        });
+        
+        // Update local settings from remote
+        const currentSettings = await db.getSettings();
+        const remoteSettings = profile.settings as Record<string, any> || {};
+        
+        await db.updateSettings({
+          ...currentSettings,
+          ...remoteSettings,
+          onboardingCompleted: profile.onboarding_completed ?? currentSettings.onboardingCompleted,
+        });
+        
+      } else {
+        console.warn('⚠️ No profile found during sync init (unexpected after ensureProfile)');
+      }
+
       console.log('🔍 Looking for active partnership for user:', userId);
       
       // Fetch user's active partnership
@@ -31,25 +65,23 @@ class SyncManager {
         .select('id, user1_id, user2_id, status, anniversary_date')
         .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
         .eq('status', 'active')
-        .single();
+        .maybeSingle();
 
       if (error) {
-        // 🔧 FIX: No partnership is not an error - it's expected for new users
-        if (error.code === 'PGRST116') {
-          console.log('ℹ️ No active partnership found (this is normal for new users)');
-        } else {
-          console.warn('⚠️ Partnership query error:', error.message);
-        }
+        console.warn('⚠️ Partnership query error:', error.message);
         return null;
       }
 
       if (!partnership) {
-        console.log('ℹ️ No partnership data returned');
+        console.log('ℹ️ No active partnership found (this is normal for new users)');
         return null;
       }
 
       console.log('✅ Found partnership:', partnership.id);
       this.partnershipId = partnership.id;
+      
+      // Determine partner ID
+      this.partnerId = partnership.user1_id === userId ? partnership.user2_id : partnership.user1_id;
 
       // Start real-time sync
       await this.startRealtimeSync(partnership.id);
@@ -62,6 +94,62 @@ class SyncManager {
 
       // Initial sync: Supabase Pet → IndexedDB
       await this.syncPetRemoteToLocal(partnership.id);
+
+      // 🆕 Fix: Sync Shared Settings (Partnership Date & Partner Name) to Local DB
+      try {
+        console.log('🔄 Syncing shared settings from remote to local...');
+        const currentSettings = await db.getSettings();
+        let settingsUpdates: Record<string, any> = {};
+        let hasUpdates = false;
+
+        // 1. Sync Anniversary Date from Partnership
+        if (partnership.anniversary_date && partnership.anniversary_date !== currentSettings.relationshipStartDate) {
+           console.log('📅 Found newer anniversary date during init:', partnership.anniversary_date);
+           settingsUpdates.relationshipStartDate = partnership.anniversary_date;
+           hasUpdates = true;
+        }
+
+        // 2. Sync Partner Name from Profile
+        if (this.partnerId) {
+           const { data: partnerProfile } = await supabase
+             .from('profiles')
+             .select('display_name')
+             .eq('id', this.partnerId)
+             .maybeSingle();
+
+           if (partnerProfile && partnerProfile.display_name) {
+              const partners = [...currentSettings.partners];
+              // Assuming index 1 is partner, or find via ID
+              // We need to match ID if possible
+              let partnerIndex = partners.findIndex(p => p.id === this.partnerId);
+              if (partnerIndex === -1) partnerIndex = 1; // Default to slot 2 if not found
+              
+              const currentName = partners[partnerIndex]?.name;
+              
+              if (currentName !== partnerProfile.display_name) {
+                 console.log(`👤 Found newer partner name during init: ${partnerProfile.display_name}`);
+                 partners[partnerIndex] = {
+                   ...partners[partnerIndex],
+                   id: this.partnerId,
+                   name: partnerProfile.display_name
+                 };
+                 settingsUpdates.partners = partners;
+                 hasUpdates = true;
+              }
+           }
+        }
+
+        if (hasUpdates) {
+          await db.updateSettings(settingsUpdates);
+          // Dispatch event to update Store
+          window.dispatchEvent(new CustomEvent('sync:settings', { 
+             detail: settingsUpdates 
+          }));
+          console.log('✅ Local settings updated with shared data');
+        }
+      } catch (err) {
+         console.error('Error syncing shared settings during init:', err);
+      }
 
       return partnership;
     } catch (error) {
@@ -113,7 +201,90 @@ class SyncManager {
 
     this.channels.set('pet', petChannel);
 
+    // Subscribe to partnership changes (Anniversary Date)
+    const partnershipChannel = supabase
+      .channel(`partnership:${partnershipId}:details`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'partnerships',
+          filter: `id=eq.${partnershipId}`,
+        },
+        (payload) => {
+          this.handleRemotePartnershipChange(payload);
+        }
+      )
+      .subscribe();
+      
+    this.channels.set('partnership-details', partnershipChannel);
+
+    // Subscribe to partner's profile changes (Name)
+    if (this.partnerId) {
+      const profileChannel = supabase
+        .channel(`partnership:${partnershipId}:partner-profile`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'profiles',
+            filter: `id=eq.${this.partnerId}`,
+          },
+          (payload) => {
+            this.handleRemoteProfileChange(payload);
+          }
+        )
+        .subscribe();
+        
+      this.channels.set('partner-profile', profileChannel);
+    }
+
     console.log('✅ Real-time sync started for partnership:', partnershipId);
+  }
+
+  /**
+   * Subscribe to new partnership requests (for inviter waiting for partner)
+   */
+  subscribeToPartnershipRequests(userId: string, onPartnershipCreated: () => void) {
+    if (this.channels.has('partnership-requests')) {
+      return;
+    }
+
+    console.log('👂 Listening for new partnerships for user:', userId);
+
+    const channel = supabase
+      .channel(`user:${userId}:partnerships`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'partnerships',
+          filter: `user1_id=eq.${userId}`, 
+        },
+        async (payload) => {
+          console.log('✨ New partnership detected (user1)!', payload);
+          onPartnershipCreated();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'partnerships',
+          filter: `user2_id=eq.${userId}`,
+        },
+        async (payload) => {
+          console.log('✨ New partnership detected (user2)!', payload);
+          onPartnershipCreated();
+        }
+      )
+      .subscribe();
+
+    this.channels.set('partnership-requests', channel);
   }
 
   /**
@@ -167,6 +338,100 @@ class SyncManager {
       window.dispatchEvent(new CustomEvent('sync:challenge', { detail: payload }));
     } catch (error) {
       console.error('Error handling remote challenge change:', error);
+    }
+  }
+
+  /**
+   * Handle remote partnership changes (Anniversary Date)
+   */
+  private async handleRemotePartnershipChange(payload: Record<string, unknown>) {
+    try {
+      const { new: newData } = payload as {
+        new: Record<string, unknown>;
+      };
+
+      if (newData.anniversary_date) {
+        console.log('📅 Remote partnership update:', newData.anniversary_date);
+        
+        // Update local settings directly
+        // Note: we are not scheduling a sync back to prevent loops
+        const currentSettings = await db.getSettings();
+        const newDate = String(newData.anniversary_date);
+        
+        if (currentSettings.relationshipStartDate !== newDate) {
+           await db.updateSettings({
+             relationshipStartDate: newDate
+           });
+           
+           // Dispatch event for Store update
+           window.dispatchEvent(new CustomEvent('sync:settings', { 
+             detail: { relationshipStartDate: newDate } 
+           }));
+        }
+      }
+    } catch (error) {
+      console.error('Error handling remote partnership change:', error);
+    }
+  }
+
+  /**
+   * Handle remote profile changes (Partner Name)
+   */
+  private async handleRemoteProfileChange(payload: Record<string, unknown>) {
+    try {
+      const { new: newData } = payload as {
+        new: Record<string, unknown>;
+      };
+
+      if (newData.display_name) {
+        console.log('👤 Remote partner profile update:', newData.display_name);
+        
+        // Update local settings partners array
+        const currentSettings = await db.getSettings();
+        const newName = String(newData.display_name);
+        const partnerId = String(newData.id);
+        
+        // Clone partners array
+        const partners = [...currentSettings.partners];
+        
+        // 1. Try to find by ID
+        let partnerIndex = partners.findIndex(p => p.id === partnerId);
+        
+        // 2. If not found, check if it matches our known partnerId
+        if (partnerIndex === -1 && this.partnerId === partnerId) {
+          // Assume index 1 is the partner slot (standard convention in this app)
+          partnerIndex = 1;
+        }
+
+        // 3. Fallback: If we still don't know, and it's NOT us (currentUserId), 
+        // and we have a placeholder like 'p2' at index 1, update it.
+        if (partnerIndex === -1 && partnerId !== this.currentUserId) {
+             // Check if index 1 has a placeholder ID
+             if (partners[1] && (partners[1].id === 'p2' || partners[1].id === 'partner')) {
+                 partnerIndex = 1;
+             }
+        }
+           
+        if (partnerIndex !== -1 && partners[partnerIndex]) {
+          console.log(`✅ Updating partner at index ${partnerIndex} with name: ${newName}`);
+          partners[partnerIndex] = { 
+            ...partners[partnerIndex], 
+            name: newName, 
+            id: partnerId // Ensure ID is synced now
+          };
+          
+          await db.updateSettings({ partners });
+          
+          // Dispatch event for Store update
+          window.dispatchEvent(new CustomEvent('sync:settings', { 
+             detail: { partners } 
+          }));
+        } else {
+            console.warn('⚠️ Could not find partner slot to update for ID:', partnerId);
+        }
+      }
+    } catch (error) {
+      console.error('Error handling remote profile change:', error);
     }
   }
 
@@ -282,15 +547,15 @@ class SyncManager {
         .from('shared_pet')
         .select('*')
         .eq('partnership_id', partnershipId)
-        .single();
+        .maybeSingle();
 
       if (error) {
-        // If no pet record exists yet, that's OK - it will be created on first update
-        if (error.code === 'PGRST116') {
-          console.log('ℹ️ No shared pet record found (will be created on first update)');
-          return;
-        }
         throw error;
+      }
+
+      if (!petData) {
+        console.log('ℹ️ No shared pet record found (will be created on first update)');
+        return;
       }
 
       if (petData) {
@@ -319,11 +584,11 @@ class SyncManager {
    * Queue a local change for sync (when online)
    */
   async queueSync(
-    type: 'challenge' | 'pet',
+    type: 'challenge' | 'pet' | 'settings',
     action: 'add' | 'update' | 'delete',
     data: Challenge | Record<string, unknown>
   ) {
-    if (!this.partnershipId) {
+    if (type !== 'settings' && !this.partnershipId) {
       console.log('No partnership - skipping sync queue');
       return;
     }
@@ -349,24 +614,58 @@ class SyncManager {
    * Process sync queue (upload to Supabase)
    */
   async processQueue() {
-    if (this.isSyncing || this.syncQueue.length === 0 || !this.partnershipId) {
+    if (this.isSyncing || this.syncQueue.length === 0) {
       return;
+    }
+
+    // Only check partnershipId if there are items that require it
+    const needsPartnership = this.syncQueue.some(item => item.type !== 'settings');
+    if (needsPartnership && !this.partnershipId) {
+      // Filter out items that don't need partnership and process them?
+      // Or just return?
+      // For simplicity, let's just proceed. 
+      // Individual handlers like syncChallenge might fail if no partnershipId but queueSync prevents adding them.
+      // However, queueSync check was: type !== 'settings' && !this.partnershipId.
+      // So if queue has non-settings items, partnershipId must have been present when adding.
+      // If it's gone now (e.g. disconnected), we should probably fail those items or skip.
+      
+      // Let's refine the check: if the head of the queue needs partnership but we don't have it, we're stuck.
+      const nextItem = this.syncQueue[0];
+      if (nextItem.type !== 'settings' && !this.partnershipId) {
+        return;
+      }
     }
 
     this.isSyncing = true;
 
     try {
-      const userId = (await supabase.auth.getUser()).data.user?.id;
+      // Try to get user ID from Supabase auth, or fallback to stored user ID
+      let userId = (await supabase.auth.getUser()).data.user?.id;
+      
+      // If we are using Firebase Auth exclusively, supabase.auth.getUser() might be empty.
+      // We should use the userId passed during initialization.
+      if (!userId && this.currentUserId) {
+        userId = this.currentUserId;
+      }
+
       if (!userId) throw new Error('User not authenticated');
 
       while (this.syncQueue.length > 0) {
         const item = this.syncQueue[0];
+
+        // Double check partnership requirement before processing
+        if (item.type !== 'settings' && !this.partnershipId) {
+           // Should ideally remove or skip, but let's break loop
+           break;
+        }
 
         try {
           if (item.type === 'challenge') {
             await this.syncChallenge(item, userId);
           } else if (item.type === 'pet') {
             await this.syncPet(item, userId);
+          } else if (item.type === 'settings') {
+            await this.syncSettings(item, userId);
           }
 
           // Remove from queue on success
@@ -389,6 +688,54 @@ class SyncManager {
       }
     } finally {
       this.isSyncing = false;
+    }
+  }
+
+  /**
+   * Sync settings to Supabase
+   */
+  private async syncSettings(item: SyncQueueItem, userId: string) {
+    const { data } = item;
+    const settings = data as Record<string, unknown>;
+
+    console.log('🔄 Syncing settings to remote:', settings);
+
+    // 1. Sync full settings blob + onboarding
+    await supabase.from('profiles').update({
+      settings: settings,
+      onboarding_completed: Boolean(settings.onboardingCompleted),
+      updated_at: new Date().toISOString(),
+    }).eq('id', userId);
+
+    console.log('✅ Synced profile settings');
+
+    // 2. Sync Shared Data: Relationship Start Date -> Partnerships
+    if (this.partnershipId && settings.relationshipStartDate) {
+      console.log(`🔄 Updating partnership date: ${settings.relationshipStartDate} for ID: ${this.partnershipId}`);
+      const { error } = await supabase.from('partnerships').update({
+        anniversary_date: settings.relationshipStartDate,
+      }).eq('id', this.partnershipId);
+      
+      if (error) console.error('❌ Error updating partnership date:', error);
+      else console.log('✅ Updated partnership date');
+    } else {
+        console.log('⚠️ Skipping partnership date sync:', { 
+            hasPartnershipId: !!this.partnershipId, 
+            hasDate: !!settings.relationshipStartDate 
+        });
+    }
+
+    // 3. Sync Public Profile: Display Name -> Profiles
+    // Assume partners[0] is always "me" / the current user
+    const partners = settings.partners as Array<{id: string, name: string}>;
+    if (partners && partners[0] && partners[0].name) {
+      console.log(`🔄 Updating public profile name: ${partners[0].name}`);
+      const { error } = await supabase.from('profiles').update({
+        display_name: partners[0].name,
+      }).eq('id', userId);
+      
+      if (error) console.error('❌ Error updating profile name:', error);
+      else console.log('✅ Updated profile name');
     }
   }
 

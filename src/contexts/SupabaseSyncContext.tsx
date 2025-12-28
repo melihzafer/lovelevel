@@ -3,12 +3,14 @@ import type { ReactNode } from 'react';
 import { useAuth } from './FirebaseAuthContext';
 import { syncManager } from '../lib/syncManager';
 import { ensureProfile } from '../lib/supabase';
+import { useSettingsStore } from '../store';
 import type { Partnership } from '../types/database';
 
 interface SupabaseSyncContextType {
   partnership: Partnership | null;
   isSyncing: boolean;
   isOnline: boolean;
+  isProfileSynced: boolean;
   queuedItems: number;
 }
 
@@ -19,11 +21,13 @@ export function SupabaseSyncProvider({ children }: { children: ReactNode }) {
   const [partnership, setPartnership] = useState<Partnership | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isProfileSynced, setIsProfileSynced] = useState(false);
 
   // Initialize sync when user logs in
   useEffect(() => {
     if (!user) {
       setPartnership(null);
+      setIsProfileSynced(false);
       return;
     }
 
@@ -45,6 +49,14 @@ export function SupabaseSyncProvider({ children }: { children: ReactNode }) {
         
         // Now safe to initialize sync (which queries partnerships, etc.)
         const partnershipData = await syncManager.initialize(user.uid);
+
+        // Reload settings from local DB (updated by syncManager)
+        console.log('🔄 Reloading settings from local DB...');
+        await useSettingsStore.getState().loadSettings();
+        
+        // MARK PROFILE AS SYNCED - This is critical for preventing onboarding loop
+        setIsProfileSynced(true);
+
         if (partnershipData) {
           setPartnership(partnershipData);
           console.log('✅ Sync initialized for partnership:', partnershipData.id);
@@ -52,11 +64,21 @@ export function SupabaseSyncProvider({ children }: { children: ReactNode }) {
           console.log('ℹ️ No active partnership - operating in solo mode');
           // 🔧 FIX: Solo mode is OK, not an error - user can still use app
           setPartnership(null);
+
+          // 🆕 Listen for new partnerships (if we sent an invite)
+          syncManager.subscribeToPartnershipRequests(user.uid, () => {
+             console.log('🎉 Partnership request detected! Re-initializing sync...');
+             // Re-run initialization to pick up the new partnership and start full sync
+             initSync();
+          });
         }
       } catch (error) {
         console.error('⚠️ Sync initialization error (continuing in solo mode):', error);
         // 🔧 FIX: Don't block login - let user continue without sync
         setPartnership(null);
+        
+        // Even if sync fails, we mark as synced so app can load (perhaps fallback to local data)
+        setIsProfileSynced(true);
       } finally {
         setIsSyncing(false);
       }
@@ -121,6 +143,7 @@ export function SupabaseSyncProvider({ children }: { children: ReactNode }) {
     partnership,
     isSyncing,
     isOnline,
+    isProfileSynced,
     queuedItems: 0, // TODO: Expose sync queue length from syncManager
   };
 

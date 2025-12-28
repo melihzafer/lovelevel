@@ -12,12 +12,13 @@ interface SettingsState {
   settings: Settings;
   loadSettings: () => Promise<void>;
   updateSettings: (updates: Partial<Settings>) => Promise<void>;
+  setSettingsRemote: (updates: Partial<Settings>) => Promise<void>;
   isLoading: boolean;
 }
 
 export const useSettingsStore = create<SettingsState>()(
   devtools(
-    (set) => ({
+    (set, get) => ({
       settings: DEFAULT_SETTINGS,
       isLoading: true,
       loadSettings: async () => {
@@ -27,9 +28,26 @@ export const useSettingsStore = create<SettingsState>()(
       },
       updateSettings: async (updates) => {
         await db.updateSettings(updates);
+        
+        // Merge updates into current settings
+        const currentSettings = get().settings;
+        const newSettings = { ...currentSettings, ...updates };
+
         set((state) => ({
-          settings: { ...state.settings, ...updates },
+          settings: newSettings,
         }));
+
+        // Sync settings to Supabase
+        syncManager.queueSync('settings', 'update', newSettings as unknown as Record<string, unknown>);
+      },
+      setSettingsRemote: async (updates) => {
+        // Update DB without triggering sync
+        await db.updateSettings(updates);
+        
+        const currentSettings = get().settings;
+        const newSettings = { ...currentSettings, ...updates };
+
+        set({ settings: newSettings });
       },
     }),
     { name: 'settings-store' }
@@ -353,11 +371,52 @@ export function useLevelInfo() {
   return getLevelInfo(pet.level, pet.xp, settings.levelCurveMultiplier);
 }
 
-// Initialize all stores
+// Initialize all stores and listeners
 export async function initializeStores() {
   await Promise.all([
     useSettingsStore.getState().loadSettings(),
     usePetStore.getState().loadPet(),
     useChallengesStore.getState().loadChallenges(),
   ]);
+  
+  // Set up listeners for real-time sync events
+  if (typeof window !== 'undefined') {
+    // Settings Sync
+    window.addEventListener('sync:settings', (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log('🔄 Store: Received settings sync', customEvent.detail);
+      useSettingsStore.getState().setSettingsRemote(customEvent.detail);
+    });
+
+    // Pet Sync
+    window.addEventListener('sync:pet', (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log('🔄 Store: Received pet sync', customEvent.detail);
+      usePetStore.getState().updatePet(customEvent.detail);
+    });
+
+    // Challenge Sync
+    window.addEventListener('sync:challenge', (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log('🔄 Store: Received challenge sync', customEvent.detail);
+      
+      const { eventType, new: newData, old: oldData } = customEvent.detail;
+      const store = useChallengesStore.getState();
+
+      // For simplicity, reload everyone or optimize updates
+      // Optimization:
+      if (eventType === 'INSERT' && newData) {
+        // We need to map DB shape to Challenge shape if needed, 
+        // but db.getChallenge/getAllChallenges handles that.
+        // Since we already updated DB in syncManager, let's just reload for safety/simplicity
+        // store.loadChallenges();
+        
+        // OR manually add to state if we trust data
+        // store.challenges.push(...)
+      }
+      
+      // Reloading is safest to ensure consistency with DB
+       store.loadChallenges();
+    });
+  }
 }

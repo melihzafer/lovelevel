@@ -129,7 +129,13 @@ export async function validateInviteCode(code: string): Promise<{ valid: boolean
 export async function acceptInviteCode(
   code: string,
   userId: string
-): Promise<{ success: boolean; partnershipId?: string; error?: string }> {
+): Promise<{ 
+  success: boolean; 
+  partnershipId?: string; 
+  anniversaryDate?: string;
+  partnerName?: string;
+  error?: string 
+}> {
   try {
     // Validate code first
     const validation = await validateInviteCode(code);
@@ -161,13 +167,27 @@ export async function acceptInviteCode(
     }
 
     // Create partnership
+    // Try to get inviter's relationship start date from their settings
+    let anniversaryDate = new Date().toISOString().split('T')[0];
+    
+    // Fetch inviter's profile to get settings
+    const { data: inviterProfile } = await supabase
+      .from('profiles')
+      .select('settings, display_name')
+      .eq('id', validation.createdBy)
+      .single();
+      
+    if (inviterProfile?.settings && (inviterProfile.settings as any).relationshipStartDate) {
+      anniversaryDate = (inviterProfile.settings as any).relationshipStartDate;
+    }
+
     const { data: partnership, error: partnershipError } = await supabase
       .from('partnerships')
       .insert({
         user1_id: validation.createdBy,
         user2_id: userId,
         status: 'active',
-        anniversary_date: new Date().toISOString().split('T')[0], // Today as anniversary
+        anniversary_date: anniversaryDate,
       })
       .select()
       .single();
@@ -194,6 +214,8 @@ export async function acceptInviteCode(
     return {
       success: true,
       partnershipId: partnership.id,
+      anniversaryDate,
+      partnerName: inviterProfile?.display_name || 'Partner',
     };
   } catch (error) {
     console.error('Error in acceptInviteCode:', error);

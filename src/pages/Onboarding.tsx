@@ -77,7 +77,24 @@ export default function OnboardingPage() {
         if (result.success && result.partnershipId) {
           setPartnershipId(result.partnershipId);
           console.log('✅ Partnership created:', result.partnershipId);
-          setStep(3);
+          
+          // ✨ Skip setup steps if joining a partner
+          // Use the synced anniversary date and partner info
+          await updateSettings({
+            partners: [
+              { id: user.uid, name: user.displayName || user.email?.split('@')[0] || 'You' },
+              { id: 'partner', name: result.partnerName || 'Partner' },
+            ],
+            relationshipStartDate: result.anniversaryDate || new Date().toISOString().split('T')[0],
+            notificationsEnabled: false,
+            onboardingCompleted: true, // Complete immediately
+            language,
+          });
+
+          // Redirect to home immediately
+          // The sync system will pull the pet state later
+          navigate('/', { replace: true });
+          
         } else {
           alert(result.error || 'Failed to join partnership');
         }
@@ -254,7 +271,7 @@ export default function OnboardingPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <Button
-                    variant={hasPartner === true ? 'default' : 'outline'}
+                    variant={hasPartner === true ? 'primary' : 'outline'}
                     onClick={() => setHasPartner(true)}
                     className="h-32 flex flex-col items-center justify-center gap-3"
                   >
@@ -265,7 +282,7 @@ export default function OnboardingPage() {
                   </Button>
 
                   <Button
-                    variant={hasPartner === false ? 'default' : 'outline'}
+                    variant={hasPartner === false ? 'primary' : 'outline'}
                     onClick={() => setHasPartner(false)}
                     className="h-32 flex flex-col items-center justify-center gap-3"
                   >
@@ -341,7 +358,6 @@ export default function OnboardingPage() {
                         </div>
                         <Button
                           variant="outline"
-                          size="sm"
                           onClick={copyCodeToClipboard}
                           className="mx-auto"
                         >

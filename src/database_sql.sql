@@ -46,6 +46,8 @@ CREATE TABLE public.profiles (
   display_name text,
   email text,
   photo_url text,
+  onboarding_completed boolean DEFAULT false,
+  settings jsonb DEFAULT '{}'::jsonb,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT profiles_pkey PRIMARY KEY (id)
