@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Users, Calendar, Sparkles, ArrowRight, ArrowLeft } from 'lucide-react';
-import { useAuth } from '../contexts/FirebaseAuthContext';
+import { useAuth } from '../contexts/SupabaseAuthContext';
 import { useSettingsStore, usePetStore } from '../store';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
@@ -44,7 +44,7 @@ export default function OnboardingPage() {
   useEffect(() => {
     async function checkExistingCode() {
       if (user && hasPartner === false && !generatedCode) {
-        const code = await getActiveInviteCode(user.uid);
+        const code = await getActiveInviteCode(user.id);
         if (code) {
           setGeneratedCode(code.code);
         }
@@ -74,7 +74,7 @@ export default function OnboardingPage() {
 
       setJoiningPartner(true);
       try {
-        const result = await acceptInviteCode(partnerCode.trim().toUpperCase(), user.uid);
+        const result = await acceptInviteCode(partnerCode.trim().toUpperCase(), user.id);
         if (result.success && result.partnershipId) {
           setPartnershipId(result.partnershipId);
           console.log('✅ Partnership created:', result.partnershipId);
@@ -83,7 +83,7 @@ export default function OnboardingPage() {
           // Use the synced anniversary date and partner info
           await updateSettings({
             partners: [
-              { id: user.uid, name: user.displayName || user.email?.split('@')[0] || 'You' },
+              { id: user.id, name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'You' },
               { id: 'partner', name: result.partnerName || 'Partner' },
             ],
             relationshipStartDate: result.anniversaryDate || new Date().toISOString().split('T')[0],
@@ -115,7 +115,7 @@ export default function OnboardingPage() {
       if (!generatedCode) {
         setGeneratingCode(true);
         try {
-          const result = await generateInviteCode(user.uid);
+          const result = await generateInviteCode(user.id);
           if (result) {
             setGeneratedCode(result.code);
             console.log('✅ Invite code generated:', result.code);
@@ -164,7 +164,7 @@ export default function OnboardingPage() {
       // 1. Save settings
       await updateSettings({
         partners: [
-          { id: user.uid, name: user.displayName || user.email?.split('@')[0] || 'You' },
+          { id: user.id, name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'You' },
           { id: 'partner', name: 'Partner' }, // Will be updated when partner joins
         ],
         relationshipStartDate: anniversaryDate,
@@ -187,7 +187,7 @@ export default function OnboardingPage() {
           try {
             await addChallenge({
               ...challenge,
-              createdBy: user.uid,
+              createdBy: user.id,
             });
             successCount++;
           } catch (err) {

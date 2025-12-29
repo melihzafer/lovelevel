@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDateStats, useSettingsStore } from '../store';
-import { useAuth } from '../contexts/FirebaseAuthContext';
+import { useAuth } from '../contexts/SupabaseAuthContext';
 import { AnimatedBackground } from '../components/layout/AnimatedBackground';
-import { Confetti } from '../components/Confetti';
+import Confetti from '../components/Confetti';
 import { Modal } from '../components/Modal';
 import { Button } from '../components/Button';
 import { useTranslation } from '../lib/i18n';
@@ -166,18 +166,18 @@ export default function HomePage() {
         >
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/profile')}>
             <div className="relative">
-              {user?.photoURL ? (
-                <img src={user.photoURL} alt="Profile" className="w-10 h-10 rounded-full object-cover ring-2 ring-white/50 dark:ring-white/10 shadow-md" />
+              {user?.user_metadata?.avatar_url ? (
+                <img src={user.user_metadata.avatar_url} alt="Profile" className="w-10 h-10 rounded-full object-cover ring-2 ring-white/50 dark:ring-white/10 shadow-md" />
               ) : (
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white font-bold shadow-md">
-                  {user?.displayName?.charAt(0)?.toUpperCase() || '?'}
+                  {user?.user_metadata?.full_name?.charAt(0)?.toUpperCase() || '?'}
                 </div>
               )}
               <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-white dark:border-gray-900 rounded-full"></div>
             </div>
             <div className="flex flex-col justify-center">
               <span className="text-xs font-semibold uppercase tracking-wider text-text-secondary leading-none mb-1">{t.profile}</span>
-              <span className="text-sm font-bold text-text-primary leading-none">{user?.displayName || 'User'}</span>
+              <span className="text-sm font-bold text-text-primary leading-none">{user?.user_metadata?.full_name || 'User'}</span>
             </div>
           </div>
 

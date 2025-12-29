@@ -11,7 +11,7 @@ import {
   isNotificationSupported,
   getUpcomingNotifications 
 } from '../lib/notifications';
-import { useAuth } from '../contexts/FirebaseAuthContext';
+import { useAuth } from '../contexts/SupabaseAuthContext';
 import type { NotificationSchedule } from '../lib/notifications';
 import { AnimatedBackground } from '../components/layout/AnimatedBackground';
 

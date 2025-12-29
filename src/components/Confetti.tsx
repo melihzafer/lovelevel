@@ -10,7 +10,7 @@ interface ConfettiPiece {
   delay: number;
 }
 
-export function Confetti() {
+export default function Confetti() {
   const [pieces, setPieces] = useState<ConfettiPiece[]>([]);
 
   useEffect(() => {

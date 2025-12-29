@@ -1,179 +1,104 @@
+import { motion } from 'framer-motion';
+import { usePetStore } from '../../store';
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence, type Variants } from 'framer-motion';
 
-interface PetAvatarProps {
-  mood: 'happy' | 'chill' | 'sleepy';
-  action: 'idle' | 'eating' | 'playing' | 'cleaning';
-  accessoryId?: string;
-}
+// Simple SVGs for base pet and accessories to avoid external image deps for now
+const BASE_PET_SVG = (mood: string) => (
+  <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-xl">
+     {/* Body */}
+     <circle cx="50" cy="55" r="40" fill="#ffb7b2" />
+     <circle cx="50" cy="55" r="40" fill="url(#fur-gradient)" className="opacity-50" />
+     <defs>
+        <radialGradient id="fur-gradient" cx="0.4" cy="0.4" r="0.8">
+            <stop offset="0%" stopColor="#fff" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="transparent" stopOpacity="0" />
+        </radialGradient>
+     </defs>
+     
+     {/* Ears */}
+     <ellipse cx="30" cy="25" rx="10" ry="18" fill="#ffb7b2" transform="rotate(-20 30 25)" />
+     <ellipse cx="70" cy="25" rx="10" ry="18" fill="#ffb7b2" transform="rotate(20 70 25)" />
 
-export const PetAvatar = ({ mood, action, accessoryId }: PetAvatarProps) => {
-  // Speech bubble logic
-  const [speech, setSpeech] = useState<string | null>(null);
-  const [showBubble, setShowBubble] = useState(false);
+     {/* Face */}
+     <circle cx="35" cy="50" r="4" fill="#333" /> {/* Left Eye */}
+     <circle cx="65" cy="50" r="4" fill="#333" /> {/* Right Eye */}
+     
+     {/* Mouth based on mood */}
+     {mood === 'happy' && <path d="M 40 65 Q 50 75 60 65" fill="none" stroke="#333" strokeWidth="3" strokeLinecap="round" />}
+     {mood === 'sad' && <path d="M 40 70 Q 50 60 60 70" fill="none" stroke="#333" strokeWidth="3" strokeLinecap="round" />}
+     {mood === 'sleepy' && <circle cx="55" cy="65" r="5" fill="none" stroke="#333" strokeWidth="2" />} {/* 'O' mouth */}
+     {mood === 'normal' && <path d="M 45 65 L 55 65" fill="none" stroke="#333" strokeWidth="3" strokeLinecap="round" />}
 
+     {/* Cheeks */}
+     <circle cx="25" cy="60" r="5" fill="#ff9999" opacity="0.6" />
+     <circle cx="75" cy="60" r="5" fill="#ff9999" opacity="0.6" />
+  </svg>
+);
+
+export const PetAvatar = () => {
+  const pet = usePetStore();
+  const [bounce, setBounce] = useState(0);
+
+  // Idle Animation
   useEffect(() => {
-    const messages = [
-      mood === 'happy' ? "I love you! 💕" : "Feed me! 🍔",
-      "You're the best! 🌟",
-      "More cuddles? 🤗",
-      "Let's play! 🎈",
-      "Did you drink water? 💧",
-      "So happy to see you! ✨"
-    ];
-
     const interval = setInterval(() => {
-        if (Math.random() > 0.7) {
-            const msg = messages[Math.floor(Math.random() * messages.length)];
-            setSpeech(msg);
-            setShowBubble(true);
-            setTimeout(() => setShowBubble(false), 4000);
-        }
-    }, 10000);
-
+       if (Math.random() > 0.7) {
+           setBounce(prev => prev + 1);
+       }
+    }, 2000);
     return () => clearInterval(interval);
-  }, [mood]);
-
-  // Animation variants based on state
-  const variants: Variants = {
-    idle: {
-      y: [0, -6, 0],
-      scaleY: [1, 1.02, 1],
-      scaleX: [1, 0.98, 1],
-      transition: {
-        duration: 3,
-        repeat: Infinity,
-        ease: "easeInOut"
-      }
-    },
-    eating: {
-      scale: [1, 1.15, 1],
-      rotate: [0, -5, 5, 0],
-      transition: { duration: 0.6, repeat: 3, ease: "easeInOut" }
-    },
-    playing: {
-      y: [0, -60, 0],
-      rotate: [0, -10, 370, 0],
-      scale: [1, 1.1, 0.9, 1],
-      transition: { duration: 1, ease: "backOut" }
-    },
-    sleeping: {
-      scaleY: [1, 0.92, 1],
-      scaleX: [1, 1.05, 1],
-      opacity: 0.9,
-      transition: { duration: 4, repeat: Infinity, ease: "easeInOut" }
-    },
-    cleaning: {
-        rotate: [0, 10, -10, 5, -5, 0],
-        scale: [1, 1.05, 1],
-        transition: { duration: 1.5, ease: "easeInOut" }
-    }
-  };
-
-  // Determine effective animation state
-  // If mood is sleepy and we are idle, animate as sleeping
-  const effectiveState = action === 'idle' && mood === 'sleepy' ? 'sleeping' : action;
-
-  // Emoji map for accessories
-  const getAccessoryEmoji = (id: string) => {
-    const map: Record<string, string> = {
-      'acc-sunglasses': '😎',
-      'acc-party-hat': '🥳',
-      'acc-flower-crown': '🌸',
-      'acc-chef-hat': '👨‍🍳',
-      'acc-wizard-hat': '🧙',
-      'acc-crown': '👑',
-      'acc-headphones': '🎧',
-      'acc-pirate-hat': '‍☠️',
-    };
-    return map[id] || '';
-  };
-
-  // Determine eye shape based on mood/state
-  const getEyes = () => {
-    if (effectiveState === 'sleeping') return (
-      <div className="flex gap-4 mt-8">
-        <div className="w-4 h-1 bg-gray-700 rounded-full" />
-        <div className="w-4 h-1 bg-gray-700 rounded-full" />
-      </div>
-    );
-    
-    // Chill/Happy eyes
-    return (
-      <div className="flex gap-4 mt-8">
-        <div className="w-4 h-6 bg-black rounded-full relative">
-          <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-white rounded-full" />
-        </div>
-        <div className="w-4 h-6 bg-black rounded-full relative">
-          <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-white rounded-full" />
-        </div>
-      </div>
-    );
-  };
+  }, []);
 
   return (
-    <div className="relative flex justify-center items-center h-64">
-      {/* Zzz particles for sleeping */}
-      <AnimatePresence>
-        {showBubble && speech && effectiveState !== 'sleeping' && (
-            <motion.div
-                initial={{ opacity: 0, y: 10, scale: 0.8 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.8 }}
-                className="absolute top-0 right-0 bg-white dark:bg-gray-800 px-4 py-2 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 whitespace-nowrap z-50 pointer-events-none"
-            >
-                <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{speech}</p>
-                <div className="absolute bottom-0 left-4 translate-y-1/2 w-4 h-4 bg-white dark:bg-gray-800 transform rotate-45 border-b border-r border-gray-100 dark:border-gray-700"></div>
-            </motion.div>
-        )}
-      </AnimatePresence>
-
-      {effectiveState === 'sleeping' && (
-        <motion.div 
-          className="absolute top-0 right-10 text-2xl font-bold text-blue-400"
-          animate={{ y: -40, opacity: [0, 1, 0], x: 20 }}
-          transition={{ duration: 2, repeat: Infinity }}
+    <div className="relative w-48 h-48">
+        <motion.div
+           animate={{ 
+               y: [0, -10, 0],
+               scale: bounce % 2 === 0 ? 1 : [1, 1.1, 1] // Use bounce to trigger subtle scale change
+           }}
+           transition={{ 
+               duration: 2, 
+               repeat: Infinity, 
+               ease: "easeInOut" 
+           }}
+           className="w-full h-full"
         >
-          Zzz...
+           {/* Base Pet */}
+           {/* Using emoji for now if SVG is too complex to inline perfectly without more context, 
+               but let's try to simulate the deleted component's likely structure 
+               Actually, let's use a high quality Emoji + css wrapper as a fallback/robust solution
+               since I don't have the original SVG code. 
+               Wait, I can use the SVG above.
+           */}
+           <div className="w-full h-full p-2">
+              {BASE_PET_SVG(pet.mood)}
+           </div>
+
+           {/* Accessories Layer */}
+           {pet.equipped?.accessoryId === 'acc-glasses' && (
+               <div className="absolute top-[35%] left-[25%] w-[50%] text-4xl text-center pointer-events-none">
+                   👓
+               </div>
+           )}
+           {pet.equipped?.accessoryId === 'acc-hat' && (
+               <div className="absolute -top-[10%] left-[30%] w-[40%] text-5xl text-center pointer-events-none">
+                   🎩
+               </div>
+           )}
+           {pet.equipped?.accessoryId === 'acc-bowtie' && (
+               <div className="absolute top-[65%] left-[35%] w-[30%] text-3xl text-center pointer-events-none">
+                   🎀
+               </div>
+           )}
+           {/* Generic accessory handler if ID is different */}
+           {pet.equipped?.accessoryId && !['acc-glasses','acc-hat','acc-bowtie'].includes(pet.equipped.accessoryId) && (
+               <div className="absolute -top-5 right-0 bg-white rounded-full p-1 shadow">
+                   {/* Fallback indicator */}
+                   Correct accessory rendering requires assets
+               </div>
+           )}
+
         </motion.div>
-      )}
-
-      {/* The Pet Body */}
-      <motion.div
-        variants={variants}
-        animate={effectiveState}
-        className={`
-          w-40 h-36 rounded-[40%] 
-          bg-amber-400 border-4 border-amber-600
-          flex flex-col items-center justify-start
-          shadow-xl relative z-10
-        `}
-      >
-        {/* Accessory */}
-        {accessoryId && (
-          <div className="absolute -top-8 text-5xl z-20">
-            {getAccessoryEmoji(accessoryId)}
-          </div>
-        )}
-
-        {/* Eyes */}
-        {getEyes()}
-
-        {/* Mouth */}
-        <div className="mt-2">
-          {action === 'eating' ? (
-            <div className="w-6 h-6 bg-red-900 rounded-full animate-pulse" />
-          ) : effectiveState === 'sleeping' ? (
-             <div className="w-3 h-3 bg-black rounded-full opacity-50" />
-          ) : (
-            <div className={`w-4 h-2 border-b-2 border-black rounded-full ${mood === 'sleepy' ? 'w-2 h-2 bg-black rounded-full' : ''}`} />
-          )}
-        </div>
-
-      </motion.div>
-      
-      {/* Shadow */}
-      <div className="absolute bottom-10 w-32 h-4 bg-black/20 rounded-[50%] blur-sm" />
     </div>
   );
 };

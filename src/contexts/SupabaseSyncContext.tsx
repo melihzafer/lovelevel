@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { useAuth } from './FirebaseAuthContext';
+import { useAuth } from './SupabaseAuthContext';
 import { syncManager } from '../lib/syncManager';
 import { ensureProfile } from '../lib/supabase';
 import { useSettingsStore } from '../store';
@@ -34,21 +34,21 @@ export function SupabaseSyncProvider({ children }: { children: ReactNode }) {
     const initSync = async () => {
       setIsSyncing(true);
       try {
-        console.log('🔄 Initializing Supabase sync for user:', user.uid);
+        console.log('🔄 Initializing Supabase sync for user:', user.id);
         
         // 🔧 CRITICAL FIX: Ensure profile exists BEFORE any Supabase operations
         // This prevents foreign key constraint errors (23503)
         console.log('👤 Ensuring profile exists in Supabase...');
         await ensureProfile(
-          user.uid,
-          user.email,
-          user.displayName,
-          user.photoURL
+          user.id,
+          user.email || '',
+          user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+          user.user_metadata?.avatar_url
         );
         console.log('✅ Profile ensured');
         
         // Now safe to initialize sync (which queries partnerships, etc.)
-        const partnershipData = await syncManager.initialize(user.uid);
+        const partnershipData = await syncManager.initialize(user.id);
 
         // Reload settings from local DB (updated by syncManager)
         console.log('🔄 Reloading settings from local DB...');
@@ -66,7 +66,7 @@ export function SupabaseSyncProvider({ children }: { children: ReactNode }) {
           setPartnership(null);
 
           // 🆕 Listen for new partnerships (if we sent an invite)
-          syncManager.subscribeToPartnershipRequests(user.uid, () => {
+          syncManager.subscribeToPartnershipRequests(user.id, () => {
              console.log('🎉 Partnership request detected! Re-initializing sync...');
              // Re-run initialization to pick up the new partnership and start full sync
              initSync();

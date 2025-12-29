@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../contexts/FirebaseAuthContext';
+import { useAuth } from '../contexts/SupabaseAuthContext';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { useTranslation } from '../lib/i18n';

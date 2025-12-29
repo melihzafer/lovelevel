@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Users, Calendar, UserMinus, Sparkles } from 'lucide-react';
-import { useAuth } from '../contexts/FirebaseAuthContext';
+import { useAuth } from '../contexts/SupabaseAuthContext';
 import { useSync } from '../contexts/SupabaseSyncContext';
 import { useTranslation } from '../lib/i18n';
 import { supabase } from '../lib/supabase';
@@ -36,7 +36,7 @@ export default function Partner() {
       setLoading(true);
 
       // Determine which user is the partner (not current user)
-      const partnerId = partnership.user1_id === user.uid ? partnership.user2_id : partnership.user1_id;
+      const partnerId = partnership.user1_id === user.id ? partnership.user2_id : partnership.user1_id;
 
       // Fetch partner profile
       const { data, error } = await supabase

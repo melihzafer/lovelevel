@@ -60,24 +60,13 @@ export const ShopModal = ({ isOpen, onClose }: ShopModalProps) => {
     <Modal isOpen={isOpen} onClose={onClose} title={t.petShop || "Pet Shop 🛍️"}>
       <div className="space-y-4">
         
-        {/* Joint Wallet Header */}
-        <div className="flex justify-between items-center bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/40 dark:to-orange-900/40 p-4 rounded-2xl border-2 border-amber-300 dark:border-amber-600 shadow-sm relative overflow-hidden">
-             {/* Shine effect */}
-             <div className="absolute top-0 right-0 w-20 h-full bg-white/20 -skew-x-12 transform translate-x-10"></div>
-             
-             <div className="flex items-center gap-3">
-                 <div className="bg-amber-400/20 p-2 rounded-full border border-amber-400/30">
-                    <span className="text-2xl">🏦</span>
-                 </div>
-                 <div className="flex flex-col">
-                     <span className="font-black text-amber-900 dark:text-amber-100 uppercase text-[10px] tracking-widest opacity-60">Joint Balance</span>
-                     <span className="font-bold text-amber-950 dark:text-amber-50 leading-tight">Couples Wallet</span>
-                 </div>
+        {/* Coin Balance Header */}
+        <div className="flex justify-between items-center bg-amber-100 dark:bg-amber-900/40 p-3 rounded-xl border border-amber-200 dark:border-amber-800">
+             <div className="flex items-center gap-2">
+                 <span className="text-2xl">🪙</span>
+                 <span className="font-bold text-amber-900 dark:text-amber-100">{t.yourCoins || 'Your Coins'}</span>
              </div>
-             <div className="flex items-center gap-1 bg-white/50 dark:bg-black/20 px-3 py-1.5 rounded-xl border border-amber-200/50 backdrop-blur-sm">
-                 <span className="text-2xl font-black text-amber-600 dark:text-amber-400 tracking-tight">{pet.coins}</span>
-                 <span className="text-lg">🪙</span>
-             </div>
+             <span className="text-xl font-black text-amber-600 dark:text-amber-400">{pet.coins}</span>
         </div>
 
         {/* Tabs */}

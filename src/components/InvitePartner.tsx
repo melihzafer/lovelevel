@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Copy, Share2, RefreshCw, Clock } from 'lucide-react';
-import { useAuth } from '../contexts/FirebaseAuthContext';
+import { useAuth } from '../contexts/SupabaseAuthContext';
 import { generateInviteCode, getActiveInviteCode } from '../services/inviteService';
 import type { InviteCode } from '../types/database';
 import { useTranslation } from '../lib/i18n';
@@ -22,7 +22,7 @@ export default function InvitePartner() {
       if (!user) return;
 
       setLoading(true);
-      const code = await getActiveInviteCode(user.uid);
+      const code = await getActiveInviteCode(user.id);
       setInviteCode(code);
       setLoading(false);
     }
@@ -34,12 +34,12 @@ export default function InvitePartner() {
     if (!user) return;
 
     setGenerating(true);
-    const result = await generateInviteCode(user.uid);
+    const result = await generateInviteCode(user.id);
 
     if (result) {
       setInviteCode({
         code: result.code,
-        created_by: user.uid,
+        created_by: user.id,
         created_at: new Date().toISOString(),
         expires_at: result.expiresAt,
         used: false,

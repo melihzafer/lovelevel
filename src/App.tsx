@@ -4,7 +4,7 @@ import { initializeStores, useSettingsStore } from './store';
 import { Loader } from './components/Loader';
 import { BottomNav } from './components/BottomNav';
 import { ThemeProvider } from './components/ThemeProvider';
-import { AuthProvider, useAuth } from './contexts/FirebaseAuthContext';
+import { AuthProvider, useAuth } from './contexts/SupabaseAuthContext';
 import { SupabaseSyncProvider, useSync } from './contexts/SupabaseSyncContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 

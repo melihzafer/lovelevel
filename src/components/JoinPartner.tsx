@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserPlus, AlertCircle, Check, Heart } from 'lucide-react';
-import { useAuth } from '../contexts/FirebaseAuthContext';
+import { useAuth } from '../contexts/SupabaseAuthContext';
 import { getInviteCodeDetails, acceptInviteCode } from '../services/inviteService';
 import { useTranslation } from '../lib/i18n';
 import { Button } from './Button';
@@ -43,7 +43,7 @@ export default function JoinPartner() {
 
     if (result.valid && result.creator) {
       // Check if trying to use own code
-      if (result.creator.id === user.uid) {
+      if (result.creator.id === user.id) {
         setError(t.cannotUseOwnCode);
         setPartnerInfo(null);
       } else {
@@ -66,7 +66,7 @@ export default function JoinPartner() {
     setAccepting(true);
     setError('');
 
-    const result = await acceptInviteCode(code, user.uid);
+    const result = await acceptInviteCode(code, user.id);
 
     if (result.success) {
       setSuccess(true);

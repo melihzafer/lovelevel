@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { usePetStore } from '../../store';
 import { Button } from '../Button';
 import { X, ArrowLeftRight } from 'lucide-react';

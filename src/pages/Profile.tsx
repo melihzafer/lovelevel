@@ -1,8 +1,7 @@
 import { useState, type ChangeEvent } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/FirebaseAuthContext';
-import { updateProfile } from 'firebase/auth';
+import { useAuth } from '../contexts/SupabaseAuthContext';
 import { supabase } from '../lib/supabase';
 import { compressImage } from '../lib/imageUtils';
 import { Button } from '../components/Button';
@@ -13,12 +12,15 @@ import { AnimatedBackground } from '../components/layout/AnimatedBackground';
 export default function ProfilePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
   
   const [isEditing, setIsEditing] = useState(false);
-  const [displayName, setDisplayName] = useState(user?.displayName || '');
+  const [displayName, setDisplayName] = useState(user?.user_metadata?.full_name || user?.email?.split('@')[0] || '');
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  const getDisplayName = () => user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+  const getPhotoURL = () => user?.user_metadata?.avatar_url;
 
   const handlePhotoUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -42,7 +44,7 @@ export default function ProfilePage() {
       const compressedFile = await compressImage(file, 1024);
       
       // 2. Create file path: profile-photos/{userId}/{timestamp}_{filename}
-      const fileName = `${user.uid}/${Date.now()}_${file.name}`;
+      const fileName = `${user.id}/${Date.now()}_${file.name}`;
       
       // 3. Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
@@ -65,16 +67,16 @@ export default function ProfilePage() {
       const { error: dbError } = await supabase
         .from('profiles')
         .upsert({
-          id: user.uid,
-          display_name: user.displayName || null,
+          id: user.id,
+          display_name: getDisplayName(),
           email: user.email || null,
           photo_url: photoURL,
         });
 
       if (dbError) console.error('Profile DB update error:', dbError);
       
-      // 6. Update Firebase Auth profile (for consistency)
-      await updateProfile(user, { photoURL });
+      // 6. Update Auth profile
+      await updateProfile({ photoURL });
       
       alert(t.photoUpdated || 'Profile photo updated successfully!');
       window.location.reload(); // Refresh to show new photo
@@ -91,7 +93,7 @@ export default function ProfilePage() {
 
     setIsSaving(true);
     try {
-      await updateProfile(user, { displayName });
+      await updateProfile({ displayName });
       alert(t.profileUpdated || 'Profile updated successfully!');
       setIsEditing(false);
     } catch (error) {
@@ -139,15 +141,15 @@ export default function ProfilePage() {
           {/* Avatar Section */}
           <div className="flex flex-col items-center gap-4 mb-8">
             <div className="relative group">
-              {user?.photoURL ? (
+              {getPhotoURL() ? (
                 <img
-                  src={user.photoURL}
+                  src={getPhotoURL()}
                   alt="Profile"
                   className="w-32 h-32 rounded-full object-cover ring-4 ring-white/50 dark:ring-white/10 shadow-lg"
                 />
               ) : (
                 <div className="w-32 h-32 rounded-full bg-gradient-to-br from-purple-400 via-pink-400 to-purple-500 flex items-center justify-center text-white text-5xl font-bold ring-4 ring-white/50 dark:ring-white/10 shadow-lg">
-                  {user?.displayName?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || '?'}
+                  {getDisplayName()?.charAt(0)?.toUpperCase() || '?'}
                 </div>
               )}
 
@@ -201,7 +203,7 @@ export default function ProfilePage() {
                 />
               ) : (
                 <div className="px-4 py-3 bg-white/50 dark:bg-black/20 border border-white/20 dark:border-white/5 rounded-xl text-text-primary">
-                  {user?.displayName || t.notSet || 'Not set'}
+                  {getDisplayName()}
                 </div>
               )}
             </div>
@@ -212,8 +214,8 @@ export default function ProfilePage() {
                 {t.accountCreated || 'Account Created'}
               </label>
               <div className="px-4 py-3 bg-white/50 dark:bg-black/20 border border-white/20 dark:border-white/5 rounded-xl text-text-primary">
-                {user?.metadata.creationTime
-                  ? new Date(user.metadata.creationTime).toLocaleDateString('en-US', {
+                {user?.created_at
+                  ? new Date(user.created_at).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',
@@ -229,7 +231,7 @@ export default function ProfilePage() {
                   <Button
                     onClick={() => {
                       setIsEditing(false);
-                      setDisplayName(user?.displayName || '');
+                      setDisplayName(user?.user_metadata?.full_name || '');
                     }}
                     variant="ghost"
                     className="flex-1"

@@ -1,26 +1,70 @@
-// import { useSettingsStore } from '../../store';
+import { useEffect, useRef } from 'react';
 
-interface AnimatedBackgroundProps {
-  className?: string;
-}
+export const AnimatedBackground = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-export function AnimatedBackground({ className = '' }: AnimatedBackgroundProps) {
-  // const { settings } = useSettingsStore();
-  // const theme = settings.theme;
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Resize canvas
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', resize);
+    resize();
+
+    // Floating particles
+    const particles: {x: number, y: number, r: number, dx: number, dy: number, color: string}[] = [];
+    const colors = ['rgba(255, 182, 193, 0.3)', 'rgba(255, 218, 185, 0.3)', 'rgba(230, 230, 250, 0.3)'];
+
+    for (let i = 0; i < 20; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 20 + 10,
+        dx: (Math.random() - 0.5) * 0.5,
+        dy: (Math.random() - 0.5) * 0.5,
+        color: colors[Math.floor(Math.random() * colors.length)]
+      });
+    }
+
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      particles.forEach(p => {
+        p.x += p.dx;
+        p.y += p.dy;
+
+        // Bounce off walls
+        if (p.x < -50 || p.x > canvas.width + 50) p.dx = -p.dx;
+        if (p.y < -50 || p.y > canvas.height + 50) p.dy = -p.dy;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+      });
+
+      requestAnimationFrame(animate);
+    };
+
+    const animationId = requestAnimationFrame(animate);
+
+    return () => {
+      window.removeEventListener('resize', resize);
+      cancelAnimationFrame(animationId);
+    };
+  }, []);
 
   return (
-    <div className={`fixed inset-0 overflow-hidden pointer-events-none -z-10 ${className}`}>
-      {/* Primary Blob */}
-      <div className="absolute top-0 -left-4 w-72 h-72 bg-primary-300 dark:bg-primary-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-30 animate-blob" />
-      
-      {/* Secondary Blob */}
-      <div className="absolute top-0 -right-4 w-72 h-72 bg-accent-300 dark:bg-accent-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-30 animate-blob animation-delay-2000" />
-      
-      {/* Tertiary Blob */}
-      <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-300 dark:bg-pink-900/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-30 animate-blob animation-delay-4000" />
-      
-      {/* Extra ambient glow for depth */}
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-to-tr from-transparent via-primary-50/10 to-transparent dark:via-primary-900/5 opacity-50" />
-    </div>
+    <canvas 
+      ref={canvasRef} 
+      className="absolute inset-0 pointer-events-none z-0"
+    />
   );
-}
+};
