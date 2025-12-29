@@ -87,6 +87,17 @@ export default function PetPage() {
 
   const filteredItems = SEED_PET_ITEMS.filter(item => item.type === selectedTab);
 
+  // Toast state
+  const [toast, setToast] = useState<{ message: string; icon: string } | null>(null);
+
+  // Auto-dismiss toast
+  useEffect(() => {
+      if (toast) {
+          const timer = setTimeout(() => setToast(null), 3000);
+          return () => clearTimeout(timer);
+      }
+  }, [toast]);
+
   // Listen for remote pet updates from partner
   useEffect(() => {
     const handleRemotePetUpdate = (event: Event) => {
@@ -95,6 +106,19 @@ export default function PetPage() {
       
       console.log('🔄 Partner updated pet:', remotePetState);
       
+      // Determine what changed for toast
+      if (remotePetState.coins < pet.coins) {
+          setToast({ message: 'Partner bought something!', icon: '🛍️' });
+      } else if (remotePetState.coins > pet.coins) {
+          setToast({ message: 'Partner earned coins!', icon: '💰' });
+      } else if (remotePetState.hunger > pet.hunger) {
+          setToast({ message: 'Partner fed the pet!', icon: '🍎' });
+      } else if (remotePetState.hygiene > pet.hygiene) {
+          setToast({ message: 'Partner cleaned the pet!', icon: '🧼' });
+      } else if (remotePetState.mood !== pet.mood) {
+          setToast({ message: `Pet is now ${remotePetState.mood}!`, icon: '✨' });
+      }
+
       // Update local pet state (triggers re-render)
       pet.updatePet({
         name: remotePetState.name,
@@ -108,6 +132,14 @@ export default function PetPage() {
           backgroundId: remotePetState.equippedBackgroundId,
         },
       });
+      
+      // Update coins specifically if needed as it might be separate in store
+      if (remotePetState.coins !== undefined) {
+          usePetStore.setState({ coins: remotePetState.coins });
+      }
+      
+      // Pulse vibration for presence
+      if ('vibrate' in navigator) navigator.vibrate(50);
     };
 
     window.addEventListener('sync:pet', handleRemotePetUpdate);
@@ -152,6 +184,22 @@ export default function PetPage() {
       <AnimatedBackground />
       
       <div className="max-w-md mx-auto p-6 relative z-10 space-y-6">
+        {/* Toast Notification */}
+        <div className="fixed top-4 left-0 right-0 z-50 pointer-events-none flex justify-center">
+            <motion.div
+                initial={{ opacity: 0, y: -20, scale: 0.9 }}
+                animate={toast ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: -20, scale: 0.9 }}
+                className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl shadow-xl px-4 py-3 rounded-full flex items-center gap-3 border border-primary-200 dark:border-primary-800"
+            >
+                {toast && (
+                    <>
+                        <span className="text-xl">{toast.icon}</span>
+                        <span className="font-bold text-sm text-gray-800 dark:text-gray-100">{toast.message}</span>
+                    </>
+                )}
+            </motion.div>
+        </div>
+
         {/* Premium Header Card */}
         <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 dark:border-white/5 ring-1 ring-black/5">
             {/* Pet Name & Level */}
