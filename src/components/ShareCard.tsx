@@ -28,20 +28,21 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>((_, ref) => 
   return (
     <div 
       ref={ref}
-      className="w-[1080px] h-[1920px] bg-gradient-to-br from-[#FFF0F3] via-[#FFF5F7] to-[#FFE4E8] relative overflow-hidden flex flex-col items-center justify-between p-24 text-center font-sans"
+      className="w-[1080px] h-[1920px] bg-white relative overflow-hidden flex flex-col items-center justify-between p-24 text-center font-sans"
       style={{
         // Force specific styles for screenshot consistency
         width: '1080px',
         height: '1920px',
         position: 'fixed',
         top: '-9999px',
-        left: '-9999px', // Hide it off-screen
+        left: '-9999px',
+        background: 'linear-gradient(135deg, #fff1f2 0%, #fff 50%, #f3e8ff 100%)', // Hardcoded soft elegant gradient
       }}
     >
       {/* Decorative Background Elements */}
-      <div className="absolute top-0 left-0 w-full h-full opacity-60 pointer-events-none">
-        <div className="absolute top-[-200px] left-[-200px] w-[800px] h-[800px] bg-gradient-to-br from-pink-300 to-purple-300 rounded-full blur-[150px] opacity-40"></div>
-        <div className="absolute bottom-[-200px] right-[-200px] w-[900px] h-[900px] bg-gradient-to-tl from-red-300 to-orange-200 rounded-full blur-[150px] opacity-40"></div>
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+        <div className="absolute top-[-200px] left-[-200px] w-[800px] h-[800px] bg-pink-100 rounded-full blur-[120px] opacity-60 mix-blend-multiply"></div>
+        <div className="absolute bottom-[-100px] right-[-100px] w-[900px] h-[900px] bg-purple-100 rounded-full blur-[120px] opacity-60 mix-blend-multiply"></div>
       </div>
 
       {/* Header */}

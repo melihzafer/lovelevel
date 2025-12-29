@@ -29,11 +29,13 @@
     --color-accent-800: #5b21b6;
     --color-accent-900: #4c1d95;
 
-    /* Backgrounds - Cleaner Neutrals */
+    /* Backgrounds - Premium Gradients */
     --bg-primary: #ffffff;
-    --bg-secondary: #f8fafc; /* Slate 50 - Cleaner than pink tint */
-    --text-primary: #0f172a;
-    --text-secondary: #475569;
+    --bg-secondary: #f8fafc;
+    --bg-gradient: radial-gradient(circle at 50% 0%, #ffffff 0%, #f1f5f9 100%); /* Clean Light Mesh */
+    
+    --text-primary: #0f172a; /* Slate 900 for sharp contrast */
+    --text-secondary: #475569; /* Slate 600 */
     --border-color: #e2e8f0;
   }
 
@@ -63,17 +65,24 @@
     --color-accent-800: #ddd6fe;
     --color-accent-900: #ede9fe;
 
-    /* Backgrounds - True Darks */
-    --bg-primary: #0a0a0a; /* Neutral nearly-black */
-    --bg-secondary: #171717; /* Neutral dark gray */
-    --text-primary: #ededed; /* Soft white */
-    --text-secondary: #a3a3a3; /* Neutral gray */
+    /* Backgrounds - True Dark Luxury */
+    --bg-primary: #000000; /* Pure Black Base */
+    --bg-secondary: #0a0a0a;
+    --bg-gradient: radial-gradient(circle at 50% 0%, #1a1a1a 0%, #000000 100%); /* Deep Spotlight Effect */
+
+    --text-primary: #fafafa; /* Neutral 50 - Ultra crisp */
+    --text-secondary: #a1a1aa; /* Neutral 400 */
     --border-color: #262626;
   }
 
   body {
-    @apply bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-300;
-    font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; /* Recommended modernized font stack if available, falling back to Inter */
+    background: var(--bg-gradient);
+    background-color: var(--bg-primary); 
+    background-attachment: fixed; /* Ensures gradient stays put */
+    background-size: cover;
+    @apply text-[var(--text-primary)] transition-colors duration-500;
+    
+    font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     margin: 0;
