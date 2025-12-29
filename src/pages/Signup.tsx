@@ -100,16 +100,16 @@ export default function Signup() {
       >
         {/* Logo/Brand */}
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-black text-white mb-2 drop-shadow-md tracking-tight">
+          <h1 className="text-5xl font-black text-pink-600 dark:text-white mb-2 drop-shadow-md tracking-tight">
             LoveLevel
           </h1>
-          <p className="text-white/90 font-medium text-lg drop-shadow-sm">
+          <p className="text-pink-900/80 dark:text-white/90 font-medium text-lg drop-shadow-sm">
             {t.auth.signupSubtitle || 'Start your love journey together'}
           </p>
         </div>
 
         {/* Signup Form */}
-        <div className="backdrop-blur-xl bg-white/40 dark:bg-black/40 border border-white/40 dark:border-white/10 rounded-3xl shadow-2xl p-8">
+        <div className="backdrop-blur-xl bg-white/90 dark:bg-black/40 border border-white/40 dark:border-white/10 rounded-3xl shadow-2xl p-8">
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6 text-center">
             {t.auth.createAccount || 'Create Account'}
           </h2>

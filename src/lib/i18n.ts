@@ -288,6 +288,7 @@ export const translations = {
     
     // Miscellaneous
     shareJourney: 'Share Your Journey 💫',
+    shareFailed: 'Could not share image. Try taking a screenshot!',
     levelUpTips: '💡 Level Up Tips:',
     levelUpTip1: 'Complete challenges to earn +20 XP',
     levelUpTip2: 'Celebrate monthiversaries for +100 XP',
@@ -673,6 +674,7 @@ export const translations = {
     
     // Miscellaneous
     shareJourney: 'Yolculuğunuzu Paylaşın 💫',
+    shareFailed: 'Görüntü paylaşılamadı. Ekran görüntüsü almayı deneyin!',
     levelUpTips: '💡 Seviye Atlama İpuçları:',
     levelUpTip1: 'Görevleri tamamlayarak +20 XP kazanın',
     levelUpTip2: 'Aylık yıldönümlerini kutlayarak +100 XP kazanın',
@@ -1058,6 +1060,7 @@ export const translations = {
     
     // Miscellaneous
     shareJourney: 'Споделете пътуването си 💫',
+    shareFailed: 'Не може да се сподели изображение. Опитайте да направите екранна снимка!',
     levelUpTips: '💡 Съвети за повишаване на ниво:',
     levelUpTip1: 'Изпълнявайте предизвикателства, за да спечелите +20 XP',
     levelUpTip2: 'Празнувайте месечни годишнини за +100 XP',

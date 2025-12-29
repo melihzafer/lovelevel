@@ -89,7 +89,6 @@ export const LoveCatcher = ({ onClose }: LoveCatcherProps) => {
     const nextItems: Item[] = [];
     const paddleWidth = 15; // %
     const paddleY = 85; // %
-    const paddleHitY = 10; // % tolerance
 
     itemsRef.current.forEach(item => {
         // Move (speed * dt)
