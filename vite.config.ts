@@ -20,7 +20,7 @@ export default defineConfig({
         description:
           "A delightful PWA for couples featuring relationship tracking, challenges, and a virtual pet companion",
         theme_color: "#e7507a",
-        background_color: "#ffffff",
+        background_color: "#e7507a",
         display: "standalone",
         start_url: "/",
         scope: "/",
