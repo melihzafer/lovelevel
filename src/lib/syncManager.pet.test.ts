@@ -4,7 +4,6 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { PetState } from '../types/database';
 
 // Mock dependencies
 vi.mock('./db', () => ({
@@ -65,7 +64,7 @@ const mockWindow = {
   removeEventListener: vi.fn(),
   dispatchEvent: vi.fn(),
 };
-global.window = mockWindow as any;
+vi.stubGlobal('window', mockWindow);
 
 // Import SyncManager after mocks
 import { syncManager } from './syncManager';
@@ -371,8 +370,6 @@ describe('Pet Synchronization', () => {
 
   describe('XP and Level Sync', () => {
     it('should sync XP changes immediately', async () => {
-      const beforeXP = 100;
-      const gainedXP = 50;
       const afterXP = 150;
 
       const petState = {

@@ -1,4 +1,5 @@
-import { motion, type Variants } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 
 interface PetAvatarProps {
   mood: 'happy' | 'chill' | 'sleepy';
@@ -7,32 +8,60 @@ interface PetAvatarProps {
 }
 
 export const PetAvatar = ({ mood, action, accessoryId }: PetAvatarProps) => {
+  // Speech bubble logic
+  const [speech, setSpeech] = useState<string | null>(null);
+  const [showBubble, setShowBubble] = useState(false);
+
+  useEffect(() => {
+    const messages = [
+      mood === 'happy' ? "I love you! 💕" : "Feed me! 🍔",
+      "You're the best! 🌟",
+      "More cuddles? 🤗",
+      "Let's play! 🎈",
+      "Did you drink water? 💧",
+      "So happy to see you! ✨"
+    ];
+
+    const interval = setInterval(() => {
+        if (Math.random() > 0.7) {
+            const msg = messages[Math.floor(Math.random() * messages.length)];
+            setSpeech(msg);
+            setShowBubble(true);
+            setTimeout(() => setShowBubble(false), 4000);
+        }
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [mood]);
+
   // Animation variants based on state
   const variants: Variants = {
     idle: {
-      y: [0, -10, 0],
-      scaleY: [1, 1.05, 1],
-      scaleX: [1, 0.95, 1],
+      y: [0, -6, 0],
+      scaleY: [1, 1.02, 1],
+      scaleX: [1, 0.98, 1],
       transition: {
-        duration: 2,
+        duration: 3,
         repeat: Infinity,
         ease: "easeInOut"
       }
     },
     eating: {
-      scale: [1, 1.2, 1],
-      rotate: [0, -10, 10, 0],
-      transition: { duration: 0.5, repeat: 3 }
+      scale: [1, 1.15, 1],
+      rotate: [0, -5, 5, 0],
+      transition: { duration: 0.6, repeat: 3, ease: "easeInOut" }
     },
     playing: {
-      y: [0, -50, 0],
-      rotate: [0, 360],
-      transition: { duration: 0.8 }
+      y: [0, -60, 0],
+      rotate: [0, -10, 370, 0],
+      scale: [1, 1.1, 0.9, 1],
+      transition: { duration: 1, ease: "backOut" }
     },
     sleeping: {
-      scaleY: [1, 0.9, 1],
-      opacity: 0.8,
-      transition: { duration: 3, repeat: Infinity }
+      scaleY: [1, 0.92, 1],
+      scaleX: [1, 1.05, 1],
+      opacity: 0.9,
+      transition: { duration: 4, repeat: Infinity, ease: "easeInOut" }
     }
   };
 
@@ -80,6 +109,20 @@ export const PetAvatar = ({ mood, action, accessoryId }: PetAvatarProps) => {
   return (
     <div className="relative flex justify-center items-center h-64">
       {/* Zzz particles for sleeping */}
+      <AnimatePresence>
+        {showBubble && speech && effectiveState !== 'sleeping' && (
+            <motion.div
+                initial={{ opacity: 0, y: 10, scale: 0.8 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.8 }}
+                className="absolute top-0 right-0 bg-white dark:bg-gray-800 px-4 py-2 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 whitespace-nowrap z-50 pointer-events-none"
+            >
+                <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{speech}</p>
+                <div className="absolute bottom-0 left-4 translate-y-1/2 w-4 h-4 bg-white dark:bg-gray-800 transform rotate-45 border-b border-r border-gray-100 dark:border-gray-700"></div>
+            </motion.div>
+        )}
+      </AnimatePresence>
+
       {effectiveState === 'sleeping' && (
         <motion.div 
           className="absolute top-0 right-10 text-2xl font-bold text-blue-400"

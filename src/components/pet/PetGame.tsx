@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { usePetStore, useLevelInfo } from '../../store';
 import { PetAvatar } from './PetAvatar';
-import { motion } from 'framer-motion';
-import { Utensils, Gamepad2 } from 'lucide-react';
+import { PetMinigame } from './PetMinigame';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Utensils, Gamepad2, Ticket } from 'lucide-react';
 
 export const PetGame = () => {
   const pet = usePetStore();
   const levelInfo = useLevelInfo();
   
   const [currentAction, setCurrentAction] = useState<'idle' | 'eating' | 'playing'>('idle');
+  const [showMinigame, setShowMinigame] = useState(false);
 
   const handleFeed = async () => {
     if (pet.hunger >= 100) return;
@@ -46,7 +48,7 @@ export const PetGame = () => {
   if (!levelInfo) return null;
 
   return (
-    <div className="max-w-md mx-auto p-4 bg-white/50 dark:bg-black/20 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 dark:border-white/5">
+    <div className="bg-transparent">
       {/* Header Stats */}
       <div className="flex justify-between items-center mb-6 px-2">
         <div className="flex flex-col w-full mr-4">
@@ -58,12 +60,12 @@ export const PetGame = () => {
               {levelInfo.currentXP} / {levelInfo.xpForNextLevel} XP
             </span>
           </div>
-          <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+          <div className="w-full h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden border border-black/5 dark:border-white/5 shadow-inner">
             <motion.div 
-              className="h-full bg-blue-500"
+              className="h-full bg-gradient-to-r from-blue-400 to-blue-600 shadow-[0_0_10px_rgba(59,130,246,0.5)]"
               initial={{ width: 0 }}
               animate={{ width: `${levelInfo.xpProgressPercent}%` }}
-              transition={{ duration: 1 }}
+              transition={{ duration: 1, ease: "easeOut" }}
             />
           </div>
         </div>
@@ -92,10 +94,24 @@ export const PetGame = () => {
           <StatBar icon="🍖" value={pet.hunger} color="bg-orange-400" />
           <StatBar icon="⚡" value={pet.energy} color="bg-yellow-400" />
         </div>
+
+        {/* Minigame Overlay */}
+        <AnimatePresence>
+          {showMinigame && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-30"
+            >
+              <PetMinigame onClose={() => setShowMinigame(false)} />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Controls */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-3">
         <ControlButton 
           onClick={handleFeed} 
           disabled={pet.hunger >= 100 || currentAction !== 'idle'}
@@ -110,6 +126,14 @@ export const PetGame = () => {
           icon={<Gamepad2 className="w-6 h-6" />}
           label="Play"
           color="bg-pink-100 text-pink-600 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-400 dark:hover:bg-pink-900/50"
+        />
+
+        <ControlButton 
+          onClick={() => setShowMinigame(true)}
+          disabled={currentAction !== 'idle'}
+          icon={<Ticket className="w-6 h-6" />}
+          label="Mini Game"
+          color="bg-purple-100 text-purple-600 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:hover:bg-purple-900/50"
         />
       </div>
     </div>
@@ -129,17 +153,21 @@ const StatBar = ({ icon, value, color }: { icon: string, value: number, color: s
   </div>
 );
 
-const ControlButton = ({ onClick, icon, label, color, disabled }: any) => (
+const ControlButton = ({ onClick, label, color, disabled }: any) => (
   <motion.button
-    whileTap={{ scale: 0.95 }}
+    whileTap={{ scale: 0.9 }}
+    whileHover={{ scale: 1.05 }}
     onClick={onClick}
     disabled={disabled}
     className={`
-      flex flex-col items-center justify-center p-4 rounded-2xl transition-colors
-      ${disabled ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800 text-gray-400' : color}
+      flex flex-col items-center justify-center p-4 rounded-3xl transition-all shadow-md
+      ${disabled ? 'opacity-40 grayscale cursor-not-allowed bg-gray-100 dark:bg-gray-800 text-gray-400' : `${color} backdrop-blur-sm border border-white/20`}
     `}
   >
-    <div className="mb-1">{icon}</div>
-    <span className="text-xs font-bold">{label}</span>
+    <div className="mb-2 p-3 rounded-full bg-white/40 dark:bg-black/20 shadow-inner text-3xl">
+        {/* Render icon as emoji or lucide icon */}
+        {label === 'Feed' ? '🍖' : label === 'Play' ? '🎾' : '🎰'}
+    </div>
+    <span className="text-xs font-bold whitespace-nowrap uppercase tracking-wider opacity-80">{label}</span>
   </motion.button>
 );

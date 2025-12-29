@@ -270,9 +270,9 @@ export async function getInviteCodeDetails(code: string): Promise<{
     return {
       valid: true,
       creator: {
-        id: data.profiles.id,
-        displayName: data.profiles.display_name || 'Unknown User',
-        photoUrl: data.profiles.photo_url || undefined,
+        id: (data.profiles as any).id,
+        displayName: (data.profiles as any).display_name || 'Unknown User',
+        photoUrl: (data.profiles as any).photo_url || undefined,
       },
       expiresAt: data.expires_at,
     };

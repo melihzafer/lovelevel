@@ -8,7 +8,7 @@ import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { getTranslation, type Language } from '../lib/i18n';
 import { generateInviteCode, getActiveInviteCode, acceptInviteCode } from '../services/inviteService';
-import { seedChallenges } from '../data/seedChallenges';
+import { generateSeedChallenges } from '../data/seedChallenges';
 import { addChallenge } from '../lib/db';
 
 export default function OnboardingPage() {
@@ -180,8 +180,9 @@ export default function OnboardingPage() {
       if (partnershipId) {
         console.log('🌱 Seeding challenges to localStorage...');
         let successCount = 0;
+        const challenges = generateSeedChallenges();
         
-        for (const challenge of seedChallenges) {
+        for (const challenge of challenges) {
           try {
             await addChallenge({
               ...challenge,
@@ -193,7 +194,7 @@ export default function OnboardingPage() {
           }
         }
         
-        console.log(`✅ Seeded ${successCount}/${seedChallenges.length} challenges`);
+        console.log(`✅ Seeded ${successCount}/${challenges.length} challenges`);
       }
 
       // 4. Navigate to home

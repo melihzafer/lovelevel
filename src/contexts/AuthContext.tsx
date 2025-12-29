@@ -133,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await signOut(auth);
       console.log('✅ Logout successful');
     } catch (err: any) {
-      const errorMessage = getFirebaseErrorMessage(err);
+      const errorMessage = handleFirebaseError(err);
       setError(errorMessage);
       console.error('❌ Logout error:', errorMessage);
       throw err;

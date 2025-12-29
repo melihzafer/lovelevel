@@ -57,6 +57,8 @@ export const translations = {
     addCustomChallenge: 'Add Custom Challenge',
     challengeTitle: 'Challenge Title',
     challengeDescription: 'Description (optional)',
+    search: 'Search',
+    allCategories: 'All Categories',
     addChallenge: 'Add Challenge',
     cancel: 'Cancel',
     completeChallenge: 'Complete Challenge',
@@ -226,6 +228,8 @@ export const translations = {
     notSet: 'Not set',
     accountCreated: 'Account Created',
     unknown: 'Unknown',
+    loading: 'Loading...',
+    photoStoredLocally: 'Photo stored locally (not synced)',
     saving: 'Saving...',
     
     // Settings tabs
@@ -436,6 +440,8 @@ export const translations = {
     addCustomChallenge: 'Özel Zorluk Ekle',
     challengeTitle: 'Zorluk Başlığı',
     challengeDescription: 'Açıklama (isteğe bağlı)',
+    search: 'Ara',
+    allCategories: 'Tüm Kategoriler',
     addChallenge: 'Zorluk Ekle',
     cancel: 'İptal',
     completeChallenge: 'Zorluğu Tamamla',
@@ -605,6 +611,8 @@ export const translations = {
     notSet: 'Ayarlanmadı',
     accountCreated: 'Hesap Oluşturuldu',
     unknown: 'Bilinmiyor',
+    loading: 'Yükleniyor...',
+    photoStoredLocally: 'Fotoğraf yerel olarak saklanıyor (senkronize değil)',
     saving: 'Kaydediliyor...',
     
     // Settings tabs
@@ -792,6 +800,8 @@ export const translations = {
     namePet: 'Моля, наименувайте вашия домашен любимец',
     
     // Home
+    loading: 'Зареждане...',
+    photoStoredLocally: 'Снимката се съхранява локално (не се синхронизира)',
     goodMorning: 'Добро утро',
     goodAfternoon: 'Добър ден',
     goodEvening: 'Добър вечер',
@@ -815,6 +825,8 @@ export const translations = {
     addCustomChallenge: 'Добави персонализирано предизвикателство',
     challengeTitle: 'Заглавие на предизвикателство',
     challengeDescription: 'Описание (по избор)',
+    search: 'Търсене',
+    allCategories: 'Всички категории',
     addChallenge: 'Добави предизвикателство',
     cancel: 'Отказ',
     completeChallenge: 'Завърши предизвикателството',

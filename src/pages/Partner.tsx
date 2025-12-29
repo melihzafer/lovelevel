@@ -9,6 +9,7 @@ import InvitePartner from '../components/InvitePartner';
 import JoinPartner from '../components/JoinPartner';
 import { Button } from '../components/Button';
 import { Loader } from '../components/Loader';
+import { AnimatedBackground } from '../components/layout/AnimatedBackground';
 
 export default function Partner() {
   const { t } = useTranslation();
@@ -104,7 +105,9 @@ export default function Partner() {
   // Connected State (Has Partner)
   if (partnership && partner) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 dark:from-gray-900 dark:via-purple-900/20 dark:to-gray-900 py-8 px-4">
+      <div className="min-h-screen bg-bg-secondary dark:bg-bg-primary relative overflow-hidden transition-colors duration-500 pb-32">
+        <AnimatedBackground />
+        <div className="relative z-10 py-8 px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -127,7 +130,7 @@ export default function Partner() {
           </div>
 
           {/* Partner Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 space-y-6">
+          <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl rounded-3xl p-6 space-y-6 shadow-xl border border-white/20 dark:border-white/5 ring-1 ring-black/5">
             {/* Partner Info */}
             <div className="flex items-center gap-4">
               {/* Partner Avatar */}
@@ -235,12 +238,15 @@ export default function Partner() {
           </div>
         </motion.div>
       </div>
+    </div>
     );
   }
 
   // No Partner State (Show Invite/Join Tabs)
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 dark:from-gray-900 dark:via-purple-900/20 dark:to-gray-900 py-8 px-4">
+    <div className="min-h-screen bg-bg-secondary dark:bg-bg-primary relative overflow-hidden transition-colors duration-500 pb-32">
+      <AnimatedBackground />
+      <div className="relative z-10 py-8 px-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -266,27 +272,39 @@ export default function Partner() {
         </div>
 
         {/* Tab Selector */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
-          <div className="flex border-b border-gray-200 dark:border-gray-700">
+        <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden border border-white/20 dark:border-white/5 ring-1 ring-black/5">
+          <div className="flex border-b border-gray-200/50 dark:border-gray-700/50">
             <button
               onClick={() => setActiveTab('invite')}
-              className={`flex-1 py-4 px-6 font-semibold transition-colors ${
+              className={`flex-1 py-4 px-6 font-semibold transition-all relative ${
                 activeTab === 'invite'
-                  ? 'text-pink-600 dark:text-pink-400 border-b-2 border-pink-600 dark:border-pink-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                  ? 'text-pink-600 dark:text-pink-400 bg-pink-50/50 dark:bg-pink-900/10'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50/50 dark:hover:bg-gray-800/50'
               }`}
             >
+              {activeTab === 'invite' && (
+                <motion.div
+                  layoutId="activeTab"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-pink-500 to-purple-500"
+                />
+              )}
               {t.invitePartner}
             </button>
 
             <button
               onClick={() => setActiveTab('join')}
-              className={`flex-1 py-4 px-6 font-semibold transition-colors ${
+              className={`flex-1 py-4 px-6 font-semibold transition-all relative ${
                 activeTab === 'join'
-                  ? 'text-pink-600 dark:text-pink-400 border-b-2 border-pink-600 dark:border-pink-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                  ? 'text-pink-600 dark:text-pink-400 bg-pink-50/50 dark:bg-pink-900/10'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50/50 dark:hover:bg-gray-800/50'
               }`}
             >
+              {activeTab === 'join' && (
+                <motion.div
+                  layoutId="activeTab"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-pink-500 to-purple-500"
+                />
+              )}
               {t.joinPartner}
             </button>
           </div>
@@ -300,6 +318,7 @@ export default function Partner() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.2 }}
                 >
                   <InvitePartner />
                 </motion.div>
@@ -309,6 +328,7 @@ export default function Partner() {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.2 }}
                 >
                   <JoinPartner />
                 </motion.div>
@@ -317,6 +337,7 @@ export default function Partner() {
           </div>
         </div>
       </motion.div>
+      </div>
     </div>
   );
 }

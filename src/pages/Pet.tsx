@@ -8,6 +8,7 @@ import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import type { PetItem } from '../types/database';
 import { PetGame } from '../components/pet/PetGame';
+import { AnimatedBackground } from '../components/layout/AnimatedBackground';
 
 export default function PetPage() {
   const { t } = useTranslation();
@@ -137,40 +138,59 @@ export default function PetPage() {
   }, [pet.equipped?.backgroundId]);
 
   return (
-    <div className={`min-h-screen ${backgroundClass} p-6 pb-24 transition-colors duration-700`}>
-      <div className="max-w-md mx-auto space-y-8">
-        {/* Pet Name & Level */}
-        <div className="text-center space-y-2">
-          <div className="flex items-center justify-center gap-2">
-            <h1 className="text-3xl font-bold text-text-primary">{petName}</h1>
-            <button
-              onClick={() => setShowRenameModal(true)}
-              className="text-xl p-1 hover:bg-primary-100 dark:hover:bg-primary-900 rounded transition-colors"
-              aria-label="Rename pet"
-            >
-              ✏️
-            </button>
-          </div>
+    <div className={`min-h-screen ${backgroundClass} relative overflow-hidden transition-colors duration-700 pb-32`}>
+      {/* Show animated background primarily when default bg is active, or overlaying subtle effect */}
+      <AnimatedBackground />
+      
+      <div className="max-w-md mx-auto p-6 relative z-10 space-y-6">
+        {/* Premium Header Card */}
+        <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 dark:border-white/5 ring-1 ring-black/5">
+            {/* Pet Name & Level */}
+            <div className="text-center mb-6">
+            <div className="flex items-center justify-center gap-2 mb-1">
+                <h1 className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-orange-500 drop-shadow-sm">
+                {petName}
+                </h1>
+                <button
+                onClick={() => setShowRenameModal(true)}
+                className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                aria-label="Rename pet"
+                >
+                <span className="text-xl filter drop-shadow">✏️</span>
+                </button>
+            </div>
+            </div>
+
+            {/* Pet Game Component */}
+            <PetGame />
         </div>
 
-        {/* Pet Game Component */}
-        <PetGame />
-
-        {/* Inventory Button */}
-        <Button 
+        {/* Inventory Button - Premium Glass Style */}
+        <motion.button 
+          whileTap={{ scale: 0.98 }}
           onClick={() => setShowInventory(true)} 
-          className="w-full"
+          className="w-full py-4 rounded-2xl bg-white/40 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg flex items-center justify-center gap-3 group hover:bg-white/50 dark:hover:bg-black/30 transition-all"
         >
-          🎒 {t.inventory || 'Inventory'} ({unlockedItems.length} {t.items || 'items'})
-        </Button>
+          <span className="text-2xl group-hover:scale-110 transition-transform duration-300">🎒</span>
+          <span className="font-bold text-text-primary text-lg">{t.inventory || 'Inventory'}</span>
+          <span className="bg-white/50 dark:bg-black/50 px-3 py-1 rounded-full text-xs font-bold text-text-secondary">
+            {unlockedItems.length}
+          </span>
+        </motion.button>
 
-        {/* Tips */}
-        <div className="bg-accent-50 dark:bg-accent-900/30 rounded-xl p-4 text-sm text-text-secondary">
-          <p className="font-medium text-text-primary mb-2">{t.levelUpTips}</p>
-          <ul className="space-y-1 list-disc list-inside">
-            <li>{t.levelUpTip1}</li>
-            <li>{t.levelUpTip2}</li>
-            <li>{t.levelUpTip3}</li>
+        {/* Tips - Clean Glass Card */}
+        <div className="bg-white/30 dark:bg-black/30 backdrop-blur-md rounded-2xl p-5 border border-white/10 shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-xl">💡</span>
+            <p className="font-bold text-text-primary">{t.levelUpTips}</p>
+          </div>
+          <ul className="space-y-2">
+            {[t.levelUpTip1, t.levelUpTip2, t.levelUpTip3].map((tip, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm text-text-secondary">
+                    <span className="text-primary-500 mt-1">•</span>
+                    <span>{tip}</span>
+                </li>
+            ))}
           </ul>
         </div>
       </div>

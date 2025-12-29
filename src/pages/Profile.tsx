@@ -8,6 +8,7 @@ import { compressImage } from '../lib/imageUtils';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { useTranslation } from '../lib/i18n';
+import { AnimatedBackground } from '../components/layout/AnimatedBackground';
 
 export default function ProfilePage() {
   const { t } = useTranslation();
@@ -102,8 +103,10 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 dark:from-purple-950 dark:via-gray-900 dark:to-pink-950 p-4 sm:p-6">
-      <div className="max-w-2xl mx-auto space-y-6">
+    <div className="min-h-screen bg-bg-secondary dark:bg-bg-primary relative overflow-hidden transition-colors duration-500 pb-20">
+      <AnimatedBackground />
+
+      <div className="max-w-md mx-auto p-6 relative z-10 space-y-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -112,19 +115,18 @@ export default function ProfilePage() {
         >
           <button
             onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            className="p-2 rounded-full bg-white/50 dark:bg-black/20 backdrop-blur hover:bg-white/80 dark:hover:bg-black/40 transition-all duration-200 shadow-sm border border-white/20"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            <span className="text-sm font-medium">{t.back || 'Back'}</span>
           </button>
 
-          <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
+          <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400">
             {t.profile || 'Profile'}
           </h1>
 
-          <div className="w-16" /> {/* Spacer for centering */}
+          <div className="w-9" /> {/* Spacer for centering */}
         </motion.div>
 
         {/* Profile Card */}
@@ -132,7 +134,7 @@ export default function ProfilePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 sm:p-8"
+          className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-white/20 dark:border-white/5 ring-1 ring-black/5"
         >
           {/* Avatar Section */}
           <div className="flex flex-col items-center gap-4 mb-8">
@@ -141,10 +143,10 @@ export default function ProfilePage() {
                 <img
                   src={user.photoURL}
                   alt="Profile"
-                  className="w-32 h-32 rounded-full object-cover border-4 border-purple-200 dark:border-purple-700 shadow-lg"
+                  className="w-32 h-32 rounded-full object-cover ring-4 ring-white/50 dark:ring-white/10 shadow-lg"
                 />
               ) : (
-                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-purple-400 via-pink-400 to-purple-500 flex items-center justify-center text-white text-5xl font-bold border-4 border-purple-200 dark:border-purple-700 shadow-lg">
+                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-purple-400 via-pink-400 to-purple-500 flex items-center justify-center text-white text-5xl font-bold ring-4 ring-white/50 dark:ring-white/10 shadow-lg">
                   {user?.displayName?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || '?'}
                 </div>
               )}
@@ -154,10 +156,13 @@ export default function ProfilePage() {
                 htmlFor="photo-upload"
                 className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
               >
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
+                <div className="text-white flex flex-col items-center gap-1">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span className="text-xs font-medium">Change</span>
+                </div>
               </label>
               <input
                 id="photo-upload"
@@ -175,8 +180,8 @@ export default function ProfilePage() {
               )}
             </div>
 
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {t.clickToUpload || 'Click on avatar to upload photo'}
+            <p className="text-sm text-center text-text-secondary">
+              {user?.email}
             </p>
           </div>
 
@@ -184,7 +189,7 @@ export default function ProfilePage() {
           <div className="space-y-6">
             {/* Display Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-text-secondary mb-2 ml-1">
                 {t.displayName || 'Display Name'}
               </label>
               {isEditing ? (
@@ -192,31 +197,21 @@ export default function ProfilePage() {
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder={t.enterDisplayName || 'Enter your name'}
-                  className="w-full"
+                  className="w-full bg-white/50 dark:bg-black/20"
                 />
               ) : (
-                <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-xl text-gray-900 dark:text-white">
+                <div className="px-4 py-3 bg-white/50 dark:bg-black/20 border border-white/20 dark:border-white/5 rounded-xl text-text-primary">
                   {user?.displayName || t.notSet || 'Not set'}
                 </div>
               )}
             </div>
 
-            {/* Email (read-only) */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {t.auth.email || 'Email'}
-              </label>
-              <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-xl text-gray-900 dark:text-white">
-                {user?.email}
-              </div>
-            </div>
-
             {/* Account Created */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-text-secondary mb-2 ml-1">
                 {t.accountCreated || 'Account Created'}
               </label>
-              <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-xl text-gray-900 dark:text-white">
+              <div className="px-4 py-3 bg-white/50 dark:bg-black/20 border border-white/20 dark:border-white/5 rounded-xl text-text-primary">
                 {user?.metadata.creationTime
                   ? new Date(user.metadata.creationTime).toLocaleDateString('en-US', {
                       year: 'numeric',
@@ -236,17 +231,17 @@ export default function ProfilePage() {
                       setIsEditing(false);
                       setDisplayName(user?.displayName || '');
                     }}
-                    variant="outline"
-                    fullWidth
+                    variant="ghost"
+                    className="flex-1"
                   >
                     {t.cancel || 'Cancel'}
                   </Button>
-                  <Button onClick={handleSaveProfile} disabled={isSaving} fullWidth>
+                  <Button onClick={handleSaveProfile} disabled={isSaving} className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-none shadow-lg shadow-purple-500/20">
                     {isSaving ? (t.saving || 'Saving...') : (t.save || 'Save')}
                   </Button>
                 </>
               ) : (
-                <Button onClick={() => setIsEditing(true)} fullWidth>
+                <Button onClick={() => setIsEditing(true)} fullWidth className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-none shadow-lg shadow-purple-500/20">
                   {t.editProfile || 'Edit Profile'}
                 </Button>
               )}

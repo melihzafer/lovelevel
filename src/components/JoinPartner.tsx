@@ -138,7 +138,7 @@ export default function JoinPartner() {
             value={code}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCodeChange(e.target.value)}
             placeholder="ABC123"
-            className="text-center text-2xl font-mono tracking-wider uppercase"
+            className="block w-full text-center text-3xl font-mono tracking-[0.5em] uppercase font-bold py-4 bg-gray-50 dark:bg-black/20 border-2 border-gray-200 dark:border-gray-800 rounded-xl focus:border-pink-500 dark:focus:border-pink-500 focus:ring-4 focus:ring-pink-500/10 transition-all outline-none"
             maxLength={6}
             autoFocus
           />
@@ -193,7 +193,7 @@ export default function JoinPartner() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
-              className="bg-gradient-to-br from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 rounded-2xl p-6 border-2 border-pink-200 dark:border-pink-800"
+              className="bg-white/50 dark:bg-black/20 backdrop-blur-sm rounded-2xl p-6 border border-white/20 dark:border-white/5 ring-1 ring-black/5"
             >
               <div className="flex items-center gap-4">
                 {/* Partner Avatar */}

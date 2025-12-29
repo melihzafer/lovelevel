@@ -2,7 +2,9 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import type { Settings, PetState as PetStateType, Challenge } from '../types/database';
 import { DEFAULT_SETTINGS, DEFAULT_PET_STATE } from '../types/database';
+import type { PetItem } from '../types/database';
 import * as db from '../lib/db';
+import { api } from '../lib/api';
 import { getDateStats } from '../lib/dateUtils';
 import { addXP, getLevelInfo } from '../lib/xpSystem';
 import { syncManager } from '../lib/syncManager';
@@ -33,7 +35,7 @@ export const useSettingsStore = create<SettingsState>()(
         const currentSettings = get().settings;
         const newSettings = { ...currentSettings, ...updates };
 
-        set((state) => ({
+        set(() => ({
           settings: newSettings,
         }));
 
@@ -70,6 +72,11 @@ interface PetState extends PetStateType {
   setEnergy: (energy: number) => Promise<void>;
   equipAccessory: (accessoryId: string | undefined) => Promise<void>;
   equipBackground: (backgroundId: string | undefined) => Promise<void>;
+  equipOutfit: (outfitId: string | undefined) => Promise<void>;
+  cleanPet: () => Promise<void>;
+  purchaseItem: (item: PetItem) => Promise<{ success: boolean; error?: string }>;
+  addCoins: (amount: number) => Promise<void>;
+  syncInventory: () => Promise<void>;
   isLoading: boolean;
 }
 
@@ -136,21 +143,29 @@ export const usePetStore = create<PetState>()(
       },
       feedPet: async () => {
         const state = get();
+        // Feeding now costs 10 coins (default food) if we want to enforce economy.
+        // Let's assume a default apple costing 5 coins.
+        
+        // Optimistic update
         const newHunger = Math.min(100, state.hunger + 20);
         await db.updatePet({ hunger: newHunger, mood: 'happy' });
         set({ hunger: newHunger, mood: 'happy' });
         
         // Sync pet state to partner
-        syncManager.queueSync('pet', 'update', {
+        const syncPayload = {
           name: state.name,
           xp: state.xp,
           level: state.level,
           mood: 'happy',
           hunger: newHunger,
           energy: state.energy,
+          hygiene: state.hygiene,
+          coins: state.coins,
           equippedAccessoryId: state.equipped?.accessoryId,
           equippedBackgroundId: state.equipped?.backgroundId,
-        });
+          equippedOutfitId: state.equipped?.outfitId,
+        };
+        syncManager.queueSync('pet', 'update', syncPayload);
       },
       playWithPet: async () => {
         const state = get();
@@ -254,7 +269,6 @@ export const usePetStore = create<PetState>()(
         await db.updatePet({ equipped: newEquipped });
         set({ equipped: newEquipped });
         
-        // Sync equipped background to partner
         syncManager.queueSync('pet', 'update', {
           name: state.name,
           xp: state.xp,
@@ -262,9 +276,143 @@ export const usePetStore = create<PetState>()(
           mood: state.mood,
           hunger: state.hunger,
           energy: state.energy,
+          hygiene: state.hygiene,
+          coins: state.coins,
           equippedAccessoryId: state.equipped?.accessoryId,
           equippedBackgroundId: backgroundId,
+          equippedOutfitId: state.equipped?.outfitId,
         });
+      },
+      equipOutfit: async (outfitId: string | undefined) => {
+        const state = get();
+        const newEquipped = { ...state.equipped, outfitId };
+        await db.updatePet({ equipped: newEquipped });
+        set({ equipped: newEquipped });
+        
+        syncManager.queueSync('pet', 'update', {
+          name: state.name,
+          xp: state.xp,
+          level: state.level,
+          mood: state.mood,
+          hunger: state.hunger,
+          energy: state.energy,
+          hygiene: state.hygiene,
+          coins: state.coins,
+          equippedAccessoryId: state.equipped?.accessoryId,
+          equippedBackgroundId: state.equipped?.backgroundId,
+          equippedOutfitId: outfitId,
+        });
+      },
+      cleanPet: async () => {
+        const state = get();
+        if (state.hygiene >= 100) return;
+        
+        const newHygiene = 100;
+        await db.updatePet({ hygiene: newHygiene, mood: 'happy' });
+        set({ hygiene: newHygiene, mood: 'happy' });
+        
+        // Use API to sync to DB (Supabase)
+        const partnershipId = useSettingsStore.getState().settings.partners[0]?.id;
+        if (partnershipId) {
+             api.updateHygiene(partnershipId, newHygiene);
+        }
+        
+        syncManager.queueSync('pet', 'update', {
+           name: state.name,
+           xp: state.xp,
+           level: state.level,
+           mood: 'happy',
+           hunger: state.hunger,
+           energy: state.energy,
+           hygiene: newHygiene,
+           coins: state.coins,
+           equippedAccessoryId: state.equipped?.accessoryId,
+           equippedBackgroundId: state.equipped?.backgroundId,
+           equippedOutfitId: state.equipped?.outfitId,
+        });
+      },
+      purchaseItem: async (item: PetItem) => {
+        const state = get();
+        if (state.coins < (item.price || 0)) {
+            return { success: false, error: 'Not enough coins' };
+        }
+        
+        const newCoins = state.coins - (item.price || 0);
+        let newInventory = state.inventory;
+        if (item.type !== 'food') {
+             newInventory = [...state.inventory, item.id];
+        }
+        
+        if (item.type === 'food') {
+            const newHunger = Math.min(100, state.hunger + 20);
+            set({ coins: newCoins, hunger: newHunger });
+            await db.updatePet({ coins: newCoins, hunger: newHunger });
+            
+             // Sync needs to be consistent
+            syncManager.queueSync('pet', 'update', {
+               name: state.name,
+               xp: state.xp,
+               level: state.level,
+               mood: 'happy',
+               hunger: newHunger,
+               energy: state.energy,
+               hygiene: state.hygiene,
+               coins: newCoins,
+               equippedAccessoryId: state.equipped?.accessoryId,
+               equippedBackgroundId: state.equipped?.backgroundId,
+               equippedOutfitId: state.equipped?.outfitId,
+            });
+        } else {
+            set({ coins: newCoins, inventory: newInventory });
+             await db.updatePet({ coins: newCoins, inventory: newInventory });
+             
+             // Sync
+            syncManager.queueSync('pet', 'update', {
+               name: state.name,
+               xp: state.xp,
+               level: state.level,
+               mood: state.mood,
+               hunger: state.hunger,
+               energy: state.energy,
+               hygiene: state.hygiene,
+               coins: newCoins,
+               equippedAccessoryId: state.equipped?.accessoryId,
+               equippedBackgroundId: state.equipped?.backgroundId,
+               equippedOutfitId: state.equipped?.outfitId,
+            });
+        }
+        
+        // Call API to persist purchase to Supabase
+        const settings = useSettingsStore.getState().settings;
+        const partnershipId = settings.partners[0]?.id;
+        if (partnershipId) {
+           await api.buyItem(partnershipId, item);
+        }
+        
+        return { success: true };
+      },
+      addCoins: async (amount: number) => {
+         const state = get();
+         const newCoins = state.coins + amount;
+         set({ coins: newCoins });
+         await db.updatePet({ coins: newCoins });
+         
+         syncManager.queueSync('pet', 'update', {
+           name: state.name,
+           xp: state.xp,
+           level: state.level,
+           mood: state.mood,
+           hunger: state.hunger,
+           energy: state.energy,
+           hygiene: state.hygiene,
+           coins: newCoins,
+           equippedAccessoryId: state.equipped?.accessoryId,
+           equippedBackgroundId: state.equipped?.backgroundId,
+           equippedOutfitId: state.equipped?.outfitId,
+        });
+      },
+      syncInventory: async () => {
+          // Placeholder
       },
     }),
     { name: 'pet-store' }
@@ -400,7 +548,7 @@ export async function initializeStores() {
       const customEvent = event as CustomEvent;
       console.log('🔄 Store: Received challenge sync', customEvent.detail);
       
-      const { eventType, new: newData, old: oldData } = customEvent.detail;
+      const { eventType, new: newData } = customEvent.detail;
       const store = useChallengesStore.getState();
 
       // For simplicity, reload everyone or optimize updates

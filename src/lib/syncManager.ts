@@ -28,50 +28,42 @@ class SyncManager {
       console.log('🔍 Initializing sync for user:', userId);
       this.currentUserId = userId;
 
-      // 1. Fetch user profile to sync settings/onboarding status
-      // Use maybeSingle to avoid 406 errors if not found (though ensureProfile should have created it)
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('onboarding_completed, settings')
-        .eq('id', userId)
-        .maybeSingle();
+      // 🚀 OPTIMIZATION: Fetch profile and partnership in parallel
+      const [profileResult, partnershipResult] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('onboarding_completed, settings')
+          .eq('id', userId)
+          .maybeSingle(),
+        supabase
+          .from('partnerships')
+          .select('id, user1_id, user2_id, status, anniversary_date')
+          .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
+          .eq('status', 'active')
+          .maybeSingle(),
+      ]);
 
-      if (profileError) {
-        console.error('❌ Error fetching profile for sync:', profileError);
-      } else if (profile) {
-        console.log('✅ Found user profile settings, syncing to local DB...', { 
-          onboardingCompleted: profile.onboarding_completed 
-        });
-        
-        // Update local settings from remote
+      // Process profile result
+      if (profileResult.error) {
+        console.error('❌ Error fetching profile for sync:', profileResult.error);
+      } else if (profileResult.data) {
+        console.log('✅ Found user profile settings');
         const currentSettings = await db.getSettings();
-        const remoteSettings = profile.settings as Record<string, any> || {};
-        
+        const remoteSettings = profileResult.data.settings as Record<string, any> || {};
         await db.updateSettings({
           ...currentSettings,
           ...remoteSettings,
-          onboardingCompleted: profile.onboarding_completed ?? currentSettings.onboardingCompleted,
+          onboardingCompleted: profileResult.data.onboarding_completed ?? currentSettings.onboardingCompleted,
         });
-        
-      } else {
-        console.warn('⚠️ No profile found during sync init (unexpected after ensureProfile)');
       }
 
-      console.log('🔍 Looking for active partnership for user:', userId);
-      
-      // Fetch user's active partnership
-      const { data: partnership, error } = await supabase
-        .from('partnerships')
-        .select('id, user1_id, user2_id, status, anniversary_date')
-        .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
-        .eq('status', 'active')
-        .maybeSingle();
-
-      if (error) {
-        console.warn('⚠️ Partnership query error:', error.message);
+      // Process partnership result
+      if (partnershipResult.error) {
+        console.warn('⚠️ Partnership query error:', partnershipResult.error.message);
         return null;
       }
 
+      const partnership = partnershipResult.data;
       if (!partnership) {
         console.log('ℹ️ No active partnership found (this is normal for new users)');
         return null;
@@ -79,37 +71,42 @@ class SyncManager {
 
       console.log('✅ Found partnership:', partnership.id);
       this.partnershipId = partnership.id;
-      
-      // Determine partner ID
       this.partnerId = partnership.user1_id === userId ? partnership.user2_id : partnership.user1_id;
 
-      // Start real-time sync
-      await this.startRealtimeSync(partnership.id);
+      // 🚀 OPTIMIZATION: Start real-time sync (non-blocking, runs in background)
+      this.startRealtimeSync(partnership.id);
 
-      // Initial sync: IndexedDB → Supabase
-      await this.syncLocalToRemote(partnership.id, userId);
+      // 🚀 OPTIMIZATION: Defer heavy sync to background (don't block page load)
+      setTimeout(async () => {
+        try {
+          console.log('🔄 Background sync: Starting deferred sync operations...');
+          
+          // These run in parallel in background
+          await Promise.all([
+            this.syncLocalToRemote(partnership.id, userId),
+            this.syncRemoteToLocal(partnership.id),
+            this.syncPetRemoteToLocal(partnership.id),
+          ]);
+          
+          console.log('✅ Background sync: Deferred operations complete');
+        } catch (err) {
+          console.error('Background sync error:', err);
+        }
+      }, 0);
 
-      // Initial sync: Supabase → IndexedDB
-      await this.syncRemoteToLocal(partnership.id);
-
-      // Initial sync: Supabase Pet → IndexedDB
-      await this.syncPetRemoteToLocal(partnership.id);
-
-      // 🆕 Fix: Sync Shared Settings (Partnership Date & Partner Name) to Local DB
+      // 🚀 OPTIMIZATION: Sync shared settings inline (fast, critical for UI)
       try {
-        console.log('🔄 Syncing shared settings from remote to local...');
         const currentSettings = await db.getSettings();
         let settingsUpdates: Record<string, any> = {};
         let hasUpdates = false;
 
-        // 1. Sync Anniversary Date from Partnership
+        // 1. Sync Anniversary Date from Partnership (already have data)
         if (partnership.anniversary_date && partnership.anniversary_date !== currentSettings.relationshipStartDate) {
-           console.log('📅 Found newer anniversary date during init:', partnership.anniversary_date);
            settingsUpdates.relationshipStartDate = partnership.anniversary_date;
            hasUpdates = true;
         }
 
-        // 2. Sync Partner Name from Profile
+        // 2. Sync Partner Name from Profile (fast single query)
         if (this.partnerId) {
            const { data: partnerProfile } = await supabase
              .from('profiles')
@@ -119,15 +116,10 @@ class SyncManager {
 
            if (partnerProfile && partnerProfile.display_name) {
               const partners = [...currentSettings.partners];
-              // Assuming index 1 is partner, or find via ID
-              // We need to match ID if possible
               let partnerIndex = partners.findIndex(p => p.id === this.partnerId);
-              if (partnerIndex === -1) partnerIndex = 1; // Default to slot 2 if not found
+              if (partnerIndex === -1) partnerIndex = 1;
               
-              const currentName = partners[partnerIndex]?.name;
-              
-              if (currentName !== partnerProfile.display_name) {
-                 console.log(`👤 Found newer partner name during init: ${partnerProfile.display_name}`);
+              if (partners[partnerIndex]?.name !== partnerProfile.display_name) {
                  partners[partnerIndex] = {
                    ...partners[partnerIndex],
                    id: this.partnerId,
@@ -141,10 +133,7 @@ class SyncManager {
 
         if (hasUpdates) {
           await db.updateSettings(settingsUpdates);
-          // Dispatch event to update Store
-          window.dispatchEvent(new CustomEvent('sync:settings', { 
-             detail: settingsUpdates 
-          }));
+          window.dispatchEvent(new CustomEvent('sync:settings', { detail: settingsUpdates }));
           console.log('✅ Local settings updated with shared data');
         }
       } catch (err) {
@@ -153,7 +142,6 @@ class SyncManager {
 
       return partnership;
     } catch (error) {
-      // 🔧 FIX: Catch all errors and log, but don't throw - let app continue
       console.error('⚠️ Sync initialization failed (app will work in solo mode):', error);
       return null;
     }

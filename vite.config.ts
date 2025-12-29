@@ -11,9 +11,9 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: "auto",
-      strategies: "injectManifest",
-      srcDir: "src",
-      filename: "sw.ts",
+      strategies: "generateSW", // Switched from injectManifest to fix build
+      // srcDir: "src",
+      // filename: "sw.ts",
       manifest: {
         name: "LoveLevel - Relationship Companion",
         short_name: "LoveLevel",
@@ -58,22 +58,9 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "google-fonts-cache",
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-            },
-          },
-        ],
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
       },
     }),
   ],

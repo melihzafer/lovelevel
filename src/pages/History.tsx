@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { getHistory } from '../lib/db';
 import { useTranslation } from '../lib/i18n';
 import type { HistoryEntry } from '../types/database';
+import { AnimatedBackground } from '../components/layout/AnimatedBackground';
 
 export default function HistoryPage() {
   const { t } = useTranslation();
@@ -25,8 +26,9 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg-secondary p-6">
-      <div className="max-w-2xl mx-auto space-y-6">
+    <div className="min-h-screen bg-bg-secondary dark:bg-bg-primary p-6 pb-32 relative overflow-hidden transition-colors duration-500">
+      <AnimatedBackground />
+      <div className="max-w-2xl mx-auto space-y-6 relative z-10">
         <h1 className="text-3xl font-bold text-text-primary">{t.history}</h1>
 
         {history.length === 0 && (

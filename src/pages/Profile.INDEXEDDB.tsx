@@ -6,7 +6,7 @@ import { updateProfile } from 'firebase/auth';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { useTranslation } from '../lib/i18n';
-import { db } from '../lib/db';
+import { initDB } from '../lib/db';
 
 export default function ProfilePage() {
   const { t } = useTranslation();
@@ -22,7 +22,7 @@ export default function ProfilePage() {
   // Load local photo from IndexedDB on mount
   useState(() => {
     if (user) {
-      db.get('settings', 'profilePhoto').then((photo) => {
+      initDB().then(db => db.get('settings', 'profilePhoto' as any)).then((photo: any) => {
         if (photo) setLocalPhotoURL(photo.dataURL);
       });
     }
@@ -55,11 +55,12 @@ export default function ProfilePage() {
         const compressed = await compressImage(dataURL, 0.7);
         
         // Save to IndexedDB
+        const db = await initDB();
         await db.put('settings', {
           id: 'profilePhoto',
           dataURL: compressed,
           timestamp: Date.now()
-        });
+        } as any, 'profilePhoto' as any);
         
         setLocalPhotoURL(compressed);
         alert(t.photoUpdated || 'Profile photo updated successfully!');

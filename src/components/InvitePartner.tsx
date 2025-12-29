@@ -123,9 +123,10 @@ export default function InvitePartner() {
       {inviteCode ? (
         <div className="space-y-4">
           {/* Code Card */}
-          <div className="bg-gradient-to-br from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 rounded-2xl p-8 border-2 border-pink-200 dark:border-pink-800">
-            <div className="text-center space-y-4">
-              <div className="text-5xl font-bold tracking-wider text-pink-600 dark:text-pink-400 font-mono">
+          <div className="bg-white/50 dark:bg-black/20 rounded-2xl p-8 border border-white/20 dark:border-white/5 ring-1 ring-black/5 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="text-center space-y-4 relative z-10">
+              <div className="text-5xl font-bold tracking-wider text-pink-600 dark:text-pink-400 font-mono drop-shadow-sm">
                 {inviteCode.code}
               </div>
 
@@ -196,7 +197,7 @@ export default function InvitePartner() {
       )}
 
       {/* Tips */}
-      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
+      <div className="bg-blue-50/50 dark:bg-blue-900/10 rounded-xl p-4 border border-blue-100 dark:border-blue-800/30">
         <h4 className="font-semibold text-blue-900 dark:text-blue-300 mb-2">
           {t.tips}
         </h4>
