@@ -129,16 +129,18 @@ export default function HomePage() {
     
     try {
       // 1. Capture the hidden ShareCard
+      // Reduced scale to 1 for mobile stability (1080x1920 is already HD)
       const canvas = await html2canvas(shareCardRef.current, {
-        scale: 2, // Higher quality
+        scale: 1, 
         backgroundColor: null,
         useCORS: true, 
         logging: false,
+        allowTaint: true, // Allow cross-origin images if CORS fails (might accept but not share)
       });
 
       // 2. Convert to blob
       const blob = await new Promise<Blob | null>((resolve) => {
-        canvas.toBlob(resolve, 'image/png', 1.0);
+        canvas.toBlob(resolve, 'image/png', 0.9);
       });
 
       if (!blob) throw new Error('Failed to generate image');
@@ -147,22 +149,30 @@ export default function HomePage() {
       const file = new File([blob], 'love_journey.png', { type: 'image/png' });
 
       // 4. Share using Web Share API
-      if (navigator.share && navigator.canShare({ files: [file] })) {
-        await navigator.share({
+      const shareData = {
           files: [file],
           title: 'Our Love Journey',
           text: `Celebrating ${dateStats?.daysTogether} days together! 💕 #LoveLevel`,
-        });
+      };
+
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        await navigator.share(shareData);
       } else {
         // Fallback: Download the image
+        // Create a link and click it immediately
         const link = document.createElement('a');
-        link.download = 'love_journey.png';
-        link.href = canvas.toDataURL('image/png', 1.0);
+        link.download = `love_level_${dateStats?.daysTogether}_days.png`;
+        link.href = canvas.toDataURL('image/png', 0.9);
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
       }
     } catch (err) {
       console.error('Share failed:', err);
-      // Fallback for browsers that don't support file sharing or on error
+      // Show user feedback (could add a toast here, but alert is better than silence for now)
+      alert(t.shareFailed || 'Could not share image. Try taking a screenshot!'); 
+
+      // Fallback text share if image fail
       if (navigator.share) {
          try {
            await navigator.share({

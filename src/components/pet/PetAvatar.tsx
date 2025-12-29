@@ -3,7 +3,7 @@ import { usePetStore } from '../../store';
 import { useState, useEffect } from 'react';
 
 // Simple SVGs for base pet and accessories to avoid external image deps for now
-const BASE_PET_SVG = (mood: string) => (
+const BasePetSVG = ({ mood }: { mood: string }) => (
   <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-xl">
      {/* Body */}
      <circle cx="50" cy="55" r="40" fill="#ffb7b2" />
@@ -36,7 +36,8 @@ const BASE_PET_SVG = (mood: string) => (
 );
 
 export const PetAvatar = () => {
-  const pet = usePetStore();
+  const mood = usePetStore(state => state.mood);
+  const equipped = usePetStore(state => state.equipped);
   const [bounce, setBounce] = useState(0);
 
   // Idle Animation
@@ -64,34 +65,28 @@ export const PetAvatar = () => {
            className="w-full h-full"
         >
            {/* Base Pet */}
-           {/* Using emoji for now if SVG is too complex to inline perfectly without more context, 
-               but let's try to simulate the deleted component's likely structure 
-               Actually, let's use a high quality Emoji + css wrapper as a fallback/robust solution
-               since I don't have the original SVG code. 
-               Wait, I can use the SVG above.
-           */}
            <div className="w-full h-full p-2">
-              {BASE_PET_SVG(pet.mood)}
+              <BasePetSVG mood={mood} />
            </div>
 
            {/* Accessories Layer */}
-           {pet.equipped?.accessoryId === 'acc-glasses' && (
+           {equipped?.accessoryId === 'acc-glasses' && (
                <div className="absolute top-[35%] left-[25%] w-[50%] text-4xl text-center pointer-events-none">
                    👓
                </div>
            )}
-           {pet.equipped?.accessoryId === 'acc-hat' && (
+           {equipped?.accessoryId === 'acc-hat' && (
                <div className="absolute -top-[10%] left-[30%] w-[40%] text-5xl text-center pointer-events-none">
                    🎩
                </div>
            )}
-           {pet.equipped?.accessoryId === 'acc-bowtie' && (
+           {equipped?.accessoryId === 'acc-bowtie' && (
                <div className="absolute top-[65%] left-[35%] w-[30%] text-3xl text-center pointer-events-none">
                    🎀
                </div>
            )}
            {/* Generic accessory handler if ID is different */}
-           {pet.equipped?.accessoryId && !['acc-glasses','acc-hat','acc-bowtie'].includes(pet.equipped.accessoryId) && (
+           {equipped?.accessoryId && !['acc-glasses','acc-hat','acc-bowtie'].includes(equipped.accessoryId) && (
                <div className="absolute -top-5 right-0 bg-white rounded-full p-1 shadow">
                    {/* Fallback indicator */}
                    Correct accessory rendering requires assets

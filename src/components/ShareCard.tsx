@@ -45,63 +45,74 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>((_, ref) => 
         <div className="absolute bottom-[-100px] right-[-100px] w-[900px] h-[900px] bg-purple-100 rounded-full blur-[120px] opacity-60 mix-blend-multiply"></div>
       </div>
 
-      {/* Header */}
-      <div className="relative z-10 flex flex-col items-center gap-6 mt-20">
-         <div className="px-8 py-3 bg-white/70 backdrop-blur-xl rounded-full border border-white/40 shadow-sm">
-           <span className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-purple-600 tracking-wide uppercase">
+      {/* Header - Fake Glass (High Opacity White + Shadow) */}
+      <div className="relative z-10 flex flex-col items-center gap-4 mt-24">
+         <div className="px-10 py-4 bg-white/90 rounded-full border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+           <span className="text-2xl font-bold text-pink-600 tracking-[0.2em] uppercase">
              Love Level Journey
            </span>
          </div>
          
-         <div className="flex items-center gap-6 text-4xl font-semibold text-gray-800">
-           <span>{partner1Name}</span>
-           <span className="text-3xl text-pink-500">❤️</span>
-           <span>{partner2Name}</span>
+         <div className="flex items-center gap-6 mt-4">
+           <span className="text-5xl font-bold text-slate-800 tracking-tight">{partner1Name}</span>
+           <span className="text-4xl filter drop-shadow-lg">❤️</span>
+           <span className="text-5xl font-bold text-slate-800 tracking-tight">{partner2Name}</span>
          </div>
-         <p className="text-2xl text-gray-500 font-medium">Since {startDate}</p>
+         <p className="text-xl text-slate-500 font-medium tracking-wide layer-shadow">Since {startDate}</p>
       </div>
 
-      {/* Main Stats - Centerpiece */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center gap-12 w-full">
-        {/* Days Circle */}
-        <div className="relative w-[700px] h-[700px] flex items-center justify-center">
-            {/* Soft glow behind */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-pink-200 to-purple-200 rounded-full blur-[60px] opacity-50"></div>
+      {/* Main Stats - Premium Centerpiece */}
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center gap-16 w-full scale-110">
+        {/* Days Circle - "Coin" Style */}
+        <div className="relative w-[650px] h-[650px] flex items-center justify-center">
+            {/* Outer Glow */}
+            <div className="absolute inset-0 bg-white/30 rounded-full blur-3xl"></div>
             
-            {/* Glassmorphism Circle */}
-            <div className="relative w-full h-full bg-white/40 backdrop-blur-2xl rounded-full border border-white/60 shadow-2xl flex flex-col items-center justify-center p-12">
-                <span className="text-[180px] font-black text-transparent bg-clip-text bg-gradient-to-b from-gray-800 to-gray-600 leading-none">
-                    {dateStats.daysTogether}
-                </span>
-                <span className="text-5xl font-bold text-gray-600 tracking-widest uppercase mt-4">Days</span>
-                <span className="text-3xl text-gray-400 font-medium mt-2">Together</span>
+            {/* Main Circle - Solid semi-transparent background to mimic glass */}
+            <div className="relative w-full h-full bg-white/95 rounded-full border-[10px] border-white/50 shadow-[0_20px_50px_rgba(231,80,122,0.15)] flex flex-col items-center justify-center p-12">
+                <div className="flex flex-col items-center">
+                    <span className="text-[200px] font-black text-slate-800 leading-[0.85] tracking-tighter">
+                        {dateStats.daysTogether}
+                    </span>
+                    <span className="text-4xl font-bold text-pink-500 tracking-[0.3em] uppercase mt-8 border-t-2 border-pink-100 pt-6 w-32 text-center">Days</span>
+                    <span className="text-2xl text-slate-400 font-medium mt-3 uppercase tracking-widest">Together</span>
+                </div>
             </div>
             
-            {/* Orbiting Elements (Simulated with absolute positions) */}
-            <div className="absolute top-10 right-20 text-8xl animate-pulse">✨</div>
-            <div className="absolute bottom-20 left-10 text-7xl animate-bounce">💕</div>
+            {/* Decorations */}
+            <div className="absolute top-0 right-14 text-8xl drop-shadow-xl animate-pulse">✨</div>
+            <div className="absolute bottom-10 left-10 text-7xl drop-shadow-xl">💖</div>
         </div>
 
-        {/* Secondary Stats Grid */}
-        <div className="grid grid-cols-2 gap-8 w-full max-w-3xl">
-            <div className="bg-white/60 backdrop-blur-lg rounded-3xl p-8 border border-white/40 shadow-lg text-center">
-                <p className="text-7xl font-bold text-purple-600">{dateStats.monthsTogether}</p>
-                <p className="text-2xl font-semibold text-gray-500 mt-2 uppercase">Months</p>
+        {/* Secondary Stats - Cards */}
+        <div className="grid grid-cols-2 gap-6 w-full max-w-4xl px-8">
+            <div className="bg-white/90 rounded-[2.5rem] p-10 border border-white shadow-[0_10px_40px_rgba(0,0,0,0.03)] flex flex-col items-center justify-center gap-2">
+                <p className="text-8xl font-bold text-purple-600 leading-none">{dateStats.monthsTogether}</p>
+                <p className="text-xl font-bold text-slate-400 uppercase tracking-wider">Months</p>
             </div>
-            {dateStats.yearsTogether > 0 && (
-                <div className="bg-white/60 backdrop-blur-lg rounded-3xl p-8 border border-white/40 shadow-lg text-center">
-                    <p className="text-7xl font-bold text-pink-500">{dateStats.yearsTogether}</p>
-                    <p className="text-2xl font-semibold text-gray-500 mt-2 uppercase">Years</p>
+            {dateStats.yearsTogether > 0 ? (
+                <div className="bg-white/90 rounded-[2.5rem] p-10 border border-white shadow-[0_10px_40px_rgba(0,0,0,0.03)] flex flex-col items-center justify-center gap-2">
+                    <p className="text-8xl font-bold text-pink-500 leading-none">{dateStats.yearsTogether}</p>
+                    <p className="text-xl font-bold text-slate-400 uppercase tracking-wider">Years</p>
+                </div>
+            ) : (
+                 <div className="bg-white/90 rounded-[2.5rem] p-10 border border-white shadow-[0_10px_40px_rgba(0,0,0,0.03)] flex flex-col items-center justify-center gap-2">
+                    <p className="text-6xl font-bold text-indigo-500 leading-none">Forever</p>
+                    <p className="text-xl font-bold text-slate-400 uppercase tracking-wider">To Go</p>
                 </div>
             )}
-            <div className="bg-white/60 backdrop-blur-lg rounded-3xl p-8 border border-white/40 shadow-lg text-center col-span-2">
-                <p className="text-2xl font-bold text-gray-700 uppercase mb-2">Next Milestone</p>
-                <p className="text-5xl font-bold text-indigo-500">
-                    {dateStats.nextMilestone.value} {dateStats.nextMilestone.type === 'years' ? 'Years' : 'Months'}
-                </p>
-                <p className="text-xl text-gray-500 mt-2">
-                   in {dateStats.nextMilestone.daysUntil} days
-                </p>
+            
+            <div className="bg-gradient-to-br from-white/95 to-white/90 rounded-[2.5rem] p-10 border border-white shadow-[0_10px_40px_rgba(0,0,0,0.03)] col-span-2 flex flex-row items-center justify-between px-16">
+                <div className="text-left">
+                    <p className="text-lg font-bold text-pink-400 uppercase tracking-widest mb-1">Next Milestone</p>
+                    <p className="text-5xl font-bold text-slate-700">
+                        {dateStats.nextMilestone.value} {dateStats.nextMilestone.type === 'years' ? 'Year Anniversary' : 'Months'}
+                    </p>
+                </div>
+                <div className="text-right">
+                    <p className="text-6xl font-black text-slate-800">{dateStats.nextMilestone.daysUntil}</p>
+                    <p className="text-xl font-medium text-slate-400">days to go</p>
+                </div>
             </div>
         </div>
       </div>

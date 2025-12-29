@@ -13,8 +13,18 @@ import { AnimatedBackground } from '../components/layout/AnimatedBackground';
 
 export default function PetPage() {
   const { t } = useTranslation();
-  const pet = usePetStore();
-  const petName = pet.name || 'Your Pet';
+  
+  // Performance: Use selectors to avoid re-rendering the whole page on every store change
+  const petName = usePetStore(state => state.name) || 'Your Pet';
+  const petLevel = usePetStore(state => state.level);
+  const petInventory = usePetStore(state => state.inventory);
+  const petEquipped = usePetStore(state => state.equipped);
+  
+  // Actions (stable functions, don't trigger re-renders)
+  const setName = usePetStore(state => state.setName);
+  const equipAccessory = usePetStore(state => state.equipAccessory);
+  const equipBackground = usePetStore(state => state.equipBackground);
+  const updatePet = usePetStore(state => state.updatePet);
 
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [showShop, setShowShop] = useState(false);
@@ -23,8 +33,8 @@ export default function PetPage() {
   const [showInventory, setShowInventory] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'accessory' | 'background' | 'emote'>('accessory');
 
-  // Get unlocked items based on level and monthiversaries
-  const unlockedItems = getUnlockedItems(pet.level, 0, 0); // TODO: get actual monthiversaries and challenge count
+  // Get unlocked items based on level
+  const unlockedItems = getUnlockedItems(petLevel, 0, 0);
 
   const handleRename = () => {
     const trimmed = newName.trim();
@@ -44,20 +54,20 @@ export default function PetPage() {
       return;
     }
     
-    pet.setName(trimmed);
+    setName(trimmed);
     setShowRenameModal(false);
     setNameError('');
   };
 
   const handleEquip = (item: PetItem) => {
     if (item.type === 'accessory') {
-      const currentlyEquipped = pet.equipped?.accessoryId === item.id;
+      const currentlyEquipped = petEquipped?.accessoryId === item.id;
       const newAccessoryId = currentlyEquipped ? undefined : item.id;
-      pet.equipAccessory(newAccessoryId);
+      equipAccessory(newAccessoryId);
     } else if (item.type === 'background') {
-      const currentlyEquipped = pet.equipped?.backgroundId === item.id;
+      const currentlyEquipped = petEquipped?.backgroundId === item.id;
       const newBackgroundId = currentlyEquipped ? undefined : item.id;
-      pet.equipBackground(newBackgroundId);
+      equipBackground(newBackgroundId);
     }
     
     if ('vibrate' in navigator) {
@@ -73,14 +83,14 @@ export default function PetPage() {
       // Default items (price 0) are always owned if unlocked
       if ((item.price || 0) === 0) return true;
       // Otherwise check inventory
-      return pet.inventory.includes(item.id);
+      return petInventory.includes(item.id);
   };
 
   const isItemEquipped = (item: PetItem) => {
     if (item.type === 'accessory') {
-      return pet.equipped?.accessoryId === item.id;
+      return petEquipped?.accessoryId === item.id;
     } else if (item.type === 'background') {
-      return pet.equipped?.backgroundId === item.id;
+      return petEquipped?.backgroundId === item.id;
     }
     return false; // emotes not supported yet
   };
@@ -96,7 +106,7 @@ export default function PetPage() {
       console.log('🔄 Partner updated pet:', remotePetState);
       
       // Update local pet state (triggers re-render)
-      pet.updatePet({
+      updatePet({
         name: remotePetState.name,
         xp: remotePetState.xp,
         level: remotePetState.level,
@@ -115,13 +125,13 @@ export default function PetPage() {
     return () => {
       window.removeEventListener('sync:pet', handleRemotePetUpdate);
     };
-  }, [pet]);
+  }, [updatePet]);
 
   // Background class logic (preserved from original)
   const [backgroundClass, setBackgroundClass] = useState('bg-gradient-to-br from-accent-50 via-white to-primary-50 dark:from-accent-950 dark:via-gray-900 dark:to-primary-950');
 
   useEffect(() => {
-    const equippedBackground = SEED_PET_ITEMS.find(item => item.id === pet.equipped?.backgroundId);
+    const equippedBackground = SEED_PET_ITEMS.find(item => item.id === petEquipped?.backgroundId);
     
     if (!equippedBackground) {
       setBackgroundClass('bg-gradient-to-br from-accent-50 via-white to-primary-50 dark:from-accent-950 dark:via-gray-900 dark:to-primary-950');
@@ -144,7 +154,7 @@ export default function PetPage() {
     };
 
     setBackgroundClass(backgroundMap[equippedBackground.id] || 'bg-gradient-to-br from-accent-50 via-white to-primary-50 dark:from-accent-950 dark:via-gray-900 dark:to-primary-950');
-  }, [pet.equipped?.backgroundId]);
+  }, [petEquipped?.backgroundId]);
 
   return (
     <div className={`min-h-screen ${backgroundClass} relative overflow-hidden transition-colors duration-700 pb-32`}>

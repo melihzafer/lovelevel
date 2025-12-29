@@ -10,6 +10,7 @@ import JoinPartner from '../components/JoinPartner';
 import { Button } from '../components/Button';
 import { Loader } from '../components/Loader';
 import { AnimatedBackground } from '../components/layout/AnimatedBackground';
+import { daysBetween } from '../lib/dateUtils';
 
 export default function Partner() {
   const { t } = useTranslation();
@@ -84,13 +85,7 @@ export default function Partner() {
 
   function calculateDaysTogether(): number {
     if (!partnership?.anniversary_date) return 0;
-
-    const anniversary = new Date(partnership.anniversary_date);
-    const today = new Date();
-    const diffTime = Math.abs(today.getTime() - anniversary.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    return diffDays;
+    return daysBetween(new Date(partnership.anniversary_date), new Date());
   }
 
   // Loading State

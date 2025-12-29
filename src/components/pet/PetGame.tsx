@@ -8,20 +8,29 @@ import { LoveCatcher } from './LoveCatcher';
 
 export const PetGame = () => {
   const { t } = useTranslation();
-  const pet = usePetStore();
+  
+  // Selectors
+  const hunger = usePetStore(state => state.hunger);
+  const hygiene = usePetStore(state => state.hygiene);
+  
+  // Actions
+  const cleanPet = usePetStore(state => state.cleanPet);
+  const gainXP = usePetStore(state => state.gainXP);
+  const feedPet = usePetStore(state => state.feedPet);
+
   const [showLoveCatcher, setShowLoveCatcher] = useState(false);
 
   // Handle cleaning
   const handleClean = useCallback(() => {
-    pet.cleanPet(); // Fixed: Use store action
-    pet.gainXP(5, 'cleaning');
+    cleanPet();
+    gainXP(5, 'cleaning');
     if ('vibrate' in navigator) navigator.vibrate([30, 50, 30]);
-  }, [pet]);
+  }, [cleanPet, gainXP]);
 
   // Handle feeding
   const handleFeed = () => {
-    if (pet.hunger >= 100) return;
-    pet.feedPet(); // Fixed: No arguments needed for default feed
+    if (hunger >= 100) return;
+    feedPet();
     // Haptic
     if ('vibrate' in navigator) navigator.vibrate(50);
   };
@@ -46,7 +55,7 @@ export const PetGame = () => {
         {/* Dirt Layer Overlay */}
         <div className="absolute inset-0 z-20 pointer-events-none">
            <div className="absolute inset-0 w-48 h-48 mx-auto top-8 pointer-events-auto">
-              <DirtLayer hygiene={pet.hygiene} onClean={handleClean} />
+              <DirtLayer hygiene={hygiene} onClean={handleClean} />
            </div>
         </div>
 
@@ -56,7 +65,7 @@ export const PetGame = () => {
         </div>
         
         {/* Thought Bubble (Status) */}
-        {pet.hunger < 30 && (
+        {hunger < 30 && (
             <motion.div 
                initial={{ opacity: 0, scale: 0.8 }}
                animate={{ opacity: 1, scale: 1 }}
@@ -75,13 +84,13 @@ export const PetGame = () => {
            <div className="flex-1">
               <div className="flex justify-between text-xs font-bold mb-1 opacity-70">
                  <span>{(t as any).hunger || 'Hunger'}</span> 
-                 <span>{Math.round(pet.hunger)}%</span>
+                 <span>{Math.round(hunger)}%</span>
               </div>
               <div className="h-2 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden">
                  <motion.div 
                     className="h-full bg-orange-400"
                     initial={{ width: 0 }}
-                    animate={{ width: `${pet.hunger}%` }}
+                    animate={{ width: `${hunger}%` }}
                  />
               </div>
            </div>
@@ -93,13 +102,13 @@ export const PetGame = () => {
            <div className="flex-1">
               <div className="flex justify-between text-xs font-bold mb-1 opacity-70">
                  <span>{(t as any).hygiene || 'Hygiene'}</span>
-                 <span>{Math.round(pet.hygiene)}%</span>
+                 <span>{Math.round(hygiene)}%</span>
               </div>
               <div className="h-2 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden">
                  <motion.div 
                     className="h-full bg-blue-400"
                     initial={{ width: 0 }}
-                    animate={{ width: `${pet.hygiene}%` }}
+                    animate={{ width: `${hygiene}%` }}
                  />
               </div>
            </div>
@@ -111,9 +120,9 @@ export const PetGame = () => {
           <motion.button
              whileTap={{ scale: 0.9 }}
              onClick={handleFeed}
-             disabled={pet.hunger >= 100}
+             disabled={hunger >= 100}
              className={`flex flex-col items-center gap-1 p-3 rounded-2xl min-w-[80px] transition-all ${
-                 pet.hunger >= 100 
+                 hunger >= 100 
                  ? 'opacity-50 grayscale bg-gray-100 dark:bg-white/5' 
                  : 'bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900/30 dark:to-amber-900/30 border border-orange-200 dark:border-orange-800 shadow-sm'
              }`}
