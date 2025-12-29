@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDateStats, useSettingsStore } from '../store';
 import { useAuth } from '../contexts/SupabaseAuthContext';
@@ -7,6 +7,8 @@ import Confetti from '../components/Confetti';
 import { Modal } from '../components/Modal';
 import { Button } from '../components/Button';
 import { useTranslation } from '../lib/i18n';
+import { ShareCard } from '../components/ShareCard';
+import html2canvas from 'html2canvas';
 
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 
@@ -82,6 +84,8 @@ export default function HomePage() {
   const [showCelebration, setShowCelebration] = useState(false);
   const [hasShownTodayCelebration, setHasShownTodayCelebration] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const shareCardRef = useRef<HTMLDivElement>(null);
 
   // Get partner names from settings
   const partner1Name = settings.partners[0]?.name || t.partner1 || 'Partner 1';
@@ -119,18 +123,59 @@ export default function HomePage() {
   }, []);
 
   const handleShare = async () => {
-    if (navigator.share && dateStats) {
-      try {
+    if (!shareCardRef.current) return;
+    
+    setIsSharing(true);
+    
+    try {
+      // 1. Capture the hidden ShareCard
+      const canvas = await html2canvas(shareCardRef.current, {
+        scale: 2, // Higher quality
+        backgroundColor: null,
+        useCORS: true, 
+        logging: false,
+      });
+
+      // 2. Convert to blob
+      const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob(resolve, 'image/png', 1.0);
+      });
+
+      if (!blob) throw new Error('Failed to generate image');
+
+      // 3. Create file for sharing
+      const file = new File([blob], 'love_journey.png', { type: 'image/png' });
+
+      // 4. Share using Web Share API
+      if (navigator.share && navigator.canShare({ files: [file] })) {
         await navigator.share({
-          title: 'Love Level',
-          text: `We've been together for ${dateStats.daysTogether} days! 💕`,
-          url: window.location.href,
+          files: [file],
+          title: 'Our Love Journey',
+          text: `Celebrating ${dateStats?.daysTogether} days together! 💕 #LoveLevel`,
         });
-      } catch (err) {
-        if ((err as Error).name !== 'AbortError') {
-          console.error('Share failed:', err);
-        }
+      } else {
+        // Fallback: Download the image
+        const link = document.createElement('a');
+        link.download = 'love_journey.png';
+        link.href = canvas.toDataURL('image/png', 1.0);
+        link.click();
       }
+    } catch (err) {
+      console.error('Share failed:', err);
+      // Fallback for browsers that don't support file sharing or on error
+      if (navigator.share) {
+         try {
+           await navigator.share({
+             title: 'Love Level',
+             text: `We've been together for ${dateStats?.daysTogether} days! 💕`,
+             url: window.location.href,
+           });
+         } catch (shareErr) {
+           console.error('Fallback share failed:', shareErr);
+         }
+      }
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -150,8 +195,6 @@ export default function HomePage() {
       </div>
     );
   }
-
-  // ... inside component ...
 
   return (
     <div className="min-h-screen bg-bg-secondary dark:bg-bg-primary relative overflow-hidden transition-colors duration-500 pb-32">
@@ -288,12 +331,22 @@ export default function HomePage() {
            <motion.button
             whileTap={{ scale: 0.98 }}
             onClick={handleShare}
+            disabled={isSharing}
             className="w-full py-4 rounded-xl bg-white dark:bg-gray-800 border-2 border-dashed border-primary-200 dark:border-primary-800 text-primary-600 dark:text-primary-400 font-medium hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors flex items-center justify-center gap-2"
            >
-             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
-             {t.shareJourney}
+             {isSharing ? (
+               <div className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+             ) : (
+               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+             )}
+             {isSharing ? 'Generating...' : t.shareJourney}
            </motion.button>
         )}
+
+        {/* Hidden Share Card for Image Generation */}
+        <div className="fixed left-[-9999px] top-[-9999px]">
+           <ShareCard ref={shareCardRef} />
+        </div>
       </div>
 
       {/* Celebration Modal */}

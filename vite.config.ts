@@ -51,6 +51,22 @@ export default defineConfig({
             purpose: "maskable",
           },
         ],
+        screenshots: [
+          {
+            src: "/screenshots/mobile-1.png",
+            sizes: "390x844",
+            type: "image/png",
+            form_factor: "narrow",
+            label: "Home Screen"
+          },
+          {
+            src: "/screenshots/desktop-1.png",
+            sizes: "1920x1080",
+            type: "image/png",
+            form_factor: "wide",
+            label: "Dashboard View"
+          }
+        ],
       },
       devOptions: {
         enabled: true,
