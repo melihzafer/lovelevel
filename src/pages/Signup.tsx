@@ -100,10 +100,10 @@ export default function Signup() {
       >
         {/* Logo/Brand */}
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-violet-600 dark:from-pink-400 dark:to-violet-400 mb-2 drop-shadow-sm">
+          <h1 className="text-5xl font-black text-white mb-2 drop-shadow-md tracking-tight">
             LoveLevel
           </h1>
-          <p className="text-gray-600 dark:text-gray-300 font-medium">
+          <p className="text-white/90 font-medium text-lg drop-shadow-sm">
             {t.auth.signupSubtitle || 'Start your love journey together'}
           </p>
         </div>

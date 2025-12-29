@@ -5,40 +5,41 @@
 @layer base {
   :root {
     /* Premium Light Theme - Vibrant & Soft */
-    /* Primary: Romantic Rose/Pink - slightly more vibrant */
+    /* Primary: Romantic Rose/Pink */
     --color-primary-50: #fff0f3;
-    --color-primary-100: #ffe3e8;
-    --color-primary-200: #ffc9d6;
-    --color-primary-300: #ff9fb4;
-    --color-primary-400: #ff6b91;
-    --color-primary-500: #f43f6e; /* More vibrant rose */
-    --color-primary-600: #e11d53;
-    --color-primary-700: #be1242;
-    --color-primary-800: #9f123d;
-    --color-primary-900: #881438;
+    --color-primary-100: #ffe4e6;
+    --color-primary-200: #fecdd3;
+    --color-primary-300: #fda4af;
+    --color-primary-400: #fb7185;
+    --color-primary-500: #f43f5e;
+    --color-primary-600: #e11d48;
+    --color-primary-700: #be123c;
+    --color-primary-800: #9f1239;
+    --color-primary-900: #881337;
 
-    /* Accent: Royal Purple/Violet - deeper & richer */
+    /* Accent: Royal Purple/Violet */
     --color-accent-50: #f5f3ff;
     --color-accent-100: #ede9fe;
     --color-accent-200: #ddd6fe;
     --color-accent-300: #c4b5fd;
     --color-accent-400: #a78bfa;
-    --color-accent-500: #8b5cf6; /* Vibrant violet */
+    --color-accent-500: #8b5cf6;
     --color-accent-600: #7c3aed;
     --color-accent-700: #6d28d9;
     --color-accent-800: #5b21b6;
     --color-accent-900: #4c1d95;
 
-    /* Backgrounds */
+    /* Backgrounds - Cleaner Neutrals */
     --bg-primary: #ffffff;
-    --bg-secondary: #fff0f3;
-    --text-primary: #0f172a; /* Dark slate for better contrast */
+    --bg-secondary: #f8fafc; /* Slate 50 - Cleaner than pink tint */
+    --text-primary: #0f172a;
     --text-secondary: #475569;
     --border-color: #e2e8f0;
   }
 
   .dark {
-    /* Premium Dark Theme - Deep & Glowing */
+    /* Premium Dark Theme - Deep & Neutral */
+    /* Muted Primary for Dark Mode */
     --color-primary-50: #4c0519;
     --color-primary-100: #831843;
     --color-primary-200: #9f1239;
@@ -50,6 +51,7 @@
     --color-primary-800: #fecdd3;
     --color-primary-900: #ffe4e6;
 
+    /* Muted Accent for Dark Mode */
     --color-accent-50: #2e1065;
     --color-accent-100: #4c1d95;
     --color-accent-200: #5b21b6;
@@ -61,11 +63,12 @@
     --color-accent-800: #ddd6fe;
     --color-accent-900: #ede9fe;
 
-    --bg-primary: #020617; /* Deepest slate */
-    --bg-secondary: #0f172a;
-    --text-primary: #f8fafc;
-    --text-secondary: #94a3b8;
-    --border-color: #1e293b;
+    /* Backgrounds - True Darks */
+    --bg-primary: #0a0a0a; /* Neutral nearly-black */
+    --bg-secondary: #171717; /* Neutral dark gray */
+    --text-primary: #ededed; /* Soft white */
+    --text-secondary: #a3a3a3; /* Neutral gray */
+    --border-color: #262626;
   }
 
   body {
@@ -124,7 +127,7 @@
   }
 
   .dark .glass-effect {
-    @apply bg-black/40 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/20 supports-[backdrop-filter]:bg-black/40;
+    @apply bg-neutral-900/60 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/40 supports-[backdrop-filter]:bg-neutral-900/40;
   }
 
   /* Card Hover Effects */
