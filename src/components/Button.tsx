@@ -13,7 +13,7 @@ export function Button({
   ...props
 }: ButtonProps) {
   const baseStyles =
-    'touch-target min-h-[44px] px-6 py-2 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed';
+    'touch-target min-h-[44px] px-6 py-2 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center';
 
   const variantStyles = {
     primary:

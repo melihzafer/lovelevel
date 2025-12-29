@@ -5,6 +5,7 @@ export type Language = 'en' | 'tr' | 'bg';
 export interface Partner {
   id: string;
   name: string;
+  avatar?: string;
 }
 
 export interface Challenge {
@@ -20,13 +21,17 @@ export interface Challenge {
   completedAt?: string; // ISO 8601 string
   notes?: string; // Markdown-lite: bold/italic/emojis
   createdAt: string;
+  createdBy?: string;
 }
+
+export type ItemType = 'accessory' | 'background' | 'emote' | 'outfit' | 'food';
 
 export interface PetItem {
   id: string;
   name: string;
-  type: 'accessory' | 'background' | 'emote';
+  type: ItemType;
   description?: string;
+  price?: number;
   unlockedAt?: string; // ISO 8601 string
   unlockCondition?: {
     type: 'level' | 'monthiversary' | 'challenge-count';
@@ -43,10 +48,14 @@ export interface PetState {
   mood: PetMood;
   hunger: number; // 0-100
   energy: number; // 0-100
-  items: PetItem[];
+  hygiene: number; // 0-100
+  coins: number;
+  inventory: string[]; // Item IDs
+  items: PetItem[]; // Deprecated? Keeping for backward compatibility or UI convenience
   equipped?: {
     accessoryId?: string;
     backgroundId?: string;
+    outfitId?: string;
   };
   lastInteraction?: string; // ISO 8601 string
 }
@@ -106,9 +115,34 @@ export const DEFAULT_PET_STATE: PetState = {
   mood: 'happy',
   hunger: 50,
   energy: 100,
+  hygiene: 100,
+  coins: 0,
+  inventory: [],
   items: [],
   equipped: {},
 };
+
+// Supabase-specific types (synced data)
+export interface Partnership {
+  id: string;
+  user1_id: string;
+  user2_id: string;
+  status: 'pending' | 'active' | 'declined';
+  anniversary_date: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface InviteCode {
+  id?: string;
+  code: string;
+  created_by: string;
+  created_at: string;
+  expires_at: string;
+  used: boolean;
+  used_by?: string;
+  used_at?: string;
+}
 
 // Utility types
 export type DeepPartial<T> = {

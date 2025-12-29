@@ -14,7 +14,7 @@ permissions:
 # Allow only one concurrent deployment
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -32,6 +32,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
+      - name: Lint
+        run: npm run lint
+        continue-on-error: false
+
+      - name: Test
+        run: npx vitest run
+        continue-on-error: false
+
       - name: Build
         run: npm run build
       

@@ -4,81 +4,96 @@
 
 @layer base {
   :root {
-    /* Light theme colors - romantic pinks and soft purples */
-    --color-primary-50: #fef2f4;
-    --color-primary-100: #fce7eb;
-    --color-primary-200: #f9cfd9;
-    --color-primary-300: #f5a7bc;
-    --color-primary-400: #f0769a;
-    --color-primary-500: #e7507a;
-    --color-primary-600: #d43063;
-    --color-primary-700: #b22251;
-    --color-primary-800: #941f49;
-    --color-primary-900: #7e1d42;
+    /* Premium Light Theme - Vibrant & Soft */
+    /* Primary: Romantic Rose/Pink - slightly more vibrant */
+    --color-primary-50: #fff0f3;
+    --color-primary-100: #ffe3e8;
+    --color-primary-200: #ffc9d6;
+    --color-primary-300: #ff9fb4;
+    --color-primary-400: #ff6b91;
+    --color-primary-500: #f43f6e; /* More vibrant rose */
+    --color-primary-600: #e11d53;
+    --color-primary-700: #be1242;
+    --color-primary-800: #9f123d;
+    --color-primary-900: #881438;
 
-    --color-accent-50: #faf5ff;
-    --color-accent-100: #f3e8ff;
-    --color-accent-200: #e9d5ff;
-    --color-accent-300: #d8b4fe;
-    --color-accent-400: #c084fc;
-    --color-accent-500: #a855f7;
-    --color-accent-600: #9333ea;
-    --color-accent-700: #7e22ce;
-    --color-accent-800: #6b21a8;
-    --color-accent-900: #581c87;
+    /* Accent: Royal Purple/Violet - deeper & richer */
+    --color-accent-50: #f5f3ff;
+    --color-accent-100: #ede9fe;
+    --color-accent-200: #ddd6fe;
+    --color-accent-300: #c4b5fd;
+    --color-accent-400: #a78bfa;
+    --color-accent-500: #8b5cf6; /* Vibrant violet */
+    --color-accent-600: #7c3aed;
+    --color-accent-700: #6d28d9;
+    --color-accent-800: #5b21b6;
+    --color-accent-900: #4c1d95;
 
+    /* Backgrounds */
     --bg-primary: #ffffff;
-    --bg-secondary: #fef2f4;
-    --text-primary: #1f2937;
-    --text-secondary: #6b7280;
-    --border-color: #f3e8ff;
+    --bg-secondary: #fff0f3;
+    --text-primary: #0f172a; /* Dark slate for better contrast */
+    --text-secondary: #475569;
+    --border-color: #e2e8f0;
   }
 
   .dark {
-    /* Dark theme colors - deeper tones */
-    --color-primary-50: #4c1d30;
-    --color-primary-100: #6b2344;
-    --color-primary-200: #8b2a5a;
-    --color-primary-300: #b23870;
-    --color-primary-400: #d84786;
-    --color-primary-500: #e7507a;
-    --color-primary-600: #f0769a;
-    --color-primary-700: #f5a7bc;
-    --color-primary-800: #f9cfd9;
-    --color-primary-900: #fce7eb;
+    /* Premium Dark Theme - Deep & Glowing */
+    --color-primary-50: #4c0519;
+    --color-primary-100: #831843;
+    --color-primary-200: #9f1239;
+    --color-primary-300: #be123c;
+    --color-primary-400: #e11d48;
+    --color-primary-500: #f43f5e;
+    --color-primary-600: #fb7185;
+    --color-primary-700: #fda4af;
+    --color-primary-800: #fecdd3;
+    --color-primary-900: #ffe4e6;
 
     --color-accent-50: #2e1065;
     --color-accent-100: #4c1d95;
     --color-accent-200: #5b21b6;
     --color-accent-300: #6d28d9;
     --color-accent-400: #7c3aed;
-    --color-accent-500: #a855f7;
-    --color-accent-600: #c084fc;
-    --color-accent-700: #d8b4fe;
-    --color-accent-800: #e9d5ff;
-    --color-accent-900: #f3e8ff;
+    --color-accent-500: #8b5cf6;
+    --color-accent-600: #a78bfa;
+    --color-accent-700: #c4b5fd;
+    --color-accent-800: #ddd6fe;
+    --color-accent-900: #ede9fe;
 
-    --bg-primary: #0f172a;
-    --bg-secondary: #1e293b;
-    --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --border-color: #334155;
+    --bg-primary: #020617; /* Deepest slate */
+    --bg-secondary: #0f172a;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --border-color: #1e293b;
   }
 
   body {
-    @apply bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-200;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    @apply bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-300;
+    font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; /* Recommended modernized font stack if available, falling back to Inter */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     margin: 0;
     min-height: 100vh;
   }
 
-  * {
-    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-primary)];
+  ::selection {
+    @apply bg-primary-200 text-primary-900;
   }
 
-  /* Ensure touch targets are at least 44x44px */
+  .dark ::selection {
+    @apply bg-primary-700 text-primary-50;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight font-bold;
+  }
+
+  * {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-primary)];
+  }
+
+  /* Improved Touch Targets */
   button,
   a,
   input[type="checkbox"],
@@ -103,15 +118,54 @@
     text-wrap: balance;
   }
 
-  .touch-target {
-    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
-  }
-
+  /* Premium Glassmorphism */
   .glass-effect {
-    @apply bg-white/10 backdrop-blur-md border border-white/20;
+    @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-lg shadow-black/5 supports-[backdrop-filter]:bg-white/40;
   }
 
   .dark .glass-effect {
-    @apply bg-black/20 backdrop-blur-md border border-white/10;
+    @apply bg-black/40 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/20 supports-[backdrop-filter]:bg-black/40;
+  }
+
+  /* Card Hover Effects */
+  .hover-card {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-pink-500/10;
+  }
+
+  /* Text Gradients */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-500 to-accent-500;
+  }
+
+  .text-gradient-gold {
+     @apply bg-clip-text text-transparent bg-gradient-to-r from-amber-400 to-orange-500;
+  }
+
+  /* Animations for background */
+  .animate-blob {
+    animation: blob 7s infinite;
+  }
+  
+  .animation-delay-2000 {
+    animation-delay: 2s;
+  }
+  
+  .animation-delay-4000 {
+    animation-delay: 4s;
+  }
+  
+  @keyframes blob {
+    0% {
+      transform: translate(0px, 0px) scale(1);
+    }
+    33% {
+      transform: translate(30px, -50px) scale(1.1);
+    }
+    66% {
+      transform: translate(-20px, 20px) scale(0.9);
+    }
+    100% {
+      transform: translate(0px, 0px) scale(1);
+    }
   }
 }

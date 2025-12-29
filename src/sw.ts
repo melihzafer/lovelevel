@@ -18,11 +18,18 @@ cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
 
 // Cache the app shell (HTML navigation requests)
-const handler = createHandlerBoundToURL('/index.html');
-const navigationRoute = new NavigationRoute(handler, {
-  denylist: [/^\/_/, /\/[^/?]+\.[^/]+$/],
-});
-registerRoute(navigationRoute);
+// Only register navigation route if we have precached items
+if (self.__WB_MANIFEST.length > 0) {
+  try {
+    const handler = createHandlerBoundToURL('/index.html');
+    const navigationRoute = new NavigationRoute(handler, {
+      denylist: [/^\/_/, /\/[^/?]+\.[^/]+$/],
+    });
+    registerRoute(navigationRoute);
+  } catch (e) {
+    console.warn('Navigation route not registered:', e);
+  }
+}
 
 // Cache Google Fonts
 registerRoute(

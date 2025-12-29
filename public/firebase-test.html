@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase Auth Diagnostic Tool</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1 {
+      color: #667eea;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    .status-box {
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .status-box.success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+    .status-box.error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+    .status-box.info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    button {
+      padding: 14px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      color: white;
+    }
+    button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+    button:active { transform: translateY(0); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-primary { background: #667eea; }
+    .btn-success { background: #28a745; }
+    .btn-danger { background: #dc3545; }
+    .btn-warning { background: #ffc107; color: #333; }
+    .test-result {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 15px;
+      font-family: monospace;
+      font-size: 13px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .test-result pre {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .divider {
+      height: 1px;
+      background: #dee2e6;
+      margin: 30px 0;
+    }
+    .step {
+      background: #f8f9fa;
+      padding: 15px;
+      border-left: 4px solid #667eea;
+      margin-bottom: 15px;
+      border-radius: 4px;
+    }
+    .step-title {
+      font-weight: 600;
+      color: #667eea;
+      margin-bottom: 8px;
+    }
+    .step-desc {
+      color: #666;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔥 Firebase Auth Diagnostic</h1>
+    <p class="subtitle">Test authentication and diagnose issues</p>
+
+    <div id="config-status" class="status-box info">
+      <strong>⏳ Loading configuration...</strong>
+    </div>
+
+    <div class="btn-group">
+      <button id="test-signup" class="btn-primary">
+        📝 Test Email/Password Signup
+      </button>
+      <button id="test-login" class="btn-success">
+        🔓 Test Email/Password Login
+      </button>
+      <button id="test-google" class="btn-warning">
+        🔵 Test Google OAuth
+      </button>
+      <button id="check-user" class="btn-primary">
+        👤 Check Current User
+      </button>
+      <button id="test-logout" class="btn-danger">
+        🚪 Logout
+      </button>
+    </div>
+
+    <div id="result" class="test-result" style="display: none;">
+      <pre id="result-content"></pre>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="step">
+      <div class="step-title">📋 Firebase Console Checklist</div>
+      <div class="step-desc">
+        1. Go to Authentication → Sign-in method<br>
+        2. Verify Email/Password is <strong>ENABLED</strong><br>
+        3. Verify Google is <strong>ENABLED</strong><br>
+        4. Check Authorized domains includes <strong>localhost</strong>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-title">🔗 Quick Links</div>
+      <div class="step-desc">
+        <a href="https://console.firebase.google.com/project/lovelevel-7dadc/authentication/providers" 
+           target="_blank" 
+           style="color: #667eea; text-decoration: none; font-weight: 600;">
+          Open Firebase Console →
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { 
+      getAuth, 
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      signInWithPopup,
+      GoogleAuthProvider,
+      onAuthStateChanged,
+      signOut
+    } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { 
+      getFirestore, 
+      doc, 
+      setDoc, 
+      getDoc 
+    } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+    // Firebase configuration
+    const config = {
+      apiKey: 'AIzaSyAh3XaGUhPxW3R0gOygs4dbOqeTp9NcOFs',
+      authDomain: 'lovelevel-7dadc.firebaseapp.com',
+      projectId: 'lovelevel-7dadc',
+      storageBucket: 'lovelevel-7dadc.firebasestorage.app',
+      messagingSenderId: '27515531667',
+      appId: '1:27515531667:web:0c4b7b32b0fae675bff866',
+      measurementId: 'G-9QEH5GB5HQ'
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(config);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // UI Elements
+    const configStatus = document.getElementById('config-status');
+    const resultDiv = document.getElementById('result');
+    const resultContent = document.getElementById('result-content');
+
+    function log(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      const prefix = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+      console.log(`[${timestamp}] ${prefix} ${message}`);
+      resultContent.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+      resultDiv.style.display = 'block';
+      resultDiv.scrollTop = resultDiv.scrollHeight;
+    }
+
+    // Display config status
+    configStatus.innerHTML = `
+      <strong>✅ Configuration Loaded</strong><br>
+      <small>
+        Project: <code>${config.projectId}</code><br>
+        Auth Domain: <code>${config.authDomain}</code>
+      </small>
+    `;
+    configStatus.className = 'status-box success';
+
+    // Test email/password signup
+    document.getElementById('test-signup').addEventListener('click', async () => {
+      log('🧪 Testing Email/Password Signup...', 'info');
+      const email = `test-${Date.now()}@example.com`;
+      const password = 'Test123!';
+      
+      try {
+        log(`Creating user: ${email}`, 'info');
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        log(`✅ User created: ${userCredential.user.uid}`, 'success');
+        
+        // Create Firestore document
+        log('Creating Firestore user document...', 'info');
+        await setDoc(doc(db, 'users', userCredential.user.uid), {
+          email: email,
+          displayName: '',
+          photoURL: '',
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        });
+        log('✅ Firestore document created', 'success');
+        log(`\n🎉 SIGNUP SUCCESSFUL!\nEmail: ${email}\nPassword: ${password}`, 'success');
+        
+      } catch (error) {
+        log(`❌ Signup failed: ${error.code}`, 'error');
+        log(`Message: ${error.message}`, 'error');
+        
+        if (error.code === 'auth/operation-not-allowed') {
+          log('\n💡 FIX: Enable Email/Password in Firebase Console', 'error');
+        }
+      }
+    });
+
+    // Test email/password login
+    document.getElementById('test-login').addEventListener('click', async () => {
+      log('🧪 Testing Email/Password Login...', 'info');
+      const email = prompt('Enter email:', 'test@example.com');
+      const password = prompt('Enter password:', 'Test123!');
+      
+      if (!email || !password) {
+        log('❌ Login cancelled', 'error');
+        return;
+      }
+      
+      try {
+        log(`Attempting login: ${email}`, 'info');
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        log(`✅ Login successful: ${userCredential.user.uid}`, 'success');
+        log(`Email: ${userCredential.user.email}`, 'success');
+        
+      } catch (error) {
+        log(`❌ Login failed: ${error.code}`, 'error');
+        log(`Message: ${error.message}`, 'error');
+      }
+    });
+
+    // Test Google OAuth
+    document.getElementById('test-google').addEventListener('click', async () => {
+      log('🧪 Testing Google OAuth...', 'info');
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      
+      try {
+        log('Opening Google popup...', 'info');
+        const result = await signInWithPopup(auth, provider);
+        log(`✅ Google login successful: ${result.user.uid}`, 'success');
+        log(`Email: ${result.user.email}`, 'success');
+        log(`Display Name: ${result.user.displayName}`, 'success');
+        
+        // Create/update Firestore document
+        log('Syncing with Firestore...', 'info');
+        await setDoc(doc(db, 'users', result.user.uid), {
+          email: result.user.email,
+          displayName: result.user.displayName || '',
+          photoURL: result.user.photoURL || '',
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        }, { merge: true });
+        log('✅ Firestore sync complete', 'success');
+        
+      } catch (error) {
+        log(`❌ Google login failed: ${error.code}`, 'error');
+        log(`Message: ${error.message}`, 'error');
+        
+        if (error.code === 'auth/operation-not-allowed') {
+          log('\n💡 FIX: Enable Google OAuth in Firebase Console', 'error');
+        } else if (error.code === 'auth/popup-blocked') {
+          log('\n💡 FIX: Allow popups in your browser', 'error');
+        } else if (error.code === 'auth/unauthorized-domain') {
+          log('\n💡 FIX: Add this domain to Authorized domains in Firebase Console', 'error');
+        }
+      }
+    });
+
+    // Check current user
+    document.getElementById('check-user').addEventListener('click', () => {
+      log('🧪 Checking current user...', 'info');
+      const user = auth.currentUser;
+      
+      if (user) {
+        log(`✅ User is logged in:`, 'success');
+        log(`  UID: ${user.uid}`, 'info');
+        log(`  Email: ${user.email}`, 'info');
+        log(`  Display Name: ${user.displayName || '(not set)'}`, 'info');
+        log(`  Email Verified: ${user.emailVerified}`, 'info');
+      } else {
+        log('❌ No user is currently logged in', 'error');
+      }
+    });
+
+    // Logout
+    document.getElementById('test-logout').addEventListener('click', async () => {
+      log('🧪 Logging out...', 'info');
+      try {
+        await signOut(auth);
+        log('✅ Logout successful', 'success');
+      } catch (error) {
+        log(`❌ Logout failed: ${error.message}`, 'error');
+      }
+    });
+
+    // Listen to auth state changes
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        log(`🔔 Auth state changed: User logged in (${user.email})`, 'success');
+      } else {
+        log('🔔 Auth state changed: User logged out', 'info');
+      }
+    });
+
+    log('✅ Diagnostic tool ready', 'success');
+    log('Click a button to start testing', 'info');
+  </script>
+</body>
+</html>
