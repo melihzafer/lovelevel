@@ -90,6 +90,8 @@ export const translations = {
     xpUntilLevel: 'XP until level',
     happiness: 'Happiness',
     energy: 'Energy',
+    petShop: 'Pet Shop',
+    yourCoins: 'Your Coins',
     
     // History
     history: 'History',
@@ -473,6 +475,8 @@ export const translations = {
     xpUntilLevel: 'seviyeye kadar XP',
     happiness: 'Mutluluk',
     energy: 'Enerji',
+    petShop: 'Evcil Hayvan Mağazası',
+    yourCoins: 'Altınlarınız',
     
     // History
     history: 'Geçmiş',
@@ -858,6 +862,8 @@ export const translations = {
     xpUntilLevel: 'XP до ниво',
     happiness: 'Щастие',
     energy: 'Енергия',
+    petShop: 'Зоомагазин',
+    yourCoins: 'Вашите монети',
     
     // History
     history: 'История',

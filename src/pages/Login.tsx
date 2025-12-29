@@ -5,6 +5,8 @@ import { useSettingsStore } from '../store';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { useTranslation } from '../lib/i18n';
+import { AnimatedBackground } from '../components/layout/AnimatedBackground';
+import { motion } from 'framer-motion';
 
 export default function Login() {
   const { t } = useTranslation();
@@ -88,34 +90,45 @@ export default function Login() {
   const displayError = localError || error;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 dark:from-gray-900 dark:via-purple-900 dark:to-gray-900 px-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center px-4">
+      <AnimatedBackground />
+      
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="w-full max-w-md relative z-10"
+      >
         {/* Logo/Brand */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-pink-600 dark:text-pink-400 mb-2">
-            💕 LoveLevel
+          <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-violet-600 dark:from-pink-400 dark:to-violet-400 mb-2 drop-shadow-sm">
+            LoveLevel
           </h1>
-          <p className="text-gray-600 dark:text-gray-300">
+          <p className="text-gray-600 dark:text-gray-300 font-medium">
             {t.auth.loginSubtitle || 'Welcome back!'}
           </p>
         </div>
 
         {/* Login Form */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+        <div className="backdrop-blur-xl bg-white/40 dark:bg-black/40 border border-white/40 dark:border-white/10 rounded-3xl shadow-2xl p-8">
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6 text-center">
             {t.auth.login || 'Sign In'}
           </h2>
 
           {/* Error Message */}
           {displayError && (
-            <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 rounded-lg">
-              <p className="text-red-700 dark:text-red-400 text-sm">{displayError}</p>
-            </div>
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="mb-4 p-3 bg-red-100/80 dark:bg-red-900/40 border border-red-400/50 dark:border-red-700/50 rounded-xl backdrop-blur-sm"
+            >
+              <p className="text-red-700 dark:text-red-300 text-sm font-medium text-center">{displayError}</p>
+            </motion.div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="email" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1 ml-1">
                 {t.auth.email || 'Email'}
               </label>
               <Input
@@ -126,12 +139,12 @@ export default function Login() {
                 placeholder="you@example.com"
                 disabled={isLoading}
                 autoComplete="email"
-                className="w-full"
+                className="w-full bg-white/50 dark:bg-black/20 border-white/40 focus:bg-white/70 dark:focus:bg-black/40 transition-all rounded-xl"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="password" className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1 ml-1">
                 {t.auth.password || 'Password'}
               </label>
               <Input
@@ -142,26 +155,26 @@ export default function Login() {
                 placeholder="••••••••"
                 disabled={isLoading}
                 autoComplete="current-password"
-                className="w-full"
+                className="w-full bg-white/50 dark:bg-black/20 border-white/40 focus:bg-white/70 dark:focus:bg-black/40 transition-all rounded-xl"
               />
             </div>
 
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-pink-500 hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700"
+              className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white shadow-lg shadow-pink-500/30 border-none rounded-xl py-3 font-bold text-lg"
             >
               {isLoading ? (t.auth.signingIn || 'Signing in...') : (t.auth.signIn || 'Sign In')}
             </Button>
           </form>
 
           {/* Divider */}
-          <div className="relative my-6">
+          <div className="relative my-8">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+              <div className="w-full border-t border-gray-300/50 dark:border-gray-600/50"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+              <span className="px-4 bg-transparent backdrop-blur-md rounded-full text-gray-500 dark:text-gray-400 font-medium">
                 {t.auth.orContinueWith || 'Or continue with'}
               </span>
             </div>
@@ -172,7 +185,7 @@ export default function Login() {
             onClick={handleGoogleLogin}
             disabled={isLoading}
             variant="secondary"
-            className="w-full flex items-center justify-center gap-2"
+            className="w-full flex items-center justify-center gap-2 bg-white/60 dark:bg-white/10 border border-white/40 dark:border-white/10 hover:bg-white/80 dark:hover:bg-white/20 text-gray-800 dark:text-white rounded-xl py-3 font-semibold shadow-sm backdrop-blur-sm"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -196,14 +209,14 @@ export default function Login() {
           </Button>
 
           {/* Sign Up Link */}
-          <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+          <p className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
             {t.auth.noAccount || "Don't have an account?"}{' '}
-            <Link to="/signup" className="text-pink-600 dark:text-pink-400 hover:underline font-medium">
+            <Link to="/signup" className="text-pink-600 dark:text-pink-400 hover:text-pink-700 dark:hover:text-pink-300 font-bold underline transition-colors">
               {t.auth.signUp || 'Sign up'}
             </Link>
           </p>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

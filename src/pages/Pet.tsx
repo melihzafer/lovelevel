@@ -8,6 +8,7 @@ import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import type { PetItem } from '../types/database';
 import { PetGame } from '../components/pet/PetGame';
+import { ShopModal } from '../components/pet/ShopModal';
 import { AnimatedBackground } from '../components/layout/AnimatedBackground';
 
 export default function PetPage() {
@@ -16,6 +17,7 @@ export default function PetPage() {
   const petName = pet.name || 'Your Pet';
 
   const [showRenameModal, setShowRenameModal] = useState(false);
+  const [showShop, setShowShop] = useState(false);
   const [newName, setNewName] = useState(petName);
   const [nameError, setNameError] = useState('');
   const [showInventory, setShowInventory] = useState(false);
@@ -65,6 +67,13 @@ export default function PetPage() {
 
   const isItemUnlocked = (item: PetItem) => {
     return unlockedItems.some(unlocked => unlocked.id === item.id);
+  };
+  
+  const isItemOwned = (item: PetItem) => {
+      // Default items (price 0) are always owned if unlocked
+      if ((item.price || 0) === 0) return true;
+      // Otherwise check inventory
+      return pet.inventory.includes(item.id);
   };
 
   const isItemEquipped = (item: PetItem) => {
@@ -165,18 +174,33 @@ export default function PetPage() {
             <PetGame />
         </div>
 
-        {/* Inventory Button - Premium Glass Style */}
-        <motion.button 
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setShowInventory(true)} 
-          className="w-full py-4 rounded-2xl bg-white/40 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg flex items-center justify-center gap-3 group hover:bg-white/50 dark:hover:bg-black/30 transition-all"
-        >
-          <span className="text-2xl group-hover:scale-110 transition-transform duration-300">🎒</span>
-          <span className="font-bold text-text-primary text-lg">{t.inventory || 'Inventory'}</span>
-          <span className="bg-white/50 dark:bg-black/50 px-3 py-1 rounded-full text-xs font-bold text-text-secondary">
-            {unlockedItems.length}
-          </span>
-        </motion.button>
+        {/* Action Buttons Grid */}
+        <div className="flex gap-3">
+            {/* Shop Button */}
+            <motion.button 
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowShop(true)} 
+              className="flex-1 py-4 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/40 dark:to-orange-900/40 backdrop-blur-md border border-amber-200 dark:border-amber-800 shadow-lg flex flex-col items-center justify-center gap-1 group hover:brightness-105 transition-all"
+            >
+              <span className="text-3xl group-hover:scale-110 transition-transform duration-300 drop-shadow-sm">🛍️</span>
+              <span className="font-bold text-amber-900 dark:text-amber-100 text-sm">{t.petShop || 'Shop'}</span>
+            </motion.button>
+
+            {/* Inventory Button */}
+            <motion.button 
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowInventory(true)} 
+              className="flex-1 py-4 rounded-2xl bg-white/40 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg flex flex-col items-center justify-center gap-1 group hover:bg-white/50 dark:hover:bg-black/30 transition-all"
+            >
+              <div className="relative">
+                  <span className="text-3xl group-hover:scale-110 transition-transform duration-300 drop-shadow-sm">🎒</span>
+                  <span className="absolute -top-1 -right-2 bg-primary-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
+                    {unlockedItems.length}
+                  </span>
+              </div>
+              <span className="font-bold text-text-primary text-sm">{t.inventory || 'Inventory'}</span>
+            </motion.button>
+        </div>
 
         {/* Tips - Clean Glass Card */}
         <div className="bg-white/30 dark:bg-black/30 backdrop-blur-md rounded-2xl p-5 border border-white/10 shadow-sm">
@@ -237,6 +261,9 @@ export default function PetPage() {
           </div>
         </div>
       </Modal>
+      
+      {/* Shop Modal */}
+      <ShopModal isOpen={showShop} onClose={() => setShowShop(false)} />
 
       {/* Inventory Modal */}
       <Modal
@@ -266,46 +293,61 @@ export default function PetPage() {
           </div>
 
           {/* Items Grid */}
-          <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-96 overflow-y-auto">
             {filteredItems.map((item) => {
               const unlocked = isItemUnlocked(item);
+              const owned = isItemOwned(item);
               const equipped = isItemEquipped(item);
+              const canUse = unlocked && owned;
 
               return (
                 <motion.button
                   key={item.id}
-                  onClick={() => unlocked && handleEquip(item)}
-                  disabled={!unlocked}
-                  whileHover={unlocked ? { scale: 1.02 } : {}}
-                  whileTap={unlocked ? { scale: 0.98 } : {}}
-                  className={`p-4 rounded-xl border-2 text-left transition-all ${
+                  onClick={() => canUse && handleEquip(item)}
+                  disabled={!canUse}
+                  whileHover={canUse ? { scale: 1.02 } : {}}
+                  whileTap={canUse ? { scale: 0.98 } : {}}
+                  className={`p-3 rounded-xl border-2 text-left transition-all ${
                     equipped
                       ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
-                      : unlocked
+                      : canUse
                       ? 'border-border-color hover:border-primary-300 bg-bg-primary'
                       : 'border-border-color bg-gray-100 dark:bg-gray-800 opacity-50 cursor-not-allowed'
                   }`}
                 >
-                  <div className="flex items-start justify-between mb-2">
-                    <span className="text-xl">
-                      {item.type === 'accessory' && '👔'}
-                      {item.type === 'background' && '🎨'}
-                      {item.type === 'emote' && '😄'}
-                    </span>
-                    {equipped && <span className="text-xs bg-primary-500 text-white px-2 py-1 rounded">✓</span>}
-                    {!unlocked && <span className="text-xl">🔒</span>}
+                  <div className="flex items-center gap-3">
+                      <div className="text-2xl p-2 bg-white/50 dark:bg-black/20 rounded-lg">
+                        {item.type === 'accessory' && '👔'}
+                        {item.type === 'background' && '🎨'}
+                        {item.type === 'emote' && '😄'}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-0.5">
+                            <h4 className={`font-bold text-sm truncate ${canUse ? 'text-text-primary' : 'text-text-secondary'}`}>
+                                {item.name}
+                            </h4>
+                            {equipped && <span className="text-[10px] bg-primary-500 text-white px-1.5 py-0.5 rounded font-bold">EQUIPPED</span>}
+                            {!unlocked && <span className="text-sm">🔒</span>}
+                            {unlocked && !owned && <span className="text-xs font-medium text-amber-600 dark:text-amber-400 whitespace-nowrap">{item.price} 🪙</span>}
+                          </div>
+                          
+                          <p className="text-xs text-text-secondary line-clamp-1">{item.description}</p>
+                          
+                          {/* Status Text - simplified */}
+                          <div className="mt-1 text-xs sm:text-[10px]">
+                            {!unlocked && item.unlockCondition ? (
+                                <p className="text-accent-600 dark:text-accent-400 truncate">
+                                {item.unlockCondition.type === 'level' && `Lvl ${item.unlockCondition.value}+`}
+                                {item.unlockCondition.type === 'monthiversary' && `${item.unlockCondition.value}mo+`}
+                                {item.unlockCondition.type === 'challenge-count' && `${item.unlockCondition.value} challenges`}
+                                </p>
+                            ) : !owned ? (
+                                <p className="font-bold text-amber-600 dark:text-amber-400 truncate text-[10px]">Tap to buy in Shop</p>
+                            ) : null}
+                          </div>
+                      </div>
                   </div>
-                  <h4 className={`font-medium text-sm mb-1 ${unlocked ? 'text-text-primary' : 'text-text-secondary'}`}>
-                    {item.name}
-                  </h4>
-                  <p className="text-xs text-text-secondary line-clamp-2">{item.description}</p>
-                  {!unlocked && item.unlockCondition && (
-                    <p className="text-xs text-accent-600 dark:text-accent-400 mt-2">
-                      {item.unlockCondition.type === 'level' && `Level ${item.unlockCondition.value}`}
-                      {item.unlockCondition.type === 'monthiversary' && `${item.unlockCondition.value} month${item.unlockCondition.value > 1 ? 's' : ''}`}
-                      {item.unlockCondition.type === 'challenge-count' && `${item.unlockCondition.value} challenges`}
-                    </p>
-                  )}
                 </motion.button>
               );
             })}

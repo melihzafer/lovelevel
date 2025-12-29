@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { usePetStore, useLevelInfo } from '../../store';
 import { PetAvatar } from './PetAvatar';
-import { PetMinigame } from './PetMinigame';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Utensils, Gamepad2, Ticket } from 'lucide-react';
+import { DirtLayer } from './DirtLayer';
+import { LoveCatcher } from './LoveCatcher';
 
 export const PetGame = () => {
   const pet = usePetStore();
   const levelInfo = useLevelInfo();
   
-  const [currentAction, setCurrentAction] = useState<'idle' | 'eating' | 'playing'>('idle');
-  const [showMinigame, setShowMinigame] = useState(false);
+  const [currentAction, setCurrentAction] = useState<'idle' | 'eating' | 'playing' | 'cleaning'>('idle');
+  const [showLoveCatcher, setShowLoveCatcher] = useState(false);
 
   const handleFeed = async () => {
     if (pet.hunger >= 100) return;
@@ -24,6 +25,14 @@ export const PetGame = () => {
     setCurrentAction('playing');
     await pet.playWithPet();
     setTimeout(() => setCurrentAction('idle'), 1000);
+  };
+  
+  const handleClean = async () => {
+      // Allow cleaning if not 100% clean
+      if (pet.hygiene >= 100) return;
+      setCurrentAction('cleaning');
+      await pet.cleanPet();
+      setTimeout(() => setCurrentAction('idle'), 1500);
   };
 
   // Background mapping
@@ -89,22 +98,26 @@ export const PetGame = () => {
           accessoryId={pet.equipped?.accessoryId}
         />
         
+        {/* Dirt Layer Overlay */}
+        <DirtLayer hygiene={pet.hygiene} onClean={handleClean} />
+        
         {/* Status Bars Overlay */}
         <div className="absolute top-4 left-4 right-4 flex gap-2">
           <StatBar icon="🍖" value={pet.hunger} color="bg-orange-400" />
           <StatBar icon="⚡" value={pet.energy} color="bg-yellow-400" />
+          <StatBar icon="🧼" value={pet.hygiene} color="bg-cyan-400" />
         </div>
 
         {/* Minigame Overlay */}
         <AnimatePresence>
-          {showMinigame && (
+          {showLoveCatcher && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="absolute inset-0 z-30"
             >
-              <PetMinigame onClose={() => setShowMinigame(false)} />
+              <LoveCatcher onClose={() => setShowLoveCatcher(false)} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -129,10 +142,10 @@ export const PetGame = () => {
         />
 
         <ControlButton 
-          onClick={() => setShowMinigame(true)}
+          onClick={() => setShowLoveCatcher(true)}
           disabled={currentAction !== 'idle'}
           icon={<Ticket className="w-6 h-6" />}
-          label="Mini Game"
+          label="Games"
           color="bg-purple-100 text-purple-600 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:hover:bg-purple-900/50"
         />
       </div>

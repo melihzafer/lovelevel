@@ -3,7 +3,7 @@ import { motion, AnimatePresence, type Variants } from 'framer-motion';
 
 interface PetAvatarProps {
   mood: 'happy' | 'chill' | 'sleepy';
-  action: 'idle' | 'eating' | 'playing';
+  action: 'idle' | 'eating' | 'playing' | 'cleaning';
   accessoryId?: string;
 }
 
@@ -62,6 +62,11 @@ export const PetAvatar = ({ mood, action, accessoryId }: PetAvatarProps) => {
       scaleX: [1, 1.05, 1],
       opacity: 0.9,
       transition: { duration: 4, repeat: Infinity, ease: "easeInOut" }
+    },
+    cleaning: {
+        rotate: [0, 10, -10, 5, -5, 0],
+        scale: [1, 1.05, 1],
+        transition: { duration: 1.5, ease: "easeInOut" }
     }
   };
 
