@@ -24,7 +24,8 @@ export default function PetPage() {
   const setName = usePetStore(state => state.setName);
   const equipAccessory = usePetStore(state => state.equipAccessory);
   const equipBackground = usePetStore(state => state.equipBackground);
-  const updatePet = usePetStore(state => state.updatePet);
+  const equipEmote = usePetStore(state => state.equipEmote);
+  // NOTE: Pet sync is handled centrally by the store (initializeStores)
 
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [showShop, setShowShop] = useState(false);
@@ -68,6 +69,10 @@ export default function PetPage() {
       const currentlyEquipped = petEquipped?.backgroundId === item.id;
       const newBackgroundId = currentlyEquipped ? undefined : item.id;
       equipBackground(newBackgroundId);
+    } else if (item.type === 'emote') {
+      const currentlyEquipped = petEquipped?.emoteId === item.id;
+      const newEmoteId = currentlyEquipped ? undefined : item.id;
+      equipEmote(newEmoteId);
     }
     
     if ('vibrate' in navigator) {
@@ -91,41 +96,16 @@ export default function PetPage() {
       return petEquipped?.accessoryId === item.id;
     } else if (item.type === 'background') {
       return petEquipped?.backgroundId === item.id;
+    } else if (item.type === 'emote') {
+      return petEquipped?.emoteId === item.id;
     }
-    return false; // emotes not supported yet
+    return false;
   };
 
   const filteredItems = SEED_PET_ITEMS.filter(item => item.type === selectedTab);
 
-  // Listen for remote pet updates from partner
-  useEffect(() => {
-    const handleRemotePetUpdate = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      const remotePetState = customEvent.detail;
-      
-      console.log('🔄 Partner updated pet:', remotePetState);
-      
-      // Update local pet state (triggers re-render)
-      updatePet({
-        name: remotePetState.name,
-        xp: remotePetState.xp,
-        level: remotePetState.level,
-        mood: remotePetState.mood,
-        hunger: remotePetState.hunger,
-        energy: remotePetState.energy,
-        equipped: {
-          accessoryId: remotePetState.equippedAccessoryId,
-          backgroundId: remotePetState.equippedBackgroundId,
-        },
-      });
-    };
-
-    window.addEventListener('sync:pet', handleRemotePetUpdate);
-    
-    return () => {
-      window.removeEventListener('sync:pet', handleRemotePetUpdate);
-    };
-  }, [updatePet]);
+  // NOTE: Pet sync is handled centrally by the store (initializeStores)
+  // No duplicate listener needed here - the store's setPetRemote handles it
 
   // Background class logic (preserved from original)
   const [backgroundClass, setBackgroundClass] = useState('bg-gradient-to-br from-accent-50 via-white to-primary-50 dark:from-accent-950 dark:via-gray-900 dark:to-primary-950');

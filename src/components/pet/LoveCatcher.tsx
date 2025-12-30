@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { usePetStore } from '../../store';
 import { Button } from '../Button';
-import { X, ArrowLeftRight } from 'lucide-react';
+import { X, ArrowLeftRight, Maximize2, Minimize2 } from 'lucide-react';
 
 interface LoveCatcherProps {
   onClose: () => void;
@@ -33,9 +34,13 @@ export const LoveCatcher = ({ onClose }: LoveCatcherProps) => {
   const [gameOver, setGameOver] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(45);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [difficulty, setDifficulty] = useState<'easy' | 'normal' | 'hard'>('normal');
+  const [showHitEffect, setShowHitEffect] = useState<string | null>(null); // 'heart', 'coin', 'poop'
 
   // Init Game
-  const startGame = () => {
+  const startGame = (selectedDifficulty: 'easy' | 'normal' | 'hard') => {
+    setDifficulty(selectedDifficulty);
     setIsPlaying(true);
     setGameOver(false);
     setFinalScore(0);
@@ -69,18 +74,40 @@ export const LoveCatcher = ({ onClose }: LoveCatcherProps) => {
     // Spawn
     spawnTimerRef.current += dt;
     // Difficulty: Spawn faster as score increases
-    const spawnRate = Math.max(200, 800 - (scoreRef.current * 2));
+    // Difficulty Logic based on selected level
+    let baseSpawnRate = 1200;
+    let minSpawnRate = 400;
+    let spawnDecay = 4;
+    let baseSpeed = 0.15; // % per ms
+    let speedScaling = 0.002;
+    let bombChance = 0.25;
+
+    if (difficulty === 'easy') {
+        baseSpawnRate = 1500; minSpawnRate = 600; spawnDecay = 2;
+        baseSpeed = 0.10; speedScaling = 0.001; bombChance = 0.15;
+    } else if (difficulty === 'hard') {
+        baseSpawnRate = 800; minSpawnRate = 250; spawnDecay = 5;
+        baseSpeed = 0.20; speedScaling = 0.003; bombChance = 0.35;
+    }
+
+    const spawnRate = Math.max(minSpawnRate, baseSpawnRate - (scoreRef.current * spawnDecay));
     
     if (spawnTimerRef.current > spawnRate) {
         const typeProb = Math.random();
-        const type = typeProb > 0.85 ? 'poop' : (typeProb > 0.7 ? 'heart' : 'coin');
+        
+        let type = 'coin';
+        if (typeProb > (1 - bombChance)) type = 'poop';
+        else if (typeProb > (1 - bombChance - 0.15)) type = 'heart';
+
+        // Speed scaling
+        const speedMultiplier = 1 + (scoreRef.current * speedScaling);
         
         itemsRef.current.push({
             id: Date.now() + Math.random(),
-            x: Math.random() * 80 + 10, // 10% to 90%
+            x: Math.random() * 80 + 10,
             y: -10,
             type: type as any,
-            speed: (Math.random() * 0.05 + 0.05) // Speed in % per ms
+            speed: (Math.random() * 0.1 + baseSpeed) * speedMultiplier
         });
         spawnTimerRef.current = 0;
     }
@@ -102,14 +129,25 @@ export const LoveCatcher = ({ onClose }: LoveCatcherProps) => {
 
         if (hitY && hitX) {
             // Caught!
-            if (item.type === 'coin') scoreRef.current += 5;
-            else if (item.type === 'heart') {
+            if (item.type === 'coin') {
+                 scoreRef.current += 5;
+            } else if (item.type === 'heart') {
                  scoreRef.current += 20;
                  if ('vibrate' in navigator) navigator.vibrate(50);
-            }
-            else if (item.type === 'poop') {
-                 scoreRef.current = Math.max(0, scoreRef.current - 30);
-                 if ('vibrate' in navigator) navigator.vibrate([50, 50, 50]);
+            } else if (item.type === 'poop') {
+                 if (difficulty === 'hard') {
+                     // Instant Game Over on Hard
+                     gameActiveRef.current = false;
+                     setFinalScore(scoreRef.current);
+                     setGameOver(true);
+                     setIsPlaying(false);
+                     if ('vibrate' in navigator) navigator.vibrate([100, 50, 100, 50, 200]);
+                 } else {
+                     scoreRef.current = Math.max(0, scoreRef.current - 50); // Higher penalty
+                     if ('vibrate' in navigator) navigator.vibrate([50, 50, 50]);
+                 }
+                 setShowHitEffect('poop');
+                 setTimeout(() => setShowHitEffect(null), 500);
             }
             // Consumed
         } else if (item.y < 110) {
@@ -193,23 +231,42 @@ export const LoveCatcher = ({ onClose }: LoveCatcherProps) => {
     paddleXRef.current = Math.max(5, Math.min(95, pct));
   };
 
-  // Resize Handler to keep canvas 1:1 pixel density or fit
+  // Resize Handler with ResizeObserver to handle transitions and dynamic layout changes
   useEffect(() => {
-    const handleResize = () => {
-        if (canvasRef.current && canvasRef.current.parentElement) {
-            const rect = canvasRef.current.parentElement.getBoundingClientRect();
-            canvasRef.current.width = rect.width;
-            canvasRef.current.height = rect.height;
-            // Draw once to prevent blank
+    if (!canvasRef.current || !canvasRef.current.parentElement) return;
+
+    const canvas = canvasRef.current;
+    const parent = canvas.parentElement;
+
+    const updateSize = () => {
+        if (!parent) return;
+        const rect = parent.getBoundingClientRect();
+        // Only update if dimensions actually changed to avoid loop
+        if (canvas.width !== rect.width || canvas.height !== rect.height) {
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            // Redraw immediately if static
             if (!isPlaying) {
-                 // intro draw?
+                 // Optional: draw intro or static frame
             }
         }
     };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+
+    // Initial size
+    updateSize();
+
+    const resizeObserver = new ResizeObserver(() => {
+        updateSize();
+    });
+
+    if (parent) {
+        resizeObserver.observe(parent);
+    }
+
+    return () => {
+        resizeObserver.disconnect();
+    };
+  }, [isPlaying]);
 
   // Save Score Effect
   useEffect(() => {
@@ -227,18 +284,27 @@ export const LoveCatcher = ({ onClose }: LoveCatcherProps) => {
       };
   }, []);
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-sm overflow-hidden border-4 border-amber-400 shadow-2xl relative flex flex-col h-[70vh]">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm touch-none">
+      <div className={`${
+          isFullscreen 
+            ? 'fixed inset-0 w-full h-full z-[9999] border-none rounded-none' 
+            : 'w-full max-w-sm h-[70vh] rounded-3xl border-4 border-amber-400 shadow-2xl overflow-hidden relative'
+        } bg-white dark:bg-gray-900 flex flex-col transition-all duration-300`}>
         {/* Header */}
         <div className="bg-amber-400 p-4 flex justify-between items-center text-amber-950 shrink-0">
              <div className="font-bold text-xl flex items-center gap-2">
                 <ArrowLeftRight size={20} />
                 Love Catcher
              </div>
-             <button onClick={onClose} className="p-1 hover:bg-white/20 rounded-full transition-colors">
-                 <X size={24} />
-             </button>
+             <div className="flex items-center gap-1">
+                 <button onClick={() => setIsFullscreen(!isFullscreen)} className="p-1 hover:bg-white/20 rounded-full transition-colors mr-1">
+                     {isFullscreen ? <Minimize2 size={24} /> : <Maximize2 size={24} />}
+                 </button>
+                 <button onClick={onClose} className="p-1 hover:bg-white/20 rounded-full transition-colors">
+                     <X size={24} />
+                 </button>
+             </div>
         </div>
 
         {/* Game Container */}
@@ -256,10 +322,9 @@ export const LoveCatcher = ({ onClose }: LoveCatcherProps) => {
                 </div>
             </div>
 
-            {/* Canvas Layer */}
             <canvas 
                 ref={canvasRef}
-                className="w-full h-full block"
+                className={`w-full h-full block transition-colors duration-200 ${showHitEffect === 'poop' ? 'bg-red-500/20' : ''}`}
                 onPointerMove={(e) => handleInput(e.clientX)}
                 onTouchMove={(e) => handleInput(e.touches[0].clientX)}
             />
@@ -268,13 +333,22 @@ export const LoveCatcher = ({ onClose }: LoveCatcherProps) => {
             {!isPlaying && !gameOver && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 z-20 text-white p-6 text-center space-y-6 backdrop-blur-[2px]">
                     <div className="text-6xl animate-bounce">👐</div>
-                    <div className="space-y-2">
-                        <h3 className="text-3xl font-black">Ready?</h3>
-                        <p className="text-lg opacity-90">Drag your pet left & right to catch coins!</p>
+                    <div className="space-y-2 mb-4">
+                        <h3 className="text-3xl font-black">Choose Difficulty</h3>
+                        <p className="text-sm opacity-90">Avoid the 💩 bombs!</p>
                     </div>
-                    <Button onClick={startGame} className="w-full text-lg py-4 bg-amber-500 hover:bg-amber-600 border-none shadow-lg shadow-amber-500/20">
-                        Start Game!
-                    </Button>
+                    
+                    <div className="flex flex-col gap-3 w-full max-w-xs">
+                        <Button onClick={() => startGame('easy')} className="w-full py-4 bg-green-500 hover:bg-green-600 border-none shadow-lg">
+                            Easy <span className="text-xs opacity-75 ml-2">(Slow)</span>
+                        </Button>
+                        <Button onClick={() => startGame('normal')} className="w-full py-4 bg-amber-500 hover:bg-amber-600 border-none shadow-lg">
+                            Normal <span className="text-xs opacity-75 ml-2">(Balanced)</span>
+                        </Button>
+                        <Button onClick={() => startGame('hard')} className="w-full py-4 bg-red-600 hover:bg-red-700 border-none shadow-lg animate-pulse hover:animate-none">
+                            😈 HARD <span className="text-xs opacity-75 ml-2">(Bomb = Game Over)</span>
+                        </Button>
+                    </div>
                 </div>
             )}
 
@@ -294,12 +368,13 @@ export const LoveCatcher = ({ onClose }: LoveCatcherProps) => {
 
                     <div className="flex gap-3 w-full">
                         <Button onClick={onClose} variant="outline" className="flex-1 bg-transparent border-white/30 text-white hover:bg-white/10 py-3">Exit</Button>
-                        <Button onClick={startGame} className="flex-1 bg-amber-500 text-white hover:bg-amber-600 border-none py-3 shadow-lg shadow-amber-500/20">Play Again</Button>
+                        <Button onClick={() => setGameOver(false)} className="flex-1 bg-amber-500 text-white hover:bg-amber-600 border-none py-3 shadow-lg shadow-amber-500/20">Play Again</Button>
                     </div>
                 </div>
             )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

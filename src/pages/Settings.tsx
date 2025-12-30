@@ -170,6 +170,7 @@ export default function SettingsPage() {
             </label>
             <Input
               type="date"
+              id="relationship-start-date"
               value={settings.relationshipStartDate}
               onChange={(e) => updateSettings({ relationshipStartDate: e.target.value })}
               className="bg-white/50 dark:bg-black/20"
@@ -189,6 +190,7 @@ export default function SettingsPage() {
                   {settings.partners[0]?.avatar || '👤'}
                 </button>
                 <Input
+                  id="partner-1-name"
                   value={settings.partners[0]?.name || ''}
                   onChange={(e) => {
                     const newPartners = [...settings.partners];
@@ -212,6 +214,7 @@ export default function SettingsPage() {
                   {settings.partners[1]?.avatar || '👤'}
                 </button>
                 <Input
+                  id="partner-2-name"
                   value={settings.partners[1]?.name || ''}
                   onChange={(e) => {
                     const newPartners = [...settings.partners];
@@ -230,6 +233,7 @@ export default function SettingsPage() {
               {t.messageTemplate}
             </label>
             <textarea
+              id="message-template"
               value={settings.messageTemplate}
               onChange={(e) => updateSettings({ messageTemplate: e.target.value })}
               className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white/50 dark:bg-black/20 text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500 transition-all resize-none"
@@ -368,6 +372,7 @@ export default function SettingsPage() {
             </label>
             <div className="relative">
               <select
+                id="language-select"
                 value={settings.language}
                 onChange={(e) => updateSettings({ language: e.target.value as Language })}
                 className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white/50 dark:bg-black/20 text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500 transition-all appearance-none cursor-pointer"
@@ -410,6 +415,7 @@ export default function SettingsPage() {
           <div className="grid grid-cols-2 gap-4">
             <Input
               type="number"
+              id="xp-per-challenge"
               label={t.xpPerChallenge}
               value={settings.xpPerChallenge}
               onChange={(e) => updateSettings({ xpPerChallenge: parseInt(e.target.value) || 20 })}
@@ -418,6 +424,7 @@ export default function SettingsPage() {
             />
             <Input
               type="number"
+              id="xp-per-monthiversary"
               label={t.xpPerMonthiversary}
               value={settings.xpPerMonthiversary}
               onChange={(e) => updateSettings({ xpPerMonthiversary: parseInt(e.target.value) || 100 })}
@@ -429,6 +436,7 @@ export default function SettingsPage() {
           <div>
             <Input
               type="number"
+              id="level-curve-multiplier"
               label="Level Curve Multiplier"
               value={settings.levelCurveMultiplier}
               onChange={(e) => updateSettings({ levelCurveMultiplier: parseFloat(e.target.value) || 1.15 })}
@@ -461,6 +469,8 @@ export default function SettingsPage() {
             {t.dataManagementDesc}
           </p>
         </div>
+
+
 
         {/* Danger Zone */}
         <div className="bg-red-50/80 dark:bg-red-900/20 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-red-100 dark:border-red-900/30 space-y-4">

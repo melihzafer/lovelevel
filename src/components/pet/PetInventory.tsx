@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ShoppingBag, Lock, Check, Shirt, Image as ImageIcon } from 'lucide-react';
+import { Lock, Check, Shirt, Image as ImageIcon } from 'lucide-react';
 import type { PetItem } from '../../types/database';
 
 interface PetInventoryProps {
@@ -7,6 +7,7 @@ interface PetInventoryProps {
   unlockedItemIds: string[];
   equippedAccessoryId?: string;
   equippedBackgroundId?: string;
+  equippedEmoteId?: string;
   onEquip: (item: PetItem) => void;
   onClose: () => void;
 }
@@ -16,6 +17,7 @@ export const PetInventory = ({
   unlockedItemIds, 
   equippedAccessoryId, 
   equippedBackgroundId, 
+  equippedEmoteId, 
   onEquip, 
   onClose 
 }: PetInventoryProps) => {
@@ -23,6 +25,7 @@ export const PetInventory = ({
   const isEquipped = (item: PetItem) => {
     if (item.type === 'accessory') return item.id === equippedAccessoryId;
     if (item.type === 'background') return item.id === equippedBackgroundId;
+    if (item.type === 'emote') return item.id === equippedEmoteId;
     return false;
   };
 
@@ -40,7 +43,7 @@ export const PetInventory = ({
       'acc-wizard-hat': '🧙',
       'acc-crown': '👑',
       'acc-headphones': '🎧',
-      'acc-pirate-hat': '‍☠️',
+      'acc-pirate-hat': '🏴‍☠️',
       'bg-sunset': '🌅',
       'bg-ocean': '🌊',
       'bg-forest': '🌲',
@@ -53,8 +56,32 @@ export const PetInventory = ({
       'bg-mint': '🍃',
       'bg-park': '🌳',
       'bg-rainbow': '🌈',
+      'emote-hearts': '😍',
+      'emote-heart': '❤️',
+      'emote-stars': '🤩', 
+      'emote-sparkle': '✨',
+      'emote-music': '🎵',
+      'emote-angry': '💢',
+      'emote-sleepy': '💤',
+      'emote-sleep': '😴',
+      'emote-confused': '😕',
+      'emote-think': '🤔',
+      'emote-cool': '😎',
+      'emote-wave': '👋',
+      'emote-laugh': '😂',
+      'emote-dance': '💃',
+      'emote-party': '🥳',
+      'emote-wink': '😉',
+      'emote-celebrate': '🎉',
     };
-    return iconMap[item.id] || (item.type === 'accessory' ? '👔' : '🎨');
+    
+    if (iconMap[item.id]) return iconMap[item.id];
+    
+    if (item.type === 'accessory') return '👔';
+    if (item.type === 'background') return '🎨';
+    if (item.type === 'emote') return '😄';
+    
+    return '📦';
   };
 
   return (
@@ -63,15 +90,18 @@ export const PetInventory = ({
       animate={{ opacity: 1, y: 0 }}
       className="bg-white dark:bg-gray-900 rounded-3xl p-6 h-full flex flex-col"
     >
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
-          <ShoppingBag className="w-5 h-5" /> Wardrobe
+      <div className="flex justify-between items-center mb-6 pt-2">
+        <h2 className="text-2xl font-black flex items-center gap-2 text-gray-900 dark:text-white">
+          <span className="text-3xl">🎒</span> Wardrobe
         </h2>
         <button 
           onClick={onClose} 
-          className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+          className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400"
         >
-          Close
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
         </button>
       </div>
 
@@ -86,12 +116,12 @@ export const PetInventory = ({
               onClick={() => unlocked && onEquip(item)}
               disabled={!unlocked}
               className={`
-                relative p-4 rounded-2xl border-2 flex flex-col items-center gap-3 transition-all min-h-[140px] justify-between
+                relative p-4 rounded-2xl border-2 flex flex-col items-center gap-3 transition-all min-h-[140px] justify-between group
                 ${equipped 
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-md ring-2 ring-blue-500/20' 
                   : unlocked
-                    ? 'border-gray-100 hover:border-blue-200 bg-white dark:bg-gray-800 dark:border-gray-700'
-                    : 'border-gray-100 bg-gray-50 opacity-60 dark:bg-gray-800/50 dark:border-gray-800 cursor-not-allowed'
+                    ? 'border-gray-200 hover:border-blue-300 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1'
+                    : 'border-gray-100 bg-gray-50 opacity-60 dark:bg-gray-800/50 dark:border-gray-800 cursor-not-allowed grayscale-[0.5]'
                 }
               `}
             >

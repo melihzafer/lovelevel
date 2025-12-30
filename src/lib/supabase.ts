@@ -167,8 +167,11 @@ export type Database = {
           mood: string;
           hunger: number;
           energy: number;
+          hygiene: number;
+          coins: number;
           equipped_accessory_id: string | null;
           equipped_background_id: string | null;
+          equipped_outfit_id: string | null;
           last_updated_at: string;
           updated_by: string;
         };
@@ -180,8 +183,11 @@ export type Database = {
           mood?: string;
           hunger?: number;
           energy?: number;
+          hygiene?: number;
+          coins?: number;
           equipped_accessory_id?: string | null;
           equipped_background_id?: string | null;
+          equipped_outfit_id?: string | null;
           last_updated_at?: string;
           updated_by: string;
         };
@@ -193,8 +199,11 @@ export type Database = {
           mood?: string;
           hunger?: number;
           energy?: number;
+          hygiene?: number;
+          coins?: number;
           equipped_accessory_id?: string | null;
           equipped_background_id?: string | null;
+          equipped_outfit_id?: string | null;
           last_updated_at?: string;
           updated_by?: string;
         };

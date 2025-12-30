@@ -49,12 +49,21 @@ class SyncManager {
       } else if (profileResult.data) {
         console.log('✅ Found user profile settings');
         const currentSettings = await db.getSettings();
-        const remoteSettings = profileResult.data.settings as Record<string, any> || {};
-        await db.updateSettings({
+        const remoteSettings = (profileResult.data.settings as Record<string, any>) || {};
+        
+        // Safely merge settings ensuring partners array integrity
+        const mergedSettings = {
           ...currentSettings,
           ...remoteSettings,
           onboardingCompleted: profileResult.data.onboarding_completed ?? currentSettings.onboardingCompleted,
-        });
+        };
+
+        // Ensure partners array exists
+        if (!mergedSettings.partners || !Array.isArray(mergedSettings.partners)) {
+           mergedSettings.partners = [...currentSettings.partners];
+        }
+
+        await db.updateSettings(mergedSettings);
       }
 
       // Process partnership result
@@ -86,6 +95,7 @@ class SyncManager {
             this.syncLocalToRemote(partnership.id, userId),
             this.syncRemoteToLocal(partnership.id),
             this.syncPetRemoteToLocal(partnership.id),
+            this.syncInventoryRemoteToLocal(partnership.id),
           ]);
           
           console.log('✅ Background sync: Deferred operations complete');
@@ -115,11 +125,19 @@ class SyncManager {
              .maybeSingle();
 
            if (partnerProfile && partnerProfile.display_name) {
-              const partners = [...currentSettings.partners];
+              const partners = [...(currentSettings.partners || [])];
+              // Ensure we have at least 2 slots
+              if (partners.length === 0) {
+                 partners.push({ id: userId, name: 'Me', avatar: '👤' });
+              }
+              if (partners.length === 1) {
+                 partners.push({ id: 'p2', name: 'Partner', avatar: '👤' });
+              }
+
               let partnerIndex = partners.findIndex(p => p.id === this.partnerId);
               if (partnerIndex === -1) partnerIndex = 1;
               
-              if (partners[partnerIndex]?.name !== partnerProfile.display_name) {
+              if (partners[partnerIndex] && partners[partnerIndex].name !== partnerProfile.display_name) {
                  partners[partnerIndex] = {
                    ...partners[partnerIndex],
                    id: this.partnerId,
@@ -228,6 +246,25 @@ class SyncManager {
         
       this.channels.set('partner-profile', profileChannel);
     }
+
+    // Subscribe to inventory changes
+    const inventoryChannel = supabase
+      .channel(`partnership:${partnershipId}:inventory`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'inventory',
+          filter: `partnership_id=eq.${partnershipId}`,
+        },
+        (payload) => {
+          this.handleRemoteInventoryChange(payload);
+        }
+      )
+      .subscribe();
+
+    this.channels.set('inventory', inventoryChannel);
 
     console.log('✅ Real-time sync started for partnership:', partnershipId);
   }
@@ -379,8 +416,13 @@ class SyncManager {
         const newName = String(newData.display_name);
         const partnerId = String(newData.id);
         
-        // Clone partners array
-        const partners = [...currentSettings.partners];
+        // Clone partners array safely
+        const partners = [...(currentSettings.partners || [])];
+        
+        // Ensure array has enough slots
+        while (partners.length < 2) {
+             partners.push({ id: `temp-${partners.length}`, name: 'Partner', avatar: '👤' });
+        }
         
         // 1. Try to find by ID
         let partnerIndex = partners.findIndex(p => p.id === partnerId);
@@ -424,6 +466,25 @@ class SyncManager {
   }
 
   /**
+   * Handle remote inventory changes
+   */
+  private async handleRemoteInventoryChange(payload: Record<string, unknown>) {
+    console.log('🎒 Remote inventory update detected:', payload);
+    if (this.partnershipId) {
+       await this.syncInventoryRemoteToLocal(this.partnershipId);
+    }
+  }
+
+
+  /**
+   * Helper to ensure a value is a valid number, returning default if not
+   */
+  private safeNumber(value: unknown, defaultValue: number): number {
+    const num = Number(value);
+    return isNaN(num) ? defaultValue : num;
+  }
+
+  /**
    * Handle remote pet changes (from partner)
    */
   private async handleRemotePetChange(payload: Record<string, unknown>) {
@@ -434,14 +495,18 @@ class SyncManager {
 
       // Update pet in Zustand store (not IndexedDB - pet state is in store)
       const petState = {
-        name: String(newData.name),
-        xp: Number(newData.xp),
-        level: Number(newData.level),
-        mood: String(newData.mood),
-        hunger: Number(newData.hunger),
-        energy: Number(newData.energy),
+        name: String(newData.name || 'Buddy'),
+        xp: this.safeNumber(newData.xp, 0),
+        level: this.safeNumber(newData.level, 1),
+        mood: String(newData.mood || 'happy'),
+        hunger: this.safeNumber(newData.hunger, 50),
+        energy: this.safeNumber(newData.energy, 100),
+        hygiene: this.safeNumber(newData.hygiene, 100),
+        coins: this.safeNumber(newData.coins, 0),
         equippedAccessoryId: newData.equipped_accessory_id ? String(newData.equipped_accessory_id) : undefined,
         equippedBackgroundId: newData.equipped_background_id ? String(newData.equipped_background_id) : undefined,
+        equippedOutfitId: newData.equipped_outfit_id ? String(newData.equipped_outfit_id) : undefined,
+        equippedEmoteId: newData.equipped_emote_id ? String(newData.equipped_emote_id) : undefined,
       };
 
       // Trigger UI refresh (dispatch custom event)
@@ -504,24 +569,53 @@ class SyncManager {
 
       // Merge with IndexedDB (avoid duplicates)
       for (const challenge of challenges || []) {
-        const exists = await db.getChallenge(challenge.id);
-        if (!exists) {
-          await db.addChallenge({
-            id: challenge.id,
-            title: challenge.title,
-            description: challenge.notes || undefined,
-            category: challenge.category as Challenge['category'],
-            tags: challenge.tags || [],
-            completedAt: challenge.completed_at || undefined,
-            notes: challenge.notes || undefined,
-            createdAt: challenge.created_at || new Date().toISOString(),
-          });
+        try {
+            // Using put (upsert) to be safe against race conditions/duplicates
+            // We map the remote challenge structure to our local structure
+            await db.updateChallenge(challenge.id, {
+                id: challenge.id,
+                title: challenge.title,
+                description: challenge.notes || undefined,
+                category: challenge.category as Challenge['category'],
+                tags: challenge.tags || [],
+                completedAt: challenge.completed_at || undefined,
+                notes: challenge.notes || undefined,
+                createdAt: challenge.created_at || new Date().toISOString(),
+            });
+        } catch (err) {
+            console.warn(`Failed to sync remote challenge ${challenge.id} to local:`, err);
         }
       }
 
       console.log(`✅ Synced ${challenges?.length || 0} remote challenges to IndexedDB`);
     } catch (error) {
       console.error('Error syncing remote to local:', error);
+    }
+  }
+
+  /**
+   * Sync remote inventory from Supabase to IndexedDB
+   */
+  async syncInventoryRemoteToLocal(partnershipId: string) {
+    try {
+      const { data: inventoryItems, error } = await supabase
+        .from('inventory')
+        .select('item_id')
+        .eq('partnership_id', partnershipId);
+
+      if (error) throw error;
+
+      if (inventoryItems && inventoryItems.length > 0) {
+        const itemIds = inventoryItems.map(i => i.item_id);
+        await db.updatePet({ inventory: itemIds });
+        
+        // Also update the store if running
+        window.dispatchEvent(new CustomEvent('sync:pet', { detail: { inventory: itemIds } }));
+        
+        console.log(`✅ Synced ${itemIds.length} inventory items to IndexedDB`);
+      }
+    } catch (error) {
+      console.error('Error syncing remote inventory to local:', error);
     }
   }
 
@@ -548,16 +642,20 @@ class SyncManager {
 
       if (petData) {
         // Update local pet state in IndexedDB
+        // Ensure defaults if fields are null/undefined to prevent NaN
         await db.updatePet({
-          name: petData.name,
-          xp: petData.xp,
-          level: petData.level,
-          mood: petData.mood as 'happy' | 'chill' | 'sleepy',
-          hunger: petData.hunger,
-          energy: petData.energy,
+          name: petData.name || 'Buddy',
+          xp: this.safeNumber(petData.xp, 0),
+          level: this.safeNumber(petData.level, 1),
+          mood: (petData.mood as 'happy' | 'chill' | 'sleepy') || 'happy',
+          hunger: this.safeNumber(petData.hunger, 50),
+          energy: this.safeNumber(petData.energy, 100),
+          hygiene: this.safeNumber(petData.hygiene, 100),
+          coins: this.safeNumber(petData.coins, 0),
           equipped: {
             accessoryId: petData.equipped_accessory_id || undefined,
             backgroundId: petData.equipped_background_id || undefined,
+            outfitId: petData.equipped_outfit_id || undefined,
           },
         });
 
@@ -767,18 +865,31 @@ class SyncManager {
     const { data } = item;
     const petData = data as Record<string, unknown>;
 
-    await supabase.from('shared_pet').upsert({
+    const payload = {
       partnership_id: this.partnershipId,
-      name: String(petData.name),
-      xp: Number(petData.xp),
-      level: Number(petData.level),
-      mood: String(petData.mood),
-      hunger: Number(petData.hunger),
-      energy: Number(petData.energy),
+      name: String(petData.name || ''),
+      xp: Math.round(Number(petData.xp) || 0),
+      level: Math.round(Number(petData.level) || 1),
+      mood: String(petData.mood || 'happy'),
+      hunger: Math.round(Number(petData.hunger) || 0),
+      energy: Math.round(Number(petData.energy) || 0),
+      hygiene: Math.round(Number(petData.hygiene) || 0),
+      coins: Math.round(Number(petData.coins) || 0),
       equipped_accessory_id: petData.equippedAccessoryId ? String(petData.equippedAccessoryId) : null,
       equipped_background_id: petData.equippedBackgroundId ? String(petData.equippedBackgroundId) : null,
+      equipped_outfit_id: petData.equippedOutfitId ? String(petData.equippedOutfitId) : null,
+      equipped_emote_id: petData.equippedEmoteId ? String(petData.equippedEmoteId) : null,
       updated_by: userId,
-    });
+    };
+
+    console.log('🔄 Syncing Pet Payload:', JSON.stringify(payload, null, 2));
+
+    const { error } = await supabase.from('shared_pet').upsert(payload);
+
+    if (error) {
+        console.error('❌ Error syncing pet:', error.message, error.details, error.hint, payload);
+        throw error;
+    }
   }
 
   /**
@@ -790,6 +901,12 @@ class SyncManager {
     });
     this.channels.clear();
     console.log('✅ Sync manager cleaned up');
+  }
+  /**
+   * Get the current partnership ID
+   */
+  getPartnershipId() {
+    return this.partnershipId;
   }
 }
 

@@ -50,12 +50,155 @@ export const PetAvatar = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Accessory Map
+  const ACCESSORY_RENDER: Record<string, React.ReactNode> = {
+     'acc-starter-bow': <div className="absolute top-[65%] left-[35%] w-[30%] text-3xl text-center pointer-events-none drop-shadow-md">🎀</div>,
+     'acc-sunglasses': <div className="absolute top-[35%] left-[25%] w-[50%] text-4xl text-center pointer-events-none drop-shadow-md">🕶️</div>,
+     'acc-party-hat': <div className="absolute -top-[15%] left-[30%] w-[40%] text-5xl text-center pointer-events-none drop-shadow-md rotate-12">🥳</div>,
+     'acc-flower-crown': <div className="absolute top-[5%] left-[15%] w-[70%] text-4xl text-center pointer-events-none drop-shadow-md">🌸</div>,
+     'acc-chef-hat': <div className="absolute -top-[20%] left-[25%] w-[50%] text-5xl text-center pointer-events-none drop-shadow-md">👨‍🍳</div>,
+     'acc-wizard-hat': <div className="absolute -top-[25%] left-[20%] w-[60%] text-5xl text-center pointer-events-none drop-shadow-md">🧙‍♂️</div>,
+     'acc-crown': <div className="absolute -top-[15%] left-[25%] w-[50%] text-5xl text-center pointer-events-none drop-shadow-md">👑</div>,
+     'acc-halo': <div className="absolute -top-[25%] left-[25%] w-[50%] text-5xl text-center pointer-events-none drop-shadow-lg animate-pulse">😇</div>,
+     'acc-headphones': <div className="absolute top-[20%] left-[5%] w-[90%] text-5xl text-center pointer-events-none drop-shadow-md">🎧</div>,
+     'acc-pirate-hat': <div className="absolute -top-[20%] left-[20%] w-[60%] text-5xl text-center pointer-events-none drop-shadow-md">🏴‍☠️</div>,
+     'acc-santa-hat': <div className="absolute -top-[15%] left-[25%] w-[50%] text-5xl text-center pointer-events-none drop-shadow-md">🎅</div>,
+      'acc-unicorn-horn': <div className="absolute -top-[15%] left-[40%] w-[20%] text-4xl text-center pointer-events-none drop-shadow-md">🦄</div>,
+  };
+
+  // Emote Map
+  const EMOTE_RENDER: Record<string, React.ReactNode> = {
+      'emote-hearts': (
+          <motion.div 
+            animate={{ scale: [1, 1.2, 1], opacity: [0, 1, 0], y: [0, -20] }} 
+            transition={{ duration: 1.5, repeat: Infinity }}
+            className="absolute -top-10 left-0 right-0 flex justify-center gap-2 text-3xl pointer-events-none"
+          >
+              ❤️ ❤️ ❤️
+          </motion.div>
+      ),
+      'emote-heart': (
+          <motion.div 
+            animate={{ scale: [1, 1.3, 1], opacity: [0, 1, 0] }} 
+            transition={{ duration: 2, repeat: Infinity }}
+            className="absolute -top-10 right-2 text-5xl pointer-events-none drop-shadow-lg"
+          >
+              ❤️
+          </motion.div>
+      ),
+      'emote-stars': (
+        <motion.div 
+            animate={{ rotate: [0, 180, 360], scale: [1, 1.2, 1] }} 
+            transition={{ duration: 3, repeat: Infinity }}
+            className="absolute -top-8 -right-4 text-4xl pointer-events-none"
+        >
+            ✨
+        </motion.div>
+      ),
+      'emote-sparkle': (
+        <motion.div 
+            animate={{ opacity: [0, 1, 0], scale: [0.8, 1.2, 0.8] }} 
+            transition={{ duration: 1.5, repeat: Infinity }}
+            className="absolute -top-5 right-5 text-4xl pointer-events-none"
+        >
+            ✨
+        </motion.div>
+      ),
+      'emote-music': (
+          <motion.div 
+            animate={{ y: [0, -15, 0], x: [0, 10, 0, -10, 0] }} 
+            transition={{ duration: 2, repeat: Infinity }}
+            className="absolute -top-8 left-10 text-3xl pointer-events-none"
+          >
+              🎵
+          </motion.div>
+      ),
+      'emote-angry': (
+          <div className="absolute top-0 right-10 text-4xl pointer-events-none filter drop-shadow-md">💢</div>
+      ),
+      'emote-sleepy': (
+          <motion.div 
+            animate={{ x: [0, 10, 20], y: [0, -20, -40], opacity: [0, 1, 0] }} 
+            transition={{ duration: 2, repeat: Infinity }}
+            className="absolute -top-10 right-0 text-3xl font-bold text-slate-500 pointer-events-none"
+          >
+              Zzz
+          </motion.div>
+      ),
+      'emote-sleep': (
+          <motion.div 
+            animate={{ scale: [1, 0.9, 1], opacity: [0.6, 1, 0.6] }} 
+            transition={{ duration: 3, repeat: Infinity }}
+            className="absolute -top-10 right-0 text-3xl pointer-events-none"
+          >
+              😴
+          </motion.div>
+      ),
+      'emote-confused': (
+          <motion.div 
+            animate={{ rotate: [0, -10, 10, -10, 0] }} 
+            transition={{ duration: 2, repeat: Infinity }}
+            className="absolute -top-5 right-5 text-4xl pointer-events-none"
+          >
+              ❓
+          </motion.div>
+      ),
+      'emote-think': (
+          <div className="absolute -top-8 right-0 text-4xl pointer-events-none drop-shadow-md">🤔</div>
+      ),
+      'emote-cool': (
+          <div className="absolute -top-5 -right-5 text-4xl pointer-events-none">❄️</div>
+      ),
+      'emote-wave': (
+          <motion.div 
+            animate={{ rotate: [0, 20, 0, -20, 0] }} 
+            transition={{ duration: 1, repeat: Infinity }}
+            className="absolute top-0 left-0 text-4xl pointer-events-none"
+          >
+              👋
+          </motion.div>
+      ),
+      'emote-laugh': (
+          <motion.div 
+            animate={{ y: [0, -5, 0] }} 
+            transition={{ duration: 0.5, repeat: Infinity }}
+            className="absolute -top-5 right-5 text-4xl pointer-events-none"
+          >
+              😂
+          </motion.div>
+      ),
+      'emote-dance': (
+          <motion.div 
+            animate={{ x: [0, 5, -5, 0] }} 
+            transition={{ duration: 0.5, repeat: Infinity }}
+            className="absolute -top-5 right-5 text-4xl pointer-events-none"
+          >
+              💃
+          </motion.div>
+      ),
+      'emote-party': (
+          <div className="absolute -top-10 right-0 text-4xl pointer-events-none drop-shadow-md">🥳</div>
+      ),
+      'emote-wink': (
+          <div className="absolute top-10 right-0 text-3xl pointer-events-none">😉</div>
+      ),
+      'emote-celebrate': (
+          <motion.div 
+            animate={{ scale: [1, 1.2, 1] }} 
+            transition={{ duration: 1, repeat: Infinity }}
+            className="absolute -top-10 left-10 text-4xl pointer-events-none drop-shadow-lg"
+          >
+              🎉
+          </motion.div>
+      ),
+  };
+
   return (
     <div className="relative w-48 h-48">
         <motion.div
            animate={{ 
                y: [0, -10, 0],
-               scale: bounce % 2 === 0 ? 1 : [1, 1.1, 1] // Use bounce to trigger subtle scale change
+               scale: bounce % 2 === 0 ? 1 : [1, 1.1, 1] 
            }}
            transition={{ 
                duration: 2, 
@@ -70,29 +213,17 @@ export const PetAvatar = () => {
            </div>
 
            {/* Accessories Layer */}
-           {equipped?.accessoryId === 'acc-glasses' && (
-               <div className="absolute top-[35%] left-[25%] w-[50%] text-4xl text-center pointer-events-none">
-                   👓
-               </div>
-           )}
-           {equipped?.accessoryId === 'acc-hat' && (
-               <div className="absolute -top-[10%] left-[30%] w-[40%] text-5xl text-center pointer-events-none">
-                   🎩
-               </div>
-           )}
-           {equipped?.accessoryId === 'acc-bowtie' && (
-               <div className="absolute top-[65%] left-[35%] w-[30%] text-3xl text-center pointer-events-none">
-                   🎀
-               </div>
-           )}
-           {/* Generic accessory handler if ID is different */}
-           {equipped?.accessoryId && !['acc-glasses','acc-hat','acc-bowtie'].includes(equipped.accessoryId) && (
-               <div className="absolute -top-5 right-0 bg-white rounded-full p-1 shadow">
-                   {/* Fallback indicator */}
-                   Correct accessory rendering requires assets
+           {equipped?.accessoryId && ACCESSORY_RENDER[equipped.accessoryId]}
+           
+           {/* Legacy/Fallback for unknown IDs to avoid breaking old data */}
+           {equipped?.accessoryId && !ACCESSORY_RENDER[equipped.accessoryId] && !['acc-glasses','acc-hat','acc-bowtie'].includes(equipped.accessoryId) && (
+               <div className="absolute -top-5 right-0 bg-white/90 rounded-full px-2 py-1 shadow-sm text-[10px] text-gray-500 border border-gray-200">
+                   ?
                </div>
            )}
 
+           {/* Emote Overlay (if equipped) */}
+           {equipped?.emoteId && EMOTE_RENDER[equipped.emoteId]}
         </motion.div>
     </div>
   );

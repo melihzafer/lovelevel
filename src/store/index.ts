@@ -9,6 +9,22 @@ import { getDateStats } from '../lib/dateUtils';
 import { addXP, getLevelInfo } from '../lib/xpSystem';
 import { syncManager } from '../lib/syncManager';
 
+// Helper to ensure full pet state is synced
+const getPetSyncPayload = (state: PetState) => ({
+  name: state.name,
+  xp: state.xp,
+  level: state.level,
+  mood: state.mood,
+  hunger: state.hunger,
+  energy: state.energy,
+  hygiene: state.hygiene,
+  coins: state.coins,
+  equippedAccessoryId: state.equipped?.accessoryId,
+  equippedBackgroundId: state.equipped?.backgroundId,
+  equippedOutfitId: state.equipped?.outfitId,
+  equippedEmoteId: state.equipped?.emoteId,
+});
+
 // Settings Store
 interface SettingsState {
   settings: Settings;
@@ -60,6 +76,7 @@ export const useSettingsStore = create<SettingsState>()(
 interface PetState extends PetStateType {
   loadPet: () => Promise<void>;
   updatePet: (updates: Partial<PetStateType>) => Promise<void>;
+  setPetRemote: (updates: Partial<PetStateType>) => Promise<void>; // Updates from remote - no sync back
   gainXP: (amount: number, source: string) => Promise<{
     didLevelUp: boolean;
     newLevel: number;
@@ -73,6 +90,7 @@ interface PetState extends PetStateType {
   equipAccessory: (accessoryId: string | undefined) => Promise<void>;
   equipBackground: (backgroundId: string | undefined) => Promise<void>;
   equipOutfit: (outfitId: string | undefined) => Promise<void>;
+  equipEmote: (emoteId: string | undefined) => Promise<void>;
   cleanPet: () => Promise<void>;
   purchaseItem: (item: PetItem) => Promise<{ success: boolean; error?: string }>;
   addCoins: (amount: number) => Promise<void>;
@@ -91,6 +109,11 @@ export const usePetStore = create<PetState>()(
         set({ ...pet, isLoading: false });
       },
       updatePet: async (updates) => {
+        await db.updatePet(updates);
+        set(updates);
+      },
+      // Update pet from remote - does NOT trigger sync back to database
+      setPetRemote: async (updates) => {
         await db.updatePet(updates);
         set(updates);
       },
@@ -115,16 +138,7 @@ export const usePetStore = create<PetState>()(
         });
 
         // Sync XP/level to partner
-        syncManager.queueSync('pet', 'update', {
-          name: state.name,
-          xp: result.remainingXP,
-          level: result.newLevel,
-          mood: state.mood,
-          hunger: state.hunger,
-          energy: state.energy,
-          equippedAccessoryId: state.equipped?.accessoryId,
-          equippedBackgroundId: state.equipped?.backgroundId,
-        });
+        syncManager.queueSync('pet', 'update', getPetSyncPayload(get()));
 
         // Log to history
         if (result.didLevelUp) {
@@ -152,20 +166,8 @@ export const usePetStore = create<PetState>()(
         set({ hunger: newHunger, mood: 'happy' });
         
         // Sync pet state to partner
-        const syncPayload = {
-          name: state.name,
-          xp: state.xp,
-          level: state.level,
-          mood: 'happy',
-          hunger: newHunger,
-          energy: state.energy,
-          hygiene: state.hygiene,
-          coins: state.coins,
-          equippedAccessoryId: state.equipped?.accessoryId,
-          equippedBackgroundId: state.equipped?.backgroundId,
-          equippedOutfitId: state.equipped?.outfitId,
-        };
-        syncManager.queueSync('pet', 'update', syncPayload);
+        // Sync pet state to partner
+        syncManager.queueSync('pet', 'update', getPetSyncPayload(get()));
       },
       playWithPet: async () => {
         const state = get();
@@ -183,67 +185,29 @@ export const usePetStore = create<PetState>()(
         });
         
         // Sync pet state to partner
-        syncManager.queueSync('pet', 'update', {
-          name: state.name,
-          xp: state.xp,
-          level: state.level,
-          mood: newMood,
-          hunger: state.hunger,
-          energy: newEnergy,
-          equippedAccessoryId: state.equipped?.accessoryId,
-          equippedBackgroundId: state.equipped?.backgroundId,
-        });
+        // Sync pet state to partner
+        syncManager.queueSync('pet', 'update', getPetSyncPayload(get()));
       },
       setName: async (name: string) => {
-        const state = get();
         await db.updatePet({ name });
         set({ name });
         
         // Sync pet name to partner
-        syncManager.queueSync('pet', 'update', {
-          name,
-          xp: state.xp,
-          level: state.level,
-          mood: state.mood,
-          hunger: state.hunger,
-          energy: state.energy,
-          equippedAccessoryId: state.equipped?.accessoryId,
-          equippedBackgroundId: state.equipped?.backgroundId,
-        });
+        syncManager.queueSync('pet', 'update', getPetSyncPayload(get()));
       },
       setHunger: async (hunger: number) => {
-        const state = get();
         await db.updatePet({ hunger });
         set({ hunger });
         
         // Sync hunger to partner
-        syncManager.queueSync('pet', 'update', {
-          name: state.name,
-          xp: state.xp,
-          level: state.level,
-          mood: state.mood,
-          hunger,
-          energy: state.energy,
-          equippedAccessoryId: state.equipped?.accessoryId,
-          equippedBackgroundId: state.equipped?.backgroundId,
-        });
+        syncManager.queueSync('pet', 'update', getPetSyncPayload(get()));
       },
       setEnergy: async (energy: number) => {
-        const state = get();
         await db.updatePet({ energy });
         set({ energy });
         
         // Sync energy to partner
-        syncManager.queueSync('pet', 'update', {
-          name: state.name,
-          xp: state.xp,
-          level: state.level,
-          mood: state.mood,
-          hunger: state.hunger,
-          energy,
-          equippedAccessoryId: state.equipped?.accessoryId,
-          equippedBackgroundId: state.equipped?.backgroundId,
-        });
+        syncManager.queueSync('pet', 'update', getPetSyncPayload(get()));
       },
       equipAccessory: async (accessoryId: string | undefined) => {
         const state = get();
@@ -252,16 +216,8 @@ export const usePetStore = create<PetState>()(
         set({ equipped: newEquipped });
         
         // Sync equipped accessory to partner
-        syncManager.queueSync('pet', 'update', {
-          name: state.name,
-          xp: state.xp,
-          level: state.level,
-          mood: state.mood,
-          hunger: state.hunger,
-          energy: state.energy,
-          equippedAccessoryId: accessoryId,
-          equippedBackgroundId: state.equipped?.backgroundId,
-        });
+        // Sync equipped accessory to partner
+        syncManager.queueSync('pet', 'update', getPetSyncPayload(get()));
       },
       equipBackground: async (backgroundId: string | undefined) => {
         const state = get();
@@ -269,19 +225,7 @@ export const usePetStore = create<PetState>()(
         await db.updatePet({ equipped: newEquipped });
         set({ equipped: newEquipped });
         
-        syncManager.queueSync('pet', 'update', {
-          name: state.name,
-          xp: state.xp,
-          level: state.level,
-          mood: state.mood,
-          hunger: state.hunger,
-          energy: state.energy,
-          hygiene: state.hygiene,
-          coins: state.coins,
-          equippedAccessoryId: state.equipped?.accessoryId,
-          equippedBackgroundId: backgroundId,
-          equippedOutfitId: state.equipped?.outfitId,
-        });
+        syncManager.queueSync('pet', 'update', getPetSyncPayload(get()));
       },
       equipOutfit: async (outfitId: string | undefined) => {
         const state = get();
@@ -289,19 +233,15 @@ export const usePetStore = create<PetState>()(
         await db.updatePet({ equipped: newEquipped });
         set({ equipped: newEquipped });
         
-        syncManager.queueSync('pet', 'update', {
-          name: state.name,
-          xp: state.xp,
-          level: state.level,
-          mood: state.mood,
-          hunger: state.hunger,
-          energy: state.energy,
-          hygiene: state.hygiene,
-          coins: state.coins,
-          equippedAccessoryId: state.equipped?.accessoryId,
-          equippedBackgroundId: state.equipped?.backgroundId,
-          equippedOutfitId: outfitId,
-        });
+        syncManager.queueSync('pet', 'update', getPetSyncPayload(get()));
+      },
+      equipEmote: async (emoteId: string | undefined) => {
+        const state = get();
+        const newEquipped = { ...state.equipped, emoteId };
+        await db.updatePet({ equipped: newEquipped });
+        set({ equipped: newEquipped });
+        
+        syncManager.queueSync('pet', 'update', getPetSyncPayload(get()));
       },
       cleanPet: async () => {
         const state = get();
@@ -312,24 +252,12 @@ export const usePetStore = create<PetState>()(
         set({ hygiene: newHygiene, mood: 'happy' });
         
         // Use API to sync to DB (Supabase)
-        const partnershipId = useSettingsStore.getState().settings.partners[0]?.id;
+        const partnershipId = syncManager.getPartnershipId();
         if (partnershipId) {
              api.updateHygiene(partnershipId, newHygiene);
         }
         
-        syncManager.queueSync('pet', 'update', {
-           name: state.name,
-           xp: state.xp,
-           level: state.level,
-           mood: 'happy',
-           hunger: state.hunger,
-           energy: state.energy,
-           hygiene: newHygiene,
-           coins: state.coins,
-           equippedAccessoryId: state.equipped?.accessoryId,
-           equippedBackgroundId: state.equipped?.backgroundId,
-           equippedOutfitId: state.equipped?.outfitId,
-        });
+        syncManager.queueSync('pet', 'update', getPetSyncPayload(get()));
       },
       purchaseItem: async (item: PetItem) => {
         const state = get();
@@ -349,42 +277,19 @@ export const usePetStore = create<PetState>()(
             await db.updatePet({ coins: newCoins, hunger: newHunger });
             
              // Sync needs to be consistent
-            syncManager.queueSync('pet', 'update', {
-               name: state.name,
-               xp: state.xp,
-               level: state.level,
-               mood: 'happy',
-               hunger: newHunger,
-               energy: state.energy,
-               hygiene: state.hygiene,
-               coins: newCoins,
-               equippedAccessoryId: state.equipped?.accessoryId,
-               equippedBackgroundId: state.equipped?.backgroundId,
-               equippedOutfitId: state.equipped?.outfitId,
-            });
+             // Sync needs to be consistent
+            syncManager.queueSync('pet', 'update', getPetSyncPayload(get()));
         } else {
             set({ coins: newCoins, inventory: newInventory });
              await db.updatePet({ coins: newCoins, inventory: newInventory });
              
              // Sync
-            syncManager.queueSync('pet', 'update', {
-               name: state.name,
-               xp: state.xp,
-               level: state.level,
-               mood: state.mood,
-               hunger: state.hunger,
-               energy: state.energy,
-               hygiene: state.hygiene,
-               coins: newCoins,
-               equippedAccessoryId: state.equipped?.accessoryId,
-               equippedBackgroundId: state.equipped?.backgroundId,
-               equippedOutfitId: state.equipped?.outfitId,
-            });
+             // Sync
+            syncManager.queueSync('pet', 'update', getPetSyncPayload(get()));
         }
         
         // Call API to persist purchase to Supabase
-        const settings = useSettingsStore.getState().settings;
-        const partnershipId = settings.partners[0]?.id;
+        const partnershipId = syncManager.getPartnershipId();
         if (partnershipId) {
            await api.buyItem(partnershipId, item);
         }
@@ -397,19 +302,7 @@ export const usePetStore = create<PetState>()(
          set({ coins: newCoins });
          await db.updatePet({ coins: newCoins });
          
-         syncManager.queueSync('pet', 'update', {
-           name: state.name,
-           xp: state.xp,
-           level: state.level,
-           mood: state.mood,
-           hunger: state.hunger,
-           energy: state.energy,
-           hygiene: state.hygiene,
-           coins: newCoins,
-           equippedAccessoryId: state.equipped?.accessoryId,
-           equippedBackgroundId: state.equipped?.backgroundId,
-           equippedOutfitId: state.equipped?.outfitId,
-        });
+         syncManager.queueSync('pet', 'update', getPetSyncPayload(get()));
       },
       syncInventory: async () => {
           // Placeholder
@@ -536,11 +429,11 @@ export async function initializeStores() {
       useSettingsStore.getState().setSettingsRemote(customEvent.detail);
     });
 
-    // Pet Sync
+    // Pet Sync - Use setPetRemote to avoid sync loops (data comes FROM remote)
     window.addEventListener('sync:pet', (event: Event) => {
       const customEvent = event as CustomEvent;
-      console.log('🔄 Store: Received pet sync', customEvent.detail);
-      usePetStore.getState().updatePet(customEvent.detail);
+      console.log('🔄 Store: Received pet sync (from remote)', customEvent.detail);
+      usePetStore.getState().setPetRemote(customEvent.detail);
     });
 
     // Challenge Sync

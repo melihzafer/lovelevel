@@ -5,9 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useCallback } from 'react';
 import { useTranslation } from '../../lib/i18n';
 import { LoveCatcher } from './LoveCatcher';
+import { usePetLoop } from '../../hooks/usePetLoop';
 
 export const PetGame = () => {
   const { t } = useTranslation();
+  usePetLoop(); // Start stats decay loop
   
   // Selectors
   const hunger = usePetStore(state => state.hunger);
@@ -40,8 +42,27 @@ export const PetGame = () => {
     setShowLoveCatcher(true);
   };
 
+  // Background Map
+  const BACKGROUND_STYLES: Record<string, string> = {
+      'bg-default': 'bg-gradient-to-b from-blue-50 to-white dark:from-slate-900 dark:to-slate-800',
+      'bg-park': 'bg-gradient-to-b from-sky-300 to-green-100 dark:from-sky-900 dark:to-green-900',
+      'bg-beach': 'bg-gradient-to-b from-sky-200 via-yellow-100 to-blue-200 dark:from-sky-900 dark:to-blue-900',
+      'bg-forest': 'bg-gradient-to-b from-emerald-800 to-emerald-950 dark:from-emerald-900 dark:to-black',
+      'bg-city': 'bg-gradient-to-b from-indigo-900 via-purple-900 to-pink-900',
+      'bg-space': 'bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-900 via-purple-950 to-black',
+      'bg-mountains': 'bg-gradient-to-b from-cyan-100 to-slate-200 dark:from-slate-800 dark:to-slate-950',
+      'bg-cafe': 'bg-gradient-to-b from-amber-50 to-orange-50 dark:from-amber-950 dark:to-orange-950',
+      'bg-library': 'bg-gradient-to-b from-amber-100 to-amber-200 dark:from-amber-900 dark:to-amber-950',
+      'bg-garden': 'bg-gradient-to-b from-purple-100 to-green-50 dark:from-purple-950 dark:to-green-950',
+      'bg-winter': 'bg-gradient-to-b from-slate-100 to-blue-50 dark:from-slate-900 dark:to-blue-950',
+      'bg-rainbow': 'bg-gradient-to-r from-red-100 via-yellow-100 to-blue-100 dark:from-red-900 dark:via-yellow-900 dark:to-blue-900',
+  };
+
+  const equippedBackgroundId = usePetStore(state => state.equipped?.backgroundId);
+  const backgroundClass = (equippedBackgroundId && BACKGROUND_STYLES[equippedBackgroundId]) || BACKGROUND_STYLES['bg-default'];
+
   return (
-    <div className="relative">
+    <div className={`relative rounded-3xl overflow-hidden transition-colors duration-700 ${backgroundClass} p-4`}>
       {/* Minigame Modal (LoveCatcher) */}
       <AnimatePresence>
         {showLoveCatcher && (
@@ -84,13 +105,13 @@ export const PetGame = () => {
            <div className="flex-1">
               <div className="flex justify-between text-xs font-bold mb-1 opacity-70">
                  <span>{(t as any).hunger || 'Hunger'}</span> 
-                 <span>{Math.round(hunger)}%</span>
+                 <span>{Math.round(Number.isFinite(hunger) ? hunger : 50)}%</span>
               </div>
               <div className="h-2 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden">
                  <motion.div 
                     className="h-full bg-orange-400"
                     initial={{ width: 0 }}
-                    animate={{ width: `${hunger}%` }}
+                    animate={{ width: `${Number.isFinite(hunger) ? hunger : 50}%` }}
                  />
               </div>
            </div>
@@ -102,13 +123,13 @@ export const PetGame = () => {
            <div className="flex-1">
               <div className="flex justify-between text-xs font-bold mb-1 opacity-70">
                  <span>{(t as any).hygiene || 'Hygiene'}</span>
-                 <span>{Math.round(hygiene)}%</span>
+                 <span>{Math.round(Number.isFinite(hygiene) ? hygiene : 100)}%</span>
               </div>
               <div className="h-2 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden">
                  <motion.div 
                     className="h-full bg-blue-400"
                     initial={{ width: 0 }}
-                    animate={{ width: `${hygiene}%` }}
+                    animate={{ width: `${Number.isFinite(hygiene) ? hygiene : 100}%` }}
                  />
               </div>
            </div>

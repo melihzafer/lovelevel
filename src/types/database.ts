@@ -56,6 +56,7 @@ export interface PetState {
     accessoryId?: string;
     backgroundId?: string;
     outfitId?: string;
+    emoteId?: string;
   };
   lastInteraction?: string; // ISO 8601 string
 }

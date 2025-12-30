@@ -69,7 +69,7 @@ export default defineConfig({
         ],
       },
       devOptions: {
-        enabled: true,
+        enabled: false, // Disabled in dev to prevent workbox noise - only use in production
         type: "module",
       },
       workbox: {
