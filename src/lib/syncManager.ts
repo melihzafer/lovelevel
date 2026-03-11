@@ -108,6 +108,7 @@ class SyncManager {
       try {
         const currentSettings = await db.getSettings();
         const settingsUpdates: Record<string, any> = {};
+        let hasUpdates = false;
 
         // 1. Sync Anniversary Date from Partnership (already have data)
         if (partnership.anniversary_date && partnership.anniversary_date !== currentSettings.relationshipStartDate) {

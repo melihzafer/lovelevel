@@ -103,32 +103,6 @@ export const PetMinigame = ({ onClose }: PetMinigameProps) => {
     setShowResult(false);
   };
 
-  const handleItemClick = (id: number, type: 'heart' | 'golden-heart') => {
-    // Vibrate if supported
-    if (navigator.vibrate) navigator.vibrate(10);
-
-    const points = type === 'golden-heart' ? 5 : 1;
-    setScore((prev) => prev + points);
-    setItems((prev) => prev.filter((i) => i.id !== id));
-  };
-
-  const startGame = () => {
-    setGameActive(true);
-    setTimeLeft(30);
-    setScore(0);
-    setItems([]);
-    setShowResult(false);
-  };
-
-  const endGame = async () => {
-    setGameActive(false);
-    setShowResult(true);
-    setItems([]);
-    
-    if (score > 0) {
-      await gainXP(score * 2, 'minigame'); // 2 XP per point
-    }
-  };
 
   return (
     <div className="absolute inset-0 z-20 bg-white/90 dark:bg-black/90 backdrop-blur-md rounded-2xl flex flex-col overflow-hidden">
