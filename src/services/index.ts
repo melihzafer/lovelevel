@@ -4,3 +4,4 @@
 export { petService, type IPetService } from './petService';
 export { challengeService, type IChallengeService } from './challengeService';
 export { settingsService, type ISettingsService } from './settingsService';
+export { syncService, type ISyncService, type SyncStatus } from './syncService';
