@@ -487,11 +487,12 @@ export default function SettingsPage() {
               if (window.confirm('Are you absolutely sure you want to delete your account? This action cannot be undone.')) {
                 try {
                   await deleteAccount();
-                } catch (error) {
+                } catch (_error) {
+                  void _error; // Error handled with user feedback
                   alert('Failed to delete account. Please try again.');
                 }
               }
-            }} 
+            }}
             variant="outline" 
             className="w-full border-red-200 text-red-600 hover:bg-red-100/50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/30"
           >

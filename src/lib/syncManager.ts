@@ -107,8 +107,7 @@ class SyncManager {
       // 🚀 OPTIMIZATION: Sync shared settings inline (fast, critical for UI)
       try {
         const currentSettings = await db.getSettings();
-        let settingsUpdates: Record<string, any> = {};
-        let hasUpdates = false;
+        const settingsUpdates: Record<string, any> = {};
 
         // 1. Sync Anniversary Date from Partnership (already have data)
         if (partnership.anniversary_date && partnership.anniversary_date !== currentSettings.relationshipStartDate) {

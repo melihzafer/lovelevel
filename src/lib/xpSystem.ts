@@ -150,7 +150,8 @@ export function getMonthiversaryXP(
 /**
  * Get items unlocked at a specific level
  */
-export function getItemsUnlockedAtLevel(_level: number): string[] {
+export function getItemsUnlockedAtLevel(level: number): string[] {
+  void level; // Parameter reserved for future use
   // This would be populated based on your item unlock schedule
   // For now, return empty array - will be implemented with pet items
   return [];

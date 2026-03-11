@@ -13,13 +13,12 @@ interface Particle {
 }
 
 export const DirtLayer = ({ hygiene, onClean }: DirtLayerProps) => {
-  if (hygiene >= 95) return null;
-
   const [scrubAmount, setScrubAmount] = useState(0);
   const [isScrubbing, setIsScrubbing] = useState(false);
   const [particles, setParticles] = useState<Particle[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const lastPos = useRef<{x: number, y: number} | null>(null);
+
 
   // Calculate visual dirtiness based on actual hygiene AND scrub progress
   // As user scrubs, the dirt visually fades before the actual onClean triggers (optimistic UI)
@@ -86,6 +85,8 @@ export const DirtLayer = ({ hygiene, onClean }: DirtLayerProps) => {
       if (hygiene >= 95) setScrubAmount(0);
   }, [hygiene]);
 
+  // Early return after all hooks are called (fixes rules-of-hooks violation)
+  if (hygiene >= 95) return null;
   return (
     <motion.div
       ref={containerRef}

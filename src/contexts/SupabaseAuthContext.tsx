@@ -162,8 +162,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Wait, legacy code tried `user.delete()` (Firebase).
       // Supabase:
       
-      const { error: _authError } = await supabase.rpc('delete_user'); // Assuming we setup this RPC or similar
-      // If no RPC, we just sign out.
+      void supabase.rpc('delete_user');
+      // Assuming we setup this RPC or similar
       
       console.warn("Account deletion on Supabase requires Server-Side Admin or RPC. Clearing local data.");
       

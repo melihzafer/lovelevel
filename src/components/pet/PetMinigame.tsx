@@ -25,34 +25,16 @@ export const PetMinigame = ({ onClose }: PetMinigameProps) => {
   
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Start game timer
-  useEffect(() => {
-    if (!gameActive) return;
-
-    if (timeLeft <= 0) {
-      endGame();
-      return;
+  // Define functions before they are used in effects
+  const endGame = async () => {
+    setGameActive(false);
+    setShowResult(true);
+    setItems([]);
+    
+    if (score > 0) {
+      await gainXP(score * 2, 'minigame'); // 2 XP per point
     }
-
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [timeLeft, gameActive]);
-
-  // Spawn items
-  useEffect(() => {
-    if (!gameActive) return;
-
-    const spawnInterval = setInterval(() => {
-      if (items.length < 5) {
-        spawnItem();
-      }
-    }, 800);
-
-    return () => clearInterval(spawnInterval);
-  }, [gameActive, items]);
+  };
 
   const spawnItem = () => {
     if (!containerRef.current) return;
@@ -73,6 +55,52 @@ export const PetMinigame = ({ onClose }: PetMinigameProps) => {
     setTimeout(() => {
       setItems((prev) => prev.filter((i) => i.id !== newItem.id));
     }, 2000);
+  };
+
+  // Start game timer
+  useEffect(() => {
+    if (!gameActive) return;
+
+    if (timeLeft <= 0) {
+      endGame();
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeLeft, gameActive, endGame]);
+
+  // Spawn items
+  useEffect(() => {
+    if (!gameActive) return;
+
+    const spawnInterval = setInterval(() => {
+      if (items.length < 5) {
+        spawnItem();
+      }
+    }, 800);
+
+    return () => clearInterval(spawnInterval);
+  }, [gameActive, items, spawnItem]);
+
+  const handleItemClick = (id: number, type: 'heart' | 'golden-heart') => {
+    // Vibrate if supported
+    if (navigator.vibrate) navigator.vibrate(10);
+
+    const points = type === 'golden-heart' ? 5 : 1;
+    setScore((prev) => prev + points);
+    setItems((prev) => prev.filter((i) => i.id !== id));
+  };
+
+  const startGame = () => {
+    setGameActive(true);
+    setTimeLeft(30);
+    setScore(0);
+    setItems([]);
+    setShowResult(false);
   };
 
   const handleItemClick = (id: number, type: 'heart' | 'golden-heart') => {
