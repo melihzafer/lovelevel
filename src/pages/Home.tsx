@@ -8,7 +8,7 @@ import { Modal } from '../components/Modal';
 import { Button } from '../components/Button';
 import { useTranslation } from '../lib/i18n';
 import { ShareCard } from '../components/ShareCard';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 
@@ -128,20 +128,16 @@ export default function HomePage() {
     setIsSharing(true);
     
     try {
-      // 1. Capture the hidden ShareCard
-      // Reduced scale to 1 for mobile stability (1080x1920 is already HD)
-      const canvas = await html2canvas(shareCardRef.current, {
-        scale: 1, 
-        backgroundColor: null,
-        useCORS: true, 
-        logging: false,
-        allowTaint: true, // Allow cross-origin images if CORS fails (might accept but not share)
+      // 1. Capture the hidden ShareCard using html-to-image (faster than html2canvas)
+      const dataUrl = await toPng(shareCardRef.current, {
+        quality: 0.9,
+        pixelRatio: 1,
+        cacheBust: true,
       });
 
-      // 2. Convert to blob
-      const blob = await new Promise<Blob | null>((resolve) => {
-        canvas.toBlob(resolve, 'image/png', 0.9);
-      });
+      // 2. Convert data URL to blob
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
 
       if (!blob) throw new Error('Failed to generate image');
 
@@ -159,17 +155,15 @@ export default function HomePage() {
         await navigator.share(shareData);
       } else {
         // Fallback: Download the image
-        // Create a link and click it immediately
         const link = document.createElement('a');
         link.download = `love_level_${dateStats?.daysTogether}_days.png`;
-        link.href = canvas.toDataURL('image/png', 0.9);
+        link.href = dataUrl;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
       }
     } catch (err) {
       console.error('Share failed:', err);
-      // Show user feedback (could add a toast here, but alert is better than silence for now)
       alert(t.shareFailed || 'Could not share image. Try taking a screenshot!'); 
 
       // Fallback text share if image fail
