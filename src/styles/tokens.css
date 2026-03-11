@@ -1,0 +1,230 @@
+/**
+ * LoveLevel Design Tokens
+ * Single source of truth for all design values
+ * 
+ * Usage: Import in index.css, reference via var(--token-name)
+ */
+
+:root {
+  /* ============================================
+   * COLOR PALETTE
+   * ============================================ */
+  
+  /* Primary: Romantic Rose/Pink */
+  --color-primary-50: #fff0f3;
+  --color-primary-100: #ffe4e6;
+  --color-primary-200: #fecdd3;
+  --color-primary-300: #fda4af;
+  --color-primary-400: #fb7185;
+  --color-primary-500: #f43f5e;
+  --color-primary-600: #e11d48;
+  --color-primary-700: #be123c;
+  --color-primary-800: #9f1239;
+  --color-primary-900: #881337;
+
+  /* Accent: Royal Purple/Violet */
+  --color-accent-50: #f5f3ff;
+  --color-accent-100: #ede9fe;
+  --color-accent-200: #ddd6fe;
+  --color-accent-300: #c4b5fd;
+  --color-accent-400: #a78bfa;
+  --color-accent-500: #8b5cf6;
+  --color-accent-600: #7c3aed;
+  --color-accent-700: #6d28d9;
+  --color-accent-800: #5b21b6;
+  --color-accent-900: #4c1d95;
+
+  /* Semantic Colors */
+  --color-success: #22c55e;
+  --color-success-light: #bbf7d0;
+  --color-warning: #f59e0b;
+  --color-warning-light: #fef3c7;
+  --color-error: #ef4444;
+  --color-error-light: #fee2e2;
+  --color-info: #3b82f6;
+  --color-info-light: #dbeafe;
+
+  /* ============================================
+   * BACKGROUND COLORS
+   * ============================================ */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --bg-gradient: radial-gradient(circle at 50% 0%, #ffffff 0%, #f1f5f9 100%);
+
+  /* Glass Effect Backgrounds */
+  --bg-glass: rgba(255, 255, 255, 0.7);
+  --bg-glass-hover: rgba(255, 255, 255, 0.9);
+  --bg-glass-border: rgba(255, 255, 255, 0.4);
+
+  /* ============================================
+   * TEXT COLORS
+   * ============================================ */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #94a3b8;
+  --text-muted: #cbd5e1;
+  --text-inverse: #ffffff;
+
+  /* ============================================
+   * BORDER COLORS
+   * ============================================ */
+  --border-color: #e2e8f0;
+  --border-color-light: #f1f5f9;
+  --border-color-dark: #cbd5e1;
+
+  /* ============================================
+   * SPACING SCALE
+   * ============================================ */
+  --space-0: 0;
+  --space-1: 0.25rem;   /* 4px */
+  --space-2: 0.5rem;     /* 8px */
+  --space-3: 0.75rem;    /* 12px */
+  --space-4: 1rem;       /* 16px */
+  --space-5: 1.25rem;    /* 20px */
+  --space-6: 1.5rem;     /* 24px */
+  --space-8: 2rem;       /* 32px */
+  --space-10: 2.5rem;    /* 40px */
+  --space-12: 3rem;      /* 48px */
+  --space-16: 4rem;      /* 64px */
+
+  /* ============================================
+   * TYPOGRAPHY
+   * ============================================ */
+  --font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Font Sizes */
+  --text-xs: 0.75rem;    /* 12px */
+  --text-sm: 0.875rem;   /* 14px */
+  --text-base: 1rem;     /* 16px */
+  --text-lg: 1.125rem;   /* 18px */
+  --text-xl: 1.25rem;    /* 20px */
+  --text-2xl: 1.5rem;    /* 24px */
+  --text-3xl: 1.875rem;  /* 30px */
+  --text-4xl: 2.25rem;   /* 36px */
+  --text-5xl: 3rem;      /* 48px */
+
+  /* Font Weights */
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  --font-black: 900;
+
+  /* Line Heights */
+  --leading-none: 1;
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  /* ============================================
+   * BORDER RADIUS
+   * ============================================ */
+  --radius-sm: 0.25rem;  /* 4px */
+  --radius-md: 0.5rem;   /* 8px */
+  --radius-lg: 0.75rem;  /* 12px */
+  --radius-xl: 1rem;     /* 16px */
+  --radius-2xl: 1.5rem;  /* 24px */
+  --radius-3xl: 2rem;    /* 32px */
+  --radius-full: 9999px;
+
+  /* ============================================
+   * SHADOWS
+   * ============================================ */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+
+  /* Colored Shadows */
+  --shadow-primary: 0 10px 15px -3px rgb(244 63 94 / 0.2);
+  --shadow-accent: 0 10px 15px -3px rgb(139 92 246 / 0.2);
+
+  /* ============================================
+   * TRANSITIONS
+   * ============================================ */
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 300ms ease;
+  --transition-slower: 500ms ease;
+
+  /* ============================================
+   * Z-INDEX SCALE
+   * ============================================ */
+  --z-base: 0;
+  --z-dropdown: 10;
+  --z-sticky: 20;
+  --z-fixed: 30;
+  --z-modal-backdrop: 40;
+  --z-modal: 50;
+  --z-popover: 60;
+  --z-tooltip: 70;
+  --z-toast: 80;
+  --z-max: 9999;
+
+  /* ============================================
+   * TOUCH TARGETS (Accessibility)
+   * ============================================ */
+  --touch-target-min: 44px;
+}
+
+/* ============================================
+ * DARK MODE OVERRIDES
+ * ============================================ */
+.dark {
+  /* Primary: Muted for dark mode */
+  --color-primary-50: #4c0519;
+  --color-primary-100: #831843;
+  --color-primary-200: #9f1239;
+  --color-primary-300: #be123c;
+  --color-primary-400: #e11d48;
+  --color-primary-500: #f43f5e;
+  --color-primary-600: #fb7185;
+  --color-primary-700: #fda4af;
+  --color-primary-800: #fecdd3;
+  --color-primary-900: #ffe4e6;
+
+  /* Accent: Muted for dark mode */
+  --color-accent-50: #2e1065;
+  --color-accent-100: #4c1d95;
+  --color-accent-200: #5b21b6;
+  --color-accent-300: #6d28d9;
+  --color-accent-400: #7c3aed;
+  --color-accent-500: #8b5cf6;
+  --color-accent-600: #a78bfa;
+  --color-accent-700: #c4b5fd;
+  --color-accent-800: #ddd6fe;
+  --color-accent-900: #ede9fe;
+
+  /* Backgrounds */
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0a;
+  --bg-tertiary: #171717;
+  --bg-gradient: radial-gradient(circle at 50% 0%, #1a1a1a 0%, #000000 100%);
+
+  /* Glass Effect */
+  --bg-glass: rgba(23, 23, 23, 0.6);
+  --bg-glass-hover: rgba(23, 23, 23, 0.8);
+  --bg-glass-border: rgba(255, 255, 255, 0.1);
+
+  /* Text */
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #71717a;
+  --text-muted: #52525b;
+
+  /* Borders */
+  --border-color: #262626;
+  --border-color-light: #171717;
+  --border-color-dark: #404040;
+
+  /* Shadows (darker for dark mode) */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.4);
+}
