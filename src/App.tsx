@@ -7,6 +7,7 @@ import { ThemeProvider } from './components/ThemeProvider';
 import { AuthProvider, useAuth } from './contexts/SupabaseAuthContext';
 import { SupabaseSyncProvider, useSync } from './contexts/SupabaseSyncContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Lazy-loaded pages
 const OnboardingPage = lazy(() => import('./pages/Onboarding'));
@@ -144,15 +145,17 @@ function AppContent() {
 
 export function App() {
   return (
-    <BrowserRouter>
-      <ThemeProvider>
-        <AuthProvider>
-          <SupabaseSyncProvider>
-            <AppContent />
-          </SupabaseSyncProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <ThemeProvider>
+          <AuthProvider>
+            <SupabaseSyncProvider>
+              <AppContent />
+            </SupabaseSyncProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 
