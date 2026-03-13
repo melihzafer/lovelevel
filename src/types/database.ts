@@ -60,6 +60,7 @@ export interface PetState {
   };
   lastInteraction?: string; // ISO 8601 string
   lastDecayTime?: string; // ISO 8601 string - tracks when decay was last applied
+  evolutionStage?: string; // Current evolution stage
 }
 
 export type Theme = 'system' | 'light' | 'dark';
@@ -123,6 +124,7 @@ export const DEFAULT_PET_STATE: PetState = {
   items: [],
   equipped: {},
   lastDecayTime: new Date().toISOString(),
+  evolutionStage: 'baby',
 };
 
 // Supabase-specific types (synced data)

@@ -3,12 +3,12 @@
  * Input field for sending messages
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Send, Mic, Heart, Smile } from 'lucide-react';
+import { Send, Heart, Smile } from 'lucide-react';
 
 interface ChatInputProps {
-  onSendMessage: (content: string, type: 'text' | 'voice' | 'love_note') => void;
+  onSendMessage: (content: string, type: 'text' | 'love_note') => void;
   onTyping?: (isTyping: boolean) => void;
   disabled?: boolean;
   placeholder?: string;
@@ -21,25 +21,22 @@ export function ChatInput({
   placeholder = 'Type a message...',
 }: ChatInputProps) {
   const [message, setMessage] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
   const [showEmojis, setShowEmojis] = useState(false);
   const [showLoveNote, setShowLoveNote] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Handle typing indicator
-  useEffect(() => {
+  const handleTyping = useCallback((isTyping: boolean) => {
     if (onTyping) {
-      onTyping(message.length > 0);
+      onTyping(isTyping);
     }
-  }, [message, onTyping]);
+  }, [onTyping]);
 
-  // Auto-resize textarea
-  useEffect(() => {
+  const updateTextareaHeight = useCallback(() => {
     if (inputRef.current) {
       inputRef.current.style.height = 'auto';
       inputRef.current.style.height = `${Math.min(inputRef.current.scrollHeight, 120)}px`;
     }
-  }, [message]);
+  }, []);
 
   const handleSend = () => {
     if (message.trim() && !disabled) {
@@ -53,11 +50,6 @@ export function ChatInput({
       e.preventDefault();
       handleSend();
     }
-  };
-
-  const handleVoiceRecord = () => {
-    // TODO: Implement voice recording
-    setIsRecording(!isRecording);
   };
 
   const handleLoveNote = () => {
@@ -140,7 +132,11 @@ export function ChatInput({
           <textarea
             ref={inputRef}
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={(e) => {
+              setMessage(e.target.value);
+              handleTyping(e.target.value.length > 0);
+              updateTextareaHeight();
+            }}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             disabled={disabled}
@@ -160,21 +156,6 @@ export function ChatInput({
           >
             <Heart className="w-5 h-5" />
           </motion.button>
-        )}
-
-        {/* Voice button (when no text) */}
-        {!message.trim() && (
-          <button
-            onClick={handleVoiceRecord}
-            className={`p-2 rounded-full transition-colors ${
-              isRecording
-                ? 'bg-red-500 text-white animate-pulse'
-                : 'hover:bg-bg-secondary text-text-secondary'
-            }`}
-            disabled={disabled}
-          >
-            <Mic className="w-5 h-5" />
-          </button>
         )}
 
         {/* Send button */}

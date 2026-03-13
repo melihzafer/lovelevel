@@ -1,5 +1,5 @@
 export interface HighScore {
-  game: 'petminigame' | 'lovecatcher' | 'memorymatch' | 'quiz' | 'whackamole' | 'triviaquiz' | 'reactiontime';
+  game: 'petminigame' | 'lovecatcher' | 'memorymatch' | 'quiz' | 'whackamole' | 'triviaquiz' | 'reactiontime' | 'truthordare' | 'wouldyourather';
   score: number;
   achievedAt: string;
   difficulty?: 'easy' | 'normal' | 'hard';

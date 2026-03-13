@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSettingsStore, usePetStore, useChallengesStore } from '../store';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
@@ -12,16 +13,20 @@ import {
   getUpcomingNotifications 
 } from '../lib/notifications';
 import { useAuth } from '../contexts/SupabaseAuthContext';
+import { useSync } from '../contexts/SupabaseSyncContext';
 import type { NotificationSchedule } from '../lib/notifications';
 import { AnimatedBackground } from '../components/layout/AnimatedBackground';
 
+
 export default function SettingsPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { settings, updateSettings } = useSettingsStore();
   const { deleteAccount } = useAuth();
+  const { partnership } = useSync();
   const pet = usePetStore();
   const { challenges } = useChallengesStore();
-  
+
   const [showExportModal, setShowExportModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [importData, setImportData] = useState('');
@@ -158,6 +163,34 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* Partner Connection */}
+        <button
+          onClick={() => navigate('/partner')}
+          className="w-full bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 dark:border-white/5 ring-1 ring-black/5 text-left hover:shadow-2xl transition-all"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center text-white text-xl">
+                {partnership ? '💑' : '👥'}
+              </div>
+              <div>
+                <div className="font-semibold text-lg text-gray-900 dark:text-white">
+                  {partnership ? 'Partner Connected' : 'Connect with Partner'}
+                </div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  {partnership ? 'View partner details & manage connection' : 'Invite or join with a partner'}
+                </div>
+              </div>
+            </div>
+            <div className="text-gray-400 dark:text-gray-500">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+        </button>
+
+        {/* Relationship Start Date */}
         {/* Relationship Start Date */}
         <div className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 dark:border-white/5 ring-1 ring-black/5 space-y-6">
           <h2 className="font-semibold text-lg text-gray-900 dark:text-white flex items-center gap-2">

@@ -209,7 +209,7 @@ class ChatService {
     scheduledFor?: Date,
     options?: {
       backgroundTheme?: string;
-      animationType?: 'hearts' | 'sparkles' | 'confetti' | 'none';
+      animationType?: 'hearts' | 'sparkles' | 'confetti' | 'fireworks' | 'none';
     }
   ): Promise<LoveNote | null> {
     try {

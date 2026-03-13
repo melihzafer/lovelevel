@@ -72,17 +72,33 @@ export default function ChatPage() {
 
   // Subscribe to new messages
   useEffect(() => {
-    if (!partnershipId) return;
+    if (!partnershipId || !user) return;
 
     const unsubscribe = chatService.subscribeToMessages(
       partnershipId,
       (message) => {
-        setMessages((prev) => [...prev, message]);
+        setMessages((prev) => {
+          // If from current user, replace any temp message with this real one
+          if (message.sender_id === user.id) {
+            const hasTemp = prev.some(m => m.id.toString().startsWith('temp-'));
+            if (hasTemp) {
+              // Replace temp message with real one
+              return prev.map(m => 
+                m.id.toString().startsWith('temp-') ? message : m
+              );
+            }
+            // No temp message, skip (already shown)
+            return prev;
+          }
+          // From other user - add if not already present
+          if (prev.some(m => m.id === message.id)) return prev;
+          return [...prev, message];
+        });
       }
     );
 
     return unsubscribe;
-  }, [partnershipId]);
+  }, [partnershipId, user]);
 
   // Subscribe to typing indicators
   useEffect(() => {
@@ -126,7 +142,7 @@ export default function ChatPage() {
 
   if (!partnership) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-bg-secondary p-4">
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-6.5rem-env(safe-area-inset-bottom))] bg-bg-secondary p-4">
         <Heart className="w-16 h-16 text-primary-300 mb-4" />
         <h2 className="text-xl font-bold text-text-primary mb-2">Connect with your partner</h2>
         <p className="text-text-secondary text-center">
@@ -137,7 +153,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-bg-secondary">
+    <div className="flex flex-col h-[calc(100vh-6.5rem-env(safe-area-inset-bottom))] bg-bg-secondary">
       {/* Header */}
       <div className="bg-bg-primary border-b border-border-color px-4 py-3 flex items-center gap-3 sticky top-0 z-10">
         <button

@@ -23,6 +23,9 @@ const ProfilePage = lazy(() => import('./pages/Profile'));
 const LoginPage = lazy(() => import('./pages/Login'));
 const SignupPage = lazy(() => import('./pages/Signup'));
 const ChatPage = lazy(() => import('./pages/Chat'));
+const JournalPage = lazy(() => import('./pages/Journal'));
+const MemoryTimelinePage = lazy(() => import('./pages/MemoryTimeline'));
+const GoalsPage = lazy(() => import('./pages/Goals'));
 
 function AppContent() {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -115,6 +118,30 @@ function AppContent() {
                 element={
                   <ProtectedRoute>
                     <ChatPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/journal"
+                element={
+                  <ProtectedRoute>
+                    <JournalPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/memories"
+                element={
+                  <ProtectedRoute>
+                    <MemoryTimelinePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/goals"
+                element={
+                  <ProtectedRoute>
+                    <GoalsPage />
                   </ProtectedRoute>
                 }
               />

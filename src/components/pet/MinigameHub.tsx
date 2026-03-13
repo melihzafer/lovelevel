@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gamepad2, Heart, Target, Brain, Trophy, X } from 'lucide-react';
+import { Gamepad2, Heart, Target, Brain, Trophy, X, HeartHandshake } from 'lucide-react';
 
 import { highScoreService } from '../../lib/highScoreService';
 import { PetMinigame } from './PetMinigame';
@@ -10,12 +10,14 @@ import { RelationshipQuiz } from './RelationshipQuiz';
 import { WhackAMole } from './WhackAMole';
 import { TriviaQuiz } from './TriviaQuiz';
 import { ReactionTime } from './ReactionTime';
+import { TruthOrDare } from './TruthOrDare';
+import { WouldYouRather } from './WouldYouRather';
 
 interface MinigameHubProps {
   onClose: () => void;
 }
 
-type GameType = 'petminigame' | 'lovecatcher' | 'memorymatch' | 'quiz' | 'whackamole' | 'triviaquiz' | 'reactiontime' | null;
+type GameType = 'petminigame' | 'lovecatcher' | 'memorymatch' | 'quiz' | 'whackamole' | 'triviaquiz' | 'reactiontime' | 'truthordare' | 'wouldyourather' | null;
 
 interface GameInfo {
   id: GameType;
@@ -75,6 +77,20 @@ const GAMES: GameInfo[] = [
     icon: <span className="text-3xl">⚡</span>,
     color: 'bg-red-500',
   },
+  {
+    id: 'truthordare',
+    name: 'Truth or Dare',
+    description: 'A fun game for couples!',
+    icon: <HeartHandshake className="w-8 h-8" />,
+    color: 'bg-rose-500',
+  },
+  {
+    id: 'wouldyourather',
+    name: 'Would You Rather',
+    description: 'Choose between two options!',
+    icon: <span className="text-3xl">🤔</span>,
+    color: 'bg-teal-500',
+  },
 ];
 
 export const MinigameHub = ({ onClose }: MinigameHubProps) => {
@@ -86,7 +102,7 @@ export const MinigameHub = ({ onClose }: MinigameHubProps) => {
     const scores: Record<string, number> = {};
     GAMES.forEach(game => {
       if (game.id) {
-        const hs = highScoreService.getHighScore(game.id);
+        const hs = highScoreService.getHighScore(game.id as any);
         if (hs) scores[game.id] = hs.score;
       }
     });
@@ -109,6 +125,10 @@ export const MinigameHub = ({ onClose }: MinigameHubProps) => {
         return <TriviaQuiz onClose={() => setActiveGame(null)} />;
       case 'reactiontime':
         return <ReactionTime onClose={() => setActiveGame(null)} />;
+      case 'truthordare':
+        return <TruthOrDare onClose={() => setActiveGame(null)} />;
+      case 'wouldyourather':
+        return <WouldYouRather onClose={() => setActiveGame(null)} />;
       default:
         return null;
     }

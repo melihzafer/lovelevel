@@ -36,7 +36,7 @@ export interface LoveNote {
   content: string;
   scheduled_for?: string;
   background_theme?: string;
-  animation_type?: 'hearts' | 'sparkles' | 'confetti' | 'none';
+  animation_type?: 'hearts' | 'sparkles' | 'confetti' | 'fireworks' | 'none';
   is_delivered: boolean;
   delivered_at?: string;
   read_at?: string;
