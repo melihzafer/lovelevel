@@ -15,7 +15,7 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-6 left-4 right-4 z-fixed flex justify-center pointer-events-none mb-[env(safe-area-inset-bottom)]"
+      className="fixed bottom-6 left-4 right-4 z-30 flex justify-center pointer-events-none mb-[env(safe-area-inset-bottom)]"
       role="navigation"
       aria-label="Main navigation"
     >

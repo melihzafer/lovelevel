@@ -53,13 +53,13 @@ export function Modal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-modal-backdrop"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
             aria-hidden="true"
           />
 
           {/* Modal */}
           <div
-            className="fixed inset-0 z-modal flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
             role="dialog"
             aria-modal="true"
             aria-labelledby={title ? 'modal-title' : undefined}
