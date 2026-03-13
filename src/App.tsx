@@ -9,6 +9,7 @@ import { SupabaseSyncProvider, useSync } from './contexts/SupabaseSyncContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { OfflineIndicator } from './components/OfflineIndicator';
+import { InstallPrompt } from './components/InstallPrompt';
 // Lazy-loaded pages
 const OnboardingPage = lazy(() => import('./pages/Onboarding'));
 const HomePage = lazy(() => import('./pages/Home'));
@@ -147,6 +148,7 @@ export function App() {
   return (
     <ErrorBoundary>
       <OfflineIndicator />
+      <InstallPrompt />
       <BrowserRouter>
         <ThemeProvider>
           <AuthProvider>
@@ -159,6 +161,7 @@ export function App() {
     </ErrorBoundary>
   );
 }
+
 
 
 export default App;
