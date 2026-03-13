@@ -12,10 +12,10 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
-      injectRegister: "auto",
-      strategies: "generateSW", // Switched from injectManifest to fix build
-      // srcDir: "src",
-      // filename: "sw.ts",
+      injectRegister: false, // We handle registration manually in sw.ts
+      strategies: "injectManifest", // Use custom service worker
+      srcDir: "src",
+      filename: "sw.ts",
       manifest: {
         name: "LoveLevel - Relationship Companion",
         short_name: "LoveLevel",
@@ -71,7 +71,7 @@ export default defineConfig({
         ],
       },
       devOptions: {
-        enabled: false, // Disabled in dev to prevent workbox noise - only use in production
+        enabled: true, // Enable in dev for testing
         type: "module",
       },
       workbox: {
