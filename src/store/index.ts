@@ -46,6 +46,15 @@ export async function initializeStores() {
     useChallengesStore.getState().loadChallenges(),
   ]);
   
+  // Calculate and apply decay based on time since last visit
+  const { calculateAndApplyDecay } = await import('../lib/petDecayService');
+  const decayResult = await calculateAndApplyDecay();
+  
+  // Reload pet state after decay calculation
+  if (decayResult.minutesElapsed > 0) {
+    await usePetStore.getState().loadPet();
+  }
+  
   // Set up listeners for real-time sync events
   if (typeof window !== 'undefined') {
     // Settings Sync

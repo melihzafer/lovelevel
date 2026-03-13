@@ -59,6 +59,7 @@ export interface PetState {
     emoteId?: string;
   };
   lastInteraction?: string; // ISO 8601 string
+  lastDecayTime?: string; // ISO 8601 string - tracks when decay was last applied
 }
 
 export type Theme = 'system' | 'light' | 'dark';
@@ -121,6 +122,7 @@ export const DEFAULT_PET_STATE: PetState = {
   inventory: [],
   items: [],
   equipped: {},
+  lastDecayTime: new Date().toISOString(),
 };
 
 // Supabase-specific types (synced data)

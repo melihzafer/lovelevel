@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { usePetStore } from '../store';
+import { updateLastDecayTime } from '../lib/petDecayService';
 
 const DECAY_INTERVAL = 60000; // 1 minute
 const HYGIENE_DECAY = 0.2; // -0.2 hygiene per minute (500 mins to 0)
-const HUNGER_DECAY = 0.7; // -0.5 hunger per minute (200 mins to 0)
-const ENERGY_DECAY = 0.7; // -0.5 energy per minute (200 mins to 0)
+const HUNGER_DECAY = 0.7; // -0.7 hunger per minute (200 mins to 0)
+const ENERGY_DECAY = 0.7; // -0.7 energy per minute (200 mins to 0)
 
 export const usePetLoop = () => {
   const updatePet = usePetStore(state => state.updatePet);
@@ -20,10 +21,10 @@ export const usePetLoop = () => {
   }, [hunger, hygiene, energy]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
       const { hunger, hygiene, energy } = statsRef.current;
       
-      const updates: any = {};
+      const updates: Record<string, number> = {};
       let hasUpdates = false;
 
       // Decay Hygiene
@@ -54,7 +55,9 @@ export const usePetLoop = () => {
       }
 
       if (hasUpdates) {
-        updatePet(updates);
+        await updatePet(updates);
+        // Update last decay time
+        await updateLastDecayTime();
       }
     }, DECAY_INTERVAL);
 
