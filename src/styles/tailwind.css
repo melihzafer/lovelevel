@@ -6,7 +6,9 @@
  */
 
 @theme {
-  /* Colors - using our design tokens */
+  /* ============================================
+   * COLORS - Primary (Romantic Rose/Pink)
+   * ============================================ */
   --color-primary-50: var(--color-primary-50);
   --color-primary-100: var(--color-primary-100);
   --color-primary-200: var(--color-primary-200);
@@ -18,6 +20,9 @@
   --color-primary-800: var(--color-primary-800);
   --color-primary-900: var(--color-primary-900);
 
+  /* ============================================
+   * COLORS - Accent (Royal Purple/Violet)
+   * ============================================ */
   --color-accent-50: var(--color-accent-50);
   --color-accent-100: var(--color-accent-100);
   --color-accent-200: var(--color-accent-200);
@@ -29,17 +34,119 @@
   --color-accent-800: var(--color-accent-800);
   --color-accent-900: var(--color-accent-900);
 
-  /* Custom colors */
+  /* ============================================
+   * SEMANTIC COLORS
+   * ============================================ */
+  --color-success: var(--color-success);
+  --color-success-light: var(--color-success-light);
+  --color-warning: var(--color-warning);
+  --color-warning-light: var(--color-warning-light);
+  --color-error: var(--color-error);
+  --color-error-light: var(--color-error-light);
+  --color-info: var(--color-info);
+  --color-info-light: var(--color-info-light);
+
+  /* ============================================
+   * BACKGROUND COLORS
+   * ============================================ */
   --color-bg-primary: var(--bg-primary);
   --color-bg-secondary: var(--bg-secondary);
+  --color-bg-tertiary: var(--bg-tertiary);
+  --color-bg-glass: var(--bg-glass);
+  --color-bg-glass-hover: var(--bg-glass-hover);
+
+  /* ============================================
+   * TEXT COLORS
+   * ============================================ */
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-muted: var(--text-muted);
+  --color-text-inverse: var(--text-inverse);
+
+  /* ============================================
+   * BORDER COLORS
+   * ============================================ */
   --color-border: var(--border-color);
+  --color-border-light: var(--border-color-light);
+  --color-border-dark: var(--border-color-dark);
 
-  /* Font family */
+  /* ============================================
+   * SPACING
+   * ============================================ */
+  --spacing-0: var(--space-0);
+  --spacing-1: var(--space-1);
+  --spacing-2: var(--space-2);
+  --spacing-3: var(--space-3);
+  --spacing-4: var(--space-4);
+  --spacing-5: var(--space-5);
+  --spacing-6: var(--space-6);
+  --spacing-8: var(--space-8);
+  --spacing-10: var(--space-10);
+  --spacing-12: var(--space-12);
+  --spacing-16: var(--space-16);
+
+  /* ============================================
+   * BORDER RADIUS
+   * ============================================ */
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+  --radius-3xl: var(--radius-3xl);
+  --radius-full: var(--radius-full);
+
+  /* ============================================
+   * SHADOWS
+   * ============================================ */
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+  --shadow-2xl: var(--shadow-2xl);
+  --shadow-primary: var(--shadow-primary);
+  --shadow-accent: var(--shadow-accent);
+
+  /* ============================================
+   * TRANSITIONS
+   * ============================================ */
+  --transition-fast: var(--transition-fast);
+  --transition-base: var(--transition-base);
+  --transition-slow: var(--transition-slow);
+  --transition-slower: var(--transition-slower);
+
+  /* ============================================
+   * Z-INDEX
+   * ============================================ */
+  --z-dropdown: var(--z-dropdown);
+  --z-sticky: var(--z-sticky);
+  --z-fixed: var(--z-fixed);
+  --z-modal-backdrop: var(--z-modal-backdrop);
+  --z-modal: var(--z-modal);
+  --z-popover: var(--z-popover);
+  --z-tooltip: var(--z-tooltip);
+  --z-toast: var(--z-toast);
+
+  /* ============================================
+   * TYPOGRAPHY
+   * ============================================ */
   --font-sans: var(--font-family);
+  --font-mono: var(--font-mono);
 
-  /* Animations */
+  --font-size-xs: var(--text-xs);
+  --font-size-sm: var(--text-sm);
+  --font-size-base: var(--text-base);
+  --font-size-lg: var(--text-lg);
+  --font-size-xl: var(--text-xl);
+  --font-size-2xl: var(--text-2xl);
+  --font-size-3xl: var(--text-3xl);
+  --font-size-4xl: var(--text-4xl);
+  --font-size-5xl: var(--text-5xl);
+
+  /* ============================================
+   * ANIMATIONS
+   * ============================================ */
   --animate-fade-in: fadeIn 0.3s ease-in-out;
   --animate-slide-up: slideUp 0.3s ease-out;
   --animate-bounce-gentle: bounceGentle 0.5s ease-in-out;
@@ -47,7 +154,9 @@
   --animate-blob: blob 7s infinite;
 }
 
-/* Custom keyframes */
+/* ============================================
+ * CUSTOM KEYFRAMES
+ * ============================================ */
 @keyframes fadeIn {
   0% { opacity: 0; }
   100% { opacity: 1; }
