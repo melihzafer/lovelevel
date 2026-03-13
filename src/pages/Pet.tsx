@@ -151,7 +151,7 @@ export default function PetPage() {
                 {petName}
                 </h1>
                 <button
-                onClick={() => setShowRenameModal(true)}
+                onClick={(e) => { e.stopPropagation(); setShowRenameModal(true); }}
                 className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
                 aria-label="Rename pet"
                 >
@@ -169,7 +169,7 @@ export default function PetPage() {
             {/* Shop Button */}
             <motion.button 
               whileTap={{ scale: 0.98 }}
-              onClick={() => setShowShop(true)} 
+              onClick={(e) => { e.stopPropagation(); setShowShop(true); }} 
               className="flex-1 py-4 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/40 dark:to-orange-900/40 backdrop-blur-md border border-amber-200 dark:border-amber-800 shadow-lg flex flex-col items-center justify-center gap-1 group hover:brightness-105 transition-all"
             >
               <span className="text-3xl group-hover:scale-110 transition-transform duration-300 drop-shadow-sm">🛍️</span>
@@ -179,7 +179,7 @@ export default function PetPage() {
             {/* Inventory Button */}
             <motion.button 
               whileTap={{ scale: 0.98 }}
-              onClick={() => setShowInventory(true)} 
+              onClick={(e) => { e.stopPropagation(); setShowInventory(true); }} 
               className="flex-1 py-4 rounded-2xl bg-white/40 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg flex flex-col items-center justify-center gap-1 group hover:bg-white/50 dark:hover:bg-black/30 transition-all"
             >
               <div className="relative">

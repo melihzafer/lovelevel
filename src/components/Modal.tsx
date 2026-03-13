@@ -63,6 +63,7 @@ export function Modal({
             role="dialog"
             aria-modal="true"
             aria-labelledby={title ? 'modal-title' : undefined}
+            onClick={(e) => e.stopPropagation()}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
