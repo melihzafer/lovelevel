@@ -1,5 +1,5 @@
 export interface HighScore {
-  game: 'petminigame' | 'lovecatcher' | 'memorymatch' | 'quiz';
+  game: 'petminigame' | 'lovecatcher' | 'memorymatch' | 'quiz' | 'whackamole' | 'triviaquiz' | 'reactiontime';
   score: number;
   achievedAt: string;
   difficulty?: 'easy' | 'normal' | 'hard';
@@ -33,13 +33,13 @@ class HighScoreService {
     return difficulty ? `${game}-${difficulty}` : game;
   }
   
-  getHighScore(game: 'petminigame' | 'lovecatcher' | 'memorymatch' | 'quiz', difficulty?: 'easy' | 'normal' | 'hard'): HighScore | null {
+  getHighScore(game: 'petminigame' | 'lovecatcher' | 'memorymatch' | 'quiz' | 'whackamole' | 'triviaquiz' | 'reactiontime', difficulty?: 'easy' | 'normal' | 'hard'): HighScore | null {
     const key = this.getKey(game, difficulty);
     return this.highScores.get(key) || null;
   }
   
   async submitScore(
-    game: 'petminigame' | 'lovecatcher' | 'memorymatch' | 'quiz',
+    game: 'petminigame' | 'lovecatcher' | 'memorymatch' | 'quiz' | 'whackamole' | 'triviaquiz' | 'reactiontime',
     score: number,
     difficulty?: 'easy' | 'normal' | 'hard'
   ): Promise<{ isNewHighScore: boolean; previousBest: number | null }> {

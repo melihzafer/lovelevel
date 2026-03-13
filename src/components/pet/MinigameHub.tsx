@@ -7,12 +7,15 @@ import { PetMinigame } from './PetMinigame';
 import { LoveCatcher } from './LoveCatcher';
 import { MemoryMatch } from './MemoryMatch';
 import { RelationshipQuiz } from './RelationshipQuiz';
+import { WhackAMole } from './WhackAMole';
+import { TriviaQuiz } from './TriviaQuiz';
+import { ReactionTime } from './ReactionTime';
 
 interface MinigameHubProps {
   onClose: () => void;
 }
 
-type GameType = 'petminigame' | 'lovecatcher' | 'memorymatch' | 'quiz' | null;
+type GameType = 'petminigame' | 'lovecatcher' | 'memorymatch' | 'quiz' | 'whackamole' | 'triviaquiz' | 'reactiontime' | null;
 
 interface GameInfo {
   id: GameType;
@@ -51,6 +54,27 @@ const GAMES: GameInfo[] = [
     icon: <Gamepad2 className="w-8 h-8" />,
     color: 'bg-green-500',
   },
+  {
+    id: 'whackamole',
+    name: 'Whack-a-Mole',
+    description: 'Tap moles before they hide!',
+    icon: <span className="text-3xl">🐹</span>,
+    color: 'bg-amber-500',
+  },
+  {
+    id: 'triviaquiz',
+    name: 'Trivia Quiz',
+    description: 'Test your general knowledge!',
+    icon: <span className="text-3xl">🧠</span>,
+    color: 'bg-indigo-500',
+  },
+  {
+    id: 'reactiontime',
+    name: 'Reaction Time',
+    description: 'How fast can you react?',
+    icon: <span className="text-3xl">⚡</span>,
+    color: 'bg-red-500',
+  },
 ];
 
 export const MinigameHub = ({ onClose }: MinigameHubProps) => {
@@ -79,6 +103,12 @@ export const MinigameHub = ({ onClose }: MinigameHubProps) => {
         return <MemoryMatch onClose={() => setActiveGame(null)} />;
       case 'quiz':
         return <RelationshipQuiz onClose={() => setActiveGame(null)} />;
+      case 'whackamole':
+        return <WhackAMole onClose={() => setActiveGame(null)} />;
+      case 'triviaquiz':
+        return <TriviaQuiz onClose={() => setActiveGame(null)} />;
+      case 'reactiontime':
+        return <ReactionTime onClose={() => setActiveGame(null)} />;
       default:
         return null;
     }
