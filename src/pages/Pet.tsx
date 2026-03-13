@@ -9,6 +9,7 @@ import { Button } from '../components/Button';
 import type { PetItem } from '../types/database';
 import { PetGame } from '../components/pet/PetGame';
 import { ShopModal } from '../components/pet/ShopModal';
+import { MinigameHub } from '../components/pet/MinigameHub';
 import { AnimatedBackground } from '../components/layout/AnimatedBackground';
 
 export default function PetPage() {
@@ -32,6 +33,7 @@ export default function PetPage() {
   const [newName, setNewName] = useState(petName);
   const [nameError, setNameError] = useState('');
   const [showInventory, setShowInventory] = useState(false);
+  const [showGames, setShowGames] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'accessory' | 'background' | 'emote'>('accessory');
 
   // Get unlocked items based on level
@@ -190,6 +192,16 @@ export default function PetPage() {
               </div>
               <span className="font-bold text-text-primary text-sm">{t.inventory || 'Inventory'}</span>
             </motion.button>
+            
+            {/* Games Button */}
+            <motion.button 
+              whileTap={{ scale: 0.98 }}
+              onClick={(e) => { e.stopPropagation(); setShowGames(true); }} 
+              className="flex-1 py-4 rounded-2xl bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/40 dark:to-pink-900/40 backdrop-blur-md border border-purple-200 dark:border-purple-800 shadow-lg flex flex-col items-center justify-center gap-1 group hover:brightness-105 transition-all"
+            >
+              <span className="text-3xl group-hover:scale-110 transition-transform duration-300 drop-shadow-sm">🎮</span>
+              <span className="font-bold text-purple-900 dark:text-purple-100 text-sm">Games</span>
+            </motion.button>
         </div>
 
         {/* Tips - Clean Glass Card */}
@@ -344,6 +356,9 @@ export default function PetPage() {
           </div>
         </div>
       </Modal>
+      
+      {/* Minigame Hub */}
+      {showGames && <MinigameHub onClose={() => setShowGames(false)} />}
     </div>
   );
 }
