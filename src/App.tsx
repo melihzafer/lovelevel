@@ -10,6 +10,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { InstallPrompt } from './components/InstallPrompt';
+import { UpdateNotification } from './components/UpdateNotification';
 // Lazy-loaded pages
 const OnboardingPage = lazy(() => import('./pages/Onboarding'));
 const HomePage = lazy(() => import('./pages/Home'));
@@ -149,6 +150,7 @@ export function App() {
     <ErrorBoundary>
       <OfflineIndicator />
       <InstallPrompt />
+      <UpdateNotification />
       <BrowserRouter>
         <ThemeProvider>
           <AuthProvider>
@@ -161,6 +163,7 @@ export function App() {
     </ErrorBoundary>
   );
 }
+
 
 
 
