@@ -33,13 +33,13 @@ export const MemoryMatch = ({ onClose }: MemoryMatchProps) => {
   
   const gainXP = usePetStore((state) => state.gainXP);
   
-  const getGridSize = () => {
+  const getGridSize = useCallback(() => {
     switch (difficulty) {
       case 'easy': return 4; // 2x2 = 4 cards (2 pairs)
       case 'normal': return 8; // 2x4 = 8 cards (4 pairs)
       case 'hard': return 16; // 4x4 = 16 cards (8 pairs)
     }
-  };
+  }, [difficulty]);
   
   const initializeGame = useCallback(() => {
     const size = getGridSize();
@@ -67,7 +67,7 @@ export const MemoryMatch = ({ onClose }: MemoryMatchProps) => {
     // Load high score
     const existing = highScoreService.getHighScore('memorymatch', difficulty);
     setHighScore(existing?.score || null);
-  }, [difficulty]);
+  }, [difficulty, getGridSize]);
   
   useEffect(() => {
     if (gameState === 'menu') {
@@ -121,11 +121,12 @@ export const MemoryMatch = ({ onClose }: MemoryMatchProps) => {
   
   // Check for win
   useEffect(() => {
-    if (gameState === 'playing' && matches === getGridSize() / 2) {
+    const size = getGridSize();
+    if (gameState === 'playing' && matches === size / 2) {
       setGameState('won');
       
       // Calculate score (lower moves = higher score)
-      const baseScore = getGridSize() * 10;
+      const baseScore = size * 10;
       const efficiency = Math.max(0, baseScore - moves);
       const finalScore = baseScore + efficiency;
       
@@ -141,7 +142,7 @@ export const MemoryMatch = ({ onClose }: MemoryMatchProps) => {
       // Check achievements
       achievementService.checkScoreAchievement('memorymatch', finalScore);
     }
-  }, [matches, gameState, moves, difficulty, gainXP]);
+  }, [matches, gameState, moves, difficulty, gainXP, getGridSize]);
   
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
