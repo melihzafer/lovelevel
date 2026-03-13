@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from '../lib/i18n';
-import { Home, Trophy, Heart, Dog, Settings } from 'lucide-react';
+import { Home, Trophy, MessageCircle, Dog, Settings } from 'lucide-react';
 
 export function BottomNav() {
   const { t } = useTranslation();
@@ -8,7 +8,7 @@ export function BottomNav() {
   const navItems = [
     { path: '/', label: t.navHome, Icon: Home },
     { path: '/challenges', label: t.navChallenges, Icon: Trophy },
-    { path: '/partner', label: t.navPartner, Icon: Heart },
+    { path: '/chat', label: 'Chat', Icon: MessageCircle },
     { path: '/pet', label: t.navPet, Icon: Dog },
     { path: '/settings', label: t.navSettings, Icon: Settings },
   ];

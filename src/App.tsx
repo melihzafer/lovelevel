@@ -22,6 +22,7 @@ const SettingsPage = lazy(() => import('./pages/Settings'));
 const ProfilePage = lazy(() => import('./pages/Profile'));
 const LoginPage = lazy(() => import('./pages/Login'));
 const SignupPage = lazy(() => import('./pages/Signup'));
+const ChatPage = lazy(() => import('./pages/Chat'));
 
 function AppContent() {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -110,6 +111,14 @@ function AppContent() {
                 }
               />
               <Route
+                path="/chat"
+                element={
+                  <ProtectedRoute>
+                    <ChatPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/history"
                 element={
                   <ProtectedRoute>
@@ -133,7 +142,6 @@ function AppContent() {
                   </ProtectedRoute>
                 }
               />
-              <Route path="/onboarding" element={<Navigate to="/" replace />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </>
           )}
